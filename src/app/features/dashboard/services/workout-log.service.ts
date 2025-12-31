@@ -75,14 +75,14 @@ export class WorkoutLogService {
    * Get all body state logs
    */
   getBodyStateLogs(): Observable<BodyStateLog[]> {
-    return this.apiService.get<BodyStateLog[]>('/api/client/bodystateleg');
+    return this.apiService.get<BodyStateLog[]>('/api/client/BodyStateLog');
   }
 
   /**
    * Get the last body state log entry
    */
   getLastBodyStateLog(): Observable<BodyStateLog> {
-    return this.apiService.get<BodyStateLog>('/api/client/bodystateleg/lastStateLog');
+    return this.apiService.get<BodyStateLog>('/api/client/BodyStateLog/lastStateLog');
   }
 }
 

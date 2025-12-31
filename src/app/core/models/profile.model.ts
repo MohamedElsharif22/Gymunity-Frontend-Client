@@ -37,6 +37,7 @@ export interface UpdateClientProfileRequest {
 export interface OnboardingCompleteRequest {
   heightCm: number;
   startingWeightKg: number;
+  gender: string;
   goal: string;
   experienceLevel: string;
 }

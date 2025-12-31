@@ -19,11 +19,12 @@ export interface LoginRequest {
 }
 
 export interface RegisterRequest {
-  name: string;
+  fullName: string;
   userName: string;
   email: string;
   password: string;
   confirmPassword: string;
+  role: UserRole; // assign to client by default 1 = Client
   profilePhoto?: File;
 }
 

@@ -11,7 +11,7 @@ import { LoginRequest } from '../../../../core/models';
   imports: [CommonModule, ReactiveFormsModule, RouterModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="min-h-screen bg-gradient-to-br from-sky-600 to-sky-800 flex items-center justify-center px-4">
+    <div class="min-h-screen bg-linear-to-br from-sky-600 to-sky-800 flex items-center justify-center px-4">
       <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8">
         <!-- Logo -->
         <div class="text-center mb-8">
@@ -100,23 +100,25 @@ export class LoginComponent {
     password: ['', [Validators.required]]
   });
 
-  isLoading = signal(false);
+  isLoading = this.authService.isLoading;
   error = signal<string | null>(null);
 
   onSubmit() {
-    if (this.loginForm.invalid) return;
+    if (this.loginForm.invalid) {
+      this.loginForm.markAllAsTouched();
+      return;
+    }
 
-    this.isLoading.set(true);
     this.error.set(null);
-
     const credentials: LoginRequest = this.loginForm.value as LoginRequest;
+    
     this.authService.login(credentials).subscribe({
       next: () => {
         this.router.navigate(['/dashboard']);
       },
       error: (err: any) => {
-        this.isLoading.set(false);
-        this.error.set(err.error?.message || 'Login failed. Please try again.');
+        const errorMessage = err.error?.message || err.error?.errors?.[0] || 'Login failed. Please try again.';
+        this.error.set(errorMessage);
       }
     });
   }

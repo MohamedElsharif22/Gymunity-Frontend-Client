@@ -1,6 +1,6 @@
 import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../../../core/services/auth.service';
 import { UserRole } from '../../../../core/models';
@@ -11,10 +11,10 @@ import { UserRole } from '../../../../core/models';
   imports: [CommonModule, ReactiveFormsModule, RouterModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="min-h-screen bg-gradient-to-br from-sky-600 to-sky-800 flex items-center justify-center px-4 py-8">
+    <div class="min-h-screen bg-linear-to-br from-sky-600 to-sky-800 flex items-center justify-center px-4 py-8">
       <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md">
         <!-- Logo Section -->
-        <div class="bg-gradient-to-r from-sky-600 to-sky-800 p-8 text-center rounded-t-2xl">
+        <div class="bg-linear-to-r from-sky-600 to-sky-800 p-8 text-center rounded-t-2xl">
           <div class="w-16 h-16 bg-white rounded-lg flex items-center justify-center mx-auto mb-4">
             <span class="text-sky-600 font-bold text-2xl">G</span>
           </div>
@@ -77,6 +77,32 @@ import { UserRole } from '../../../../core/models';
               placeholder="Confirm your password"
               class="input-field"
             />
+            <p *ngIf="registerForm.get('confirmPassword')?.hasError('passwordMismatch') && registerForm.get('confirmPassword')?.touched" class="text-red-600 text-sm mt-1">
+              Passwords do not match
+            </p>
+          </div>
+
+          <!-- Profile Photo -->
+          <div>
+            <label class="block text-sm font-semibold text-gray-900 mb-2">Profile Photo (Optional)</label>
+            <input
+              type="file"
+              accept="image/*"
+              (change)="onFileSelected($event)"
+              class="input-field"
+            />
+          </div>
+
+          <!-- Form Validation Errors -->
+          <div *ngIf="registerForm.touched && registerForm.invalid" class="space-y-2 text-sm text-red-600">
+            <p *ngIf="registerForm.get('fullName')?.hasError('required')">• Full name is required</p>
+            <p *ngIf="registerForm.get('userName')?.hasError('required')">• Username is required</p>
+            <p *ngIf="registerForm.get('email')?.hasError('required')">• Email is required</p>
+            <p *ngIf="registerForm.get('email')?.hasError('email')">• Please enter a valid email</p>
+            <p *ngIf="registerForm.get('password')?.hasError('required')">• Password is required</p>
+            <p *ngIf="registerForm.get('password')?.hasError('minlength')">• Password must be at least 6 characters</p>
+            <p *ngIf="registerForm.get('confirmPassword')?.hasError('required')">• Please confirm your password</p>
+            <p *ngIf="registerForm.hasError('passwordMismatch') && registerForm.touched">• Passwords must match</p>
           </div>
 
           <!-- Submit Button -->
@@ -111,27 +137,39 @@ export class RegisterComponent {
   private authService = inject(AuthService);
   private router = inject(Router);
 
-  registerForm = this.fb.group({
-    fullName: ['', [Validators.required]],
-    userName: ['', [Validators.required]],
-    email: ['', [Validators.required, Validators.email]],
-    password: ['', [Validators.required, Validators.minLength(6)]],
-    confirmPassword: ['', [Validators.required]],
-    profilePhoto: [null as File | null]
-  });
+  registerForm = this.fb.group(
+    {
+      fullName: ['', [Validators.required]],
+      userName: ['', [Validators.required]],
+      email: ['', [Validators.required, Validators.email]],
+      password: ['', [Validators.required, Validators.minLength(6)]],
+      confirmPassword: ['', [Validators.required]],
+      profilePhoto: [null as File | null]
+    },
+    { validators: this.passwordMatchValidator }
+  );
 
-  isLoading = signal(false);
+  isLoading = this.authService.isLoading;
   error = signal<string | null>(null);
 
+  // Validator to check if passwords match
+  private passwordMatchValidator(group: AbstractControl): ValidationErrors | null {
+    const password = group.get('password')?.value;
+    const confirmPassword = group.get('confirmPassword')?.value;
+    return password && confirmPassword && password !== confirmPassword ? { passwordMismatch: true } : null;
+  }
+
   onSubmit() {
-    if (this.registerForm.invalid) return;
+    if (this.registerForm.invalid) {
+      this.registerForm.markAllAsTouched();
+      return;
+    }
 
-    this.isLoading.set(true);
     this.error.set(null);
-
     const formData = new FormData();
     const formValue = this.registerForm.value;
 
+    // Append required fields
     formData.append('fullName', formValue.fullName || '');
     formData.append('userName', formValue.userName || '');
     formData.append('email', formValue.email || '');
@@ -139,20 +177,19 @@ export class RegisterComponent {
     formData.append('confirmPassword', formValue.confirmPassword || '');
     formData.append('role', UserRole.Client.toString());
 
-    if (this.registerForm.get('profilePhoto')?.value) {
-      const file = this.registerForm.get('profilePhoto')?.value;
-      if (file instanceof File) {
-        formData.append('profilePhoto', file);
-      }
+    // Append optional profile photo
+    const profilePhoto = this.registerForm.get('profilePhoto')?.value;
+    if (profilePhoto instanceof File) {
+      formData.append('profilePhoto', profilePhoto);
     }
 
     this.authService.register(formData).subscribe({
       next: () => {
-        this.router.navigate(['/onboarding']);
+        this.router.navigate(['/dashboard']);
       },
       error: (err: any) => {
-        this.isLoading.set(false);
-        this.error.set(err.error?.message || 'Registration failed. Please try again.');
+        const errorMessage = err.error?.message || err.error?.errors?.[0] || 'Registration failed. Please try again.';
+        this.error.set(errorMessage);
       }
     });
   }
