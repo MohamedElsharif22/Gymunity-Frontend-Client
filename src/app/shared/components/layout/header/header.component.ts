@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { AuthService } from '../../../../core/services/auth.service';
@@ -41,12 +41,12 @@ import { User } from '../../../../core/models';
             <!-- Profile Dropdown -->
             <div class="flex items-center gap-3 pl-4 border-l border-gray-200">
               <img
-                [src]="currentUser?.profilePhoto || 'https://via.placeholder.com/40'"
-                [alt]="currentUser?.fullName"
+                [src]="currentUser()?.profilePhotoUrl || 'https://via.placeholder.com/40'"
+                [alt]="currentUser()?.name"
                 class="w-10 h-10 rounded-full object-cover"
               />
               <div class="hidden md:flex flex-col">
-                <span class="text-sm font-semibold text-gray-900">{{ currentUser?.fullName }}</span>
+                <span class="text-sm font-semibold text-gray-900">{{ currentUser()?.name }}</span>
                 <span class="text-xs text-gray-500">Client</span>
               </div>
             </div>
@@ -65,14 +65,11 @@ import { User } from '../../../../core/models';
   styles: []
 })
 export class HeaderComponent implements OnInit {
-  currentUser: User | null = null;
-
-  constructor(private authService: AuthService) {}
+  private authService = inject(AuthService);
+  currentUser = computed(() => this.authService.currentUser());
 
   ngOnInit() {
-    this.authService.currentUser$.subscribe((user: User | null) => {
-      this.currentUser = user;
-    });
+    // Computed signal automatically updates
   }
 
   logout() {

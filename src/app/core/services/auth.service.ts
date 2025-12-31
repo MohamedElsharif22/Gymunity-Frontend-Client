@@ -1,43 +1,100 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, inject, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, BehaviorSubject, tap } from 'rxjs';
+import { Observable, tap } from 'rxjs';
 import { ApiService } from './api.service';
-import { User, LoginRequest, RegisterRequest, AuthResponse, UpdateProfileRequest, ChangePasswordRequest } from '../models';
+import {
+  User,
+  LoginRequest,
+  RegisterRequest,
+  GoogleAuthRequest,
+  AuthResponse,
+  UpdateProfileRequest,
+  ChangePasswordRequest,
+  SendResetPasswordLinkRequest,
+  ResetPasswordRequest
+} from '../models';
 import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
-  private apiUrl = (environment as any).apiUrl;
-  private tokenKey = 'authToken';
-  private userKey = 'authUser';
+  private readonly http = inject(HttpClient);
+  private readonly apiService = inject(ApiService);
+  private readonly apiUrl = (environment as any).apiUrl;
+  private readonly tokenKey = 'authToken';
+  private readonly userKey = 'authUser';
 
-  currentUser$ = new BehaviorSubject<User | null>(this.getUserFromStorage());
-  isAuthenticated$ = new BehaviorSubject<boolean>(this.hasToken());
+  // Signals for state management (Angular best practice)
+  private readonly currentUserSignal = signal<User | null>(this.getUserFromStorage());
+  private readonly isAuthenticatedSignal = signal<boolean>(this.hasToken());
+  private readonly loadingSignal = signal<boolean>(false);
 
-  constructor(
-    private http: HttpClient,
-    private apiService: ApiService
-  ) {}
+  // Computed signals for derived state
+  readonly currentUser = computed(() => this.currentUserSignal());
+  readonly isAuthenticated = computed(() => this.isAuthenticatedSignal());
+  readonly isLoading = computed(() => this.loadingSignal());
 
   login(credentials: LoginRequest): Observable<AuthResponse> {
+    this.loadingSignal.set(true);
     return this.http.post<AuthResponse>(`${this.apiUrl}/api/account/login`, credentials).pipe(
-      tap(response => this.setAuthData(response))
+      tap(response => {
+        this.setAuthData(response);
+        this.loadingSignal.set(false);
+      })
     );
   }
 
-  register(data: FormData): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.apiUrl}/api/account/register`, data).pipe(
-      tap(response => this.setAuthData(response))
+  register(formData: FormData): Observable<AuthResponse> {
+    this.loadingSignal.set(true);
+    return this.http.post<AuthResponse>(`${this.apiUrl}/api/account/register`, formData).pipe(
+      tap(response => {
+        this.setAuthData(response);
+        this.loadingSignal.set(false);
+      })
+    );
+  }
+
+  googleAuth(request: GoogleAuthRequest): Observable<AuthResponse> {
+    this.loadingSignal.set(true);
+    return this.http.post<AuthResponse>(`${this.apiUrl}/api/account/google-auth`, request).pipe(
+      tap(response => {
+        this.setAuthData(response);
+        this.loadingSignal.set(false);
+      })
     );
   }
 
   logout(): void {
     localStorage.removeItem(this.tokenKey);
     localStorage.removeItem(this.userKey);
-    this.currentUser$.next(null);
-    this.isAuthenticated$.next(false);
+    this.currentUserSignal.set(null);
+    this.isAuthenticatedSignal.set(false);
+  }
+
+  updateProfile(formData: FormData): Observable<AuthResponse> {
+    return this.apiService.postFormData<AuthResponse>(
+      '/api/account/update-profile',
+      formData
+    ).pipe(
+      tap(response => {
+        if (response) {
+          this.setAuthData(response);
+        }
+      })
+    );
+  }
+
+  changePassword(request: ChangePasswordRequest): Observable<any> {
+    return this.apiService.post<any>('/api/account/change-password', request);
+  }
+
+  sendResetPasswordLink(request: SendResetPasswordLinkRequest): Observable<any> {
+    return this.apiService.post<any>('/api/account/send-reset-password-link', request);
+  }
+
+  resetPassword(request: ResetPasswordRequest): Observable<any> {
+    return this.apiService.post<any>('/api/account/reset-password', request);
   }
 
   getToken(): string | null {
@@ -48,23 +105,23 @@ export class AuthService {
     return !!this.getToken();
   }
 
-  updateProfile(data: FormData): Observable<any> {
-    return this.apiService.postFormData('/api/Account/update-profile', data);
-  }
-
-  changePassword(request: ChangePasswordRequest): Observable<any> {
-    return this.apiService.post('/api/Account/change-password', request);
-  }
-
   getCurrentUser(): User | null {
-    return this.currentUser$.getValue();
+    return this.currentUserSignal();
   }
 
   private setAuthData(response: AuthResponse): void {
     localStorage.setItem(this.tokenKey, response.token);
-    localStorage.setItem(this.userKey, JSON.stringify(response.user));
-    this.currentUser$.next(response.user);
-    this.isAuthenticated$.next(true);
+    const user: User = {
+      id: response.id,
+      name: response.name,
+      userName: response.userName,
+      email: response.email,
+      role: response.role,
+      profilePhotoUrl: response.profilePhotoUrl
+    };
+    localStorage.setItem(this.userKey, JSON.stringify(user));
+    this.currentUserSignal.set(user);
+    this.isAuthenticatedSignal.set(true);
   }
 
   private getUserFromStorage(): User | null {
@@ -72,3 +129,4 @@ export class AuthService {
     return user ? JSON.parse(user) : null;
   }
 }
+

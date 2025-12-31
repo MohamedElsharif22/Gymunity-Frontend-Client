@@ -1,10 +1,15 @@
-// Subscription and membership models
+/**
+ * Subscription, package, and membership models
+ * Aligns with Gymunity Backend API specification
+ */
+
 import { Program, TrainerProfile } from './program.model';
 
 export interface Subscription {
   id: number;
   clientId: string;
   packageId: number;
+  trainerName?: string;
   startDate: Date;
   endDate: Date;
   status: SubscriptionStatus;
@@ -25,13 +30,14 @@ export interface SubscribeRequest {
 export interface Package {
   id: number;
   trainerId: string;
+  trainerName?: string;
   name: string;
   description: string;
   priceMonthly: number;
   priceYearly: number;
   isActive: boolean;
   thumbnailUrl?: string;
-  programIds: number[];
+  programIds?: number[];
   createdAt?: Date;
   updatedAt?: Date;
 }

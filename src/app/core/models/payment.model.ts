@@ -1,4 +1,8 @@
-// Payment and transaction models
+/**
+ * Payment, transaction, and billing models
+ * Aligns with Gymunity Backend API specification
+ */
+
 export interface Payment {
   id: number;
   clientId: string;
@@ -50,7 +54,7 @@ export enum PaymentStatus {
 
 export enum PaymentMethod {
   CreditCard = 1,
-  Debit = 2,
-  MobileWallet = 3,
+  Wallet = 2,
+  MobilePayment = 3,
   BankTransfer = 4
 }

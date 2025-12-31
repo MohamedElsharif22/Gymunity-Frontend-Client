@@ -1,47 +1,92 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ApiService } from '../../../core/services/api.service';
-import { Package, Program, TrainerProfile } from '../../../core/models';
+import { Package, Program, TrainerProfile, SearchResults } from '../../../core/models';
 import { HttpParams } from '@angular/common/http';
 
+/**
+ * Home Client Service
+ * Handles discovery features: searching for packages, trainers, and programs
+ * Public endpoints for unauthenticated users
+ * Follows Angular best practices with providedIn: 'root' and inject()
+ */
 @Injectable({
   providedIn: 'root'
 })
 export class HomeClientService {
-  private apiService = inject(ApiService);
+  private readonly apiService = inject(ApiService);
 
-  searchPackagesTrainersPrograms(term: string): Observable<any> {
+  // ==================== Search ====================
+
+  /**
+   * Global search across trainers, packages, and programs
+   */
+  search(term: string): Observable<SearchResults> {
     const params = new HttpParams().set('term', term);
-    return this.apiService.get<any>('/api/HomeClient/search', params);
+    return this.apiService.get<SearchResults>('/api/homeclient/search', params);
   }
 
+  // ==================== Packages ====================
+
+  /**
+   * Get all available packages
+   */
   getAllPackages(): Observable<Package[]> {
-    return this.apiService.get<Package[]>('/api/HomeClient/packages');
+    return this.apiService.get<Package[]>('/api/homeclient/packages');
   }
 
+  /**
+   * Get package by ID
+   */
   getPackageById(packageId: number): Observable<Package> {
-    return this.apiService.get<Package>(`/api/HomeClient/packages/${packageId}`);
+    return this.apiService.get<Package>(`/api/homeclient/packages/${packageId}`);
   }
 
+  /**
+   * Get packages by trainer ID
+   */
   getPackagesByTrainer(trainerId: string): Observable<Package[]> {
     const params = new HttpParams().set('trainerId', trainerId);
-    return this.apiService.get<Package[]>('/api/HomeClient/packages/by-trainer', params);
+    return this.apiService.get<Package[]>('/api/homeclient/packages/by-trainer', params);
   }
 
+  // ==================== Trainers ====================
+
+  /**
+   * Get all trainers
+   */
+  getAllTrainers(): Observable<TrainerProfile[]> {
+    return this.apiService.get<TrainerProfile[]>('/api/homeclient/trainers');
+  }
+
+  /**
+   * Get trainer by ID
+   */
   getTrainerById(trainerId: number): Observable<TrainerProfile> {
-    return this.apiService.get<TrainerProfile>(`/api/HomeClient/trainer/${trainerId}`);
+    return this.apiService.get<TrainerProfile>(`/api/homeclient/trainers/${trainerId}`);
   }
 
-  getTrainerByUserId(userId: string): Observable<TrainerProfile> {
-    const params = new HttpParams().set('userId', userId);
-    return this.apiService.get<TrainerProfile>('/api/HomeClient/trainer/by-user', params);
-  }
+  // ==================== Programs ====================
 
+  /**
+   * Get all available programs
+   */
   getAllPrograms(): Observable<Program[]> {
-    return this.apiService.get<Program[]>('/api/HomeClient/programs');
+    return this.apiService.get<Program[]>('/api/homeclient/programs');
   }
 
+  /**
+   * Get program by ID
+   */
   getProgramById(programId: number): Observable<Program> {
-    return this.apiService.get<Program>(`/api/HomeClient/programs/${programId}`);
+    return this.apiService.get<Program>(`/api/homeclient/programs/${programId}`);
+  }
+
+  /**
+   * Get programs by trainer ID
+   */
+  getProgramsByTrainer(trainerId: string): Observable<Program[]> {
+    return this.apiService.get<Program[]>(`/api/homeclient/programs/by-trainer/${trainerId}`);
   }
 }
+

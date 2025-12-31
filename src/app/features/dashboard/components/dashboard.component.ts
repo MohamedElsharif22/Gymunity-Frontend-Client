@@ -113,8 +113,8 @@ export class DashboardComponent implements OnInit {
   constructor(private workoutLogService: WorkoutLogService) {}
 
   ngOnInit() {
-    this.workoutLogService.getLastStateLog().subscribe({
-      next: (log) => {
+    this.workoutLogService.getLastBodyStateLog().subscribe({
+      next: (log: BodyStateLog) => {
         this.lastBodyLog = log;
       },
       error: () => {

@@ -1,16 +1,19 @@
-// Client profile and onboarding models
+/**
+ * Client profile, onboarding, and dashboard models
+ * Aligns with Gymunity Backend API specification
+ */
+
 export interface ClientProfile {
-  id: string;
-  userId: string;
+  id: number;
   userName: string;
   heightCm: number;
   startingWeightKg: number;
-  currentWeightKg?: number;
   gender: string;
   goal: string;
   experienceLevel: string;
-  createdAt?: Date;
   updatedAt?: Date;
+  createdAt?: Date;
+  bodyStateLog?: BodyStateLog | null;
 }
 
 export interface CreateClientProfileRequest {
@@ -38,7 +41,24 @@ export interface OnboardingCompleteRequest {
   experienceLevel: string;
 }
 
-export interface OnboardingStatus {
-  isProfileCompleted: boolean;
-  completedAt?: Date;
+export interface DashboardResponse {
+  userName: string;
+  goal: string;
+  experienceLevel: string;
+  isOnboardingCompleted: boolean;
+  lastBodyState?: BodyStateLog;
+  bodyStateHistory?: BodyStateLog[];
+  profileCreatedAt?: Date;
+}
+
+export interface BodyStateLog {
+  id?: number;
+  weightKg: number;
+  bodyFatPercent?: number;
+  measurementsJson?: string;
+  photoFrontUrl?: string;
+  photoSideUrl?: string;
+  photoBackUrl?: string;
+  notes?: string;
+  loggedAt?: Date;
 }

@@ -1,7 +1,12 @@
-// Trainer and program models
+/**
+ * Program, trainer, and exercise models
+ * Aligns with Gymunity Backend API specification
+ */
+
 export interface Program {
   id: number;
   trainerId: string;
+  trainerName?: string;
   title: string;
   description: string;
   type: ProgramType;
@@ -66,6 +71,7 @@ export interface Exercise {
 export interface TrainerProfile {
   id: number;
   userId: string;
+  userName?: string;
   profilePhotoUrl?: string;
   bio?: string;
   specialization?: string;

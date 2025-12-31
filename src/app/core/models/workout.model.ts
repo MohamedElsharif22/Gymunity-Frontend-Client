@@ -1,8 +1,13 @@
-// Workout and body tracking models
+/**
+ * Workout logging and body state tracking models
+ * Aligns with Gymunity Backend API specification
+ */
+
 export interface WorkoutLog {
   id: number;
-  clientId: string;
+  clientProfileId: number;
   programDayId: number;
+  programDayName?: string;
   completedAt: Date;
   notes?: string;
   durationMinutes: number;
@@ -27,18 +32,8 @@ export interface UpdateWorkoutLogRequest {
   exercisesLoggedJson?: string;
 }
 
-export interface BodyStateLog {
-  id: number;
-  clientId: string;
-  weightKg: number;
-  bodyFatPercent?: number;
-  measurementsJson?: string;
-  photoFrontUrl?: string;
-  photoSideUrl?: string;
-  photoBackUrl?: string;
-  notes?: string;
-  createdAt?: Date;
-}
+// BodyStateLog is defined in profile.model.ts - import from there
+export type { BodyStateLog } from './profile.model';
 
 export interface CreateBodyStateLogRequest {
   weightKg: number;
@@ -52,9 +47,8 @@ export interface CreateBodyStateLogRequest {
 
 export interface ExerciseLog {
   exerciseId: number;
-  name: string;
-  setsCompleted: number;
-  repsPerSet: number[];
-  weightUsed?: number;
+  sets: number;
+  reps: number[];
+  weight?: number;
   notes?: string;
 }

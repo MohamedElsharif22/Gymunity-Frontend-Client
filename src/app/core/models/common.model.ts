@@ -1,8 +1,12 @@
-// Review and rating models
+/**
+ * Common models including reviews, pagination, and API responses
+ * Aligns with Gymunity Backend API specification
+ */
+
 export interface Review {
-  id: number;
-  clientId: string;
-  trainerId: number;
+  id?: number;
+  trainerId?: number;
+  clientId?: string;
   rating: number;
   comment?: string;
   createdAt?: Date;
@@ -37,4 +41,11 @@ export interface ApiResponse<T> {
   data?: T;
   message?: string;
   errors?: Record<string, string[]>;
+}
+
+// Search results wrapper
+export interface SearchResults {
+  trainers?: any[];
+  packages?: any[];
+  programs?: any[];
 }
