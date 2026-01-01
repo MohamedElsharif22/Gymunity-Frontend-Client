@@ -20,6 +20,13 @@ import { User } from '../../../../core/models';
             <span class="font-bold text-lg text-gray-900">Gymunity</span>
           </a>
 
+          <!-- Navigation Links -->
+          <nav class="hidden md:flex items-center gap-6 flex-1 mx-8">
+            <a routerLink="/packages" class="text-gray-700 hover:text-sky-600 font-medium transition">
+              Packages
+            </a>
+          </nav>
+
           <!-- Search Bar -->
           <div class="flex-1 max-w-md mx-8">
             <input

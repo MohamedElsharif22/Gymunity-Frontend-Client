@@ -53,6 +53,41 @@ export const routes: Routes = [
         loadComponent: () => import('./features/trainers/components/trainers.component').then(m => m.TrainersComponent)
       },
       {
+        path: 'packages',
+        canActivate: [profileCompletionGuard],
+        loadComponent: () => import('./features/packages/components/packages.component').then(m => m.PackagesComponent)
+      },
+      {
+        path: 'packages/:id',
+        canActivate: [profileCompletionGuard],
+        loadComponent: () => import('./features/packages/components/package-subscribe/package-subscribe.component').then(m => m.PackageSubscribeComponent)
+      },
+      {
+        path: 'payment/:id',
+        canActivate: [profileCompletionGuard],
+        loadComponent: () => import('./features/payments/components/payment/payment.component').then(m => m.PaymentComponent)
+      },
+      {
+        path: 'payment/success',
+        canActivate: [profileCompletionGuard],
+        loadComponent: () => import('./features/payments/components/payment-success/payment-success.component').then(m => m.PaymentSuccessComponent)
+      },
+      {
+        path: 'payment/failed',
+        canActivate: [profileCompletionGuard],
+        loadComponent: () => import('./features/payments/components/payment-failed/payment-failed.component').then(m => m.PaymentFailedComponent)
+      },
+      {
+        path: 'payment/canceled',
+        canActivate: [profileCompletionGuard],
+        loadComponent: () => import('./features/payments/components/payment-canceled/payment-canceled.component').then(m => m.PaymentCanceledComponent)
+      },
+      {
+        path: 'payment/error',
+        canActivate: [profileCompletionGuard],
+        loadComponent: () => import('./features/payments/components/payment-error/payment-error.component').then(m => m.PaymentErrorComponent)
+      },
+      {
         path: 'bookings',
         canActivate: [profileCompletionGuard],
         loadComponent: () => import('./features/bookings/components/bookings.component').then(m => m.BookingsComponent)
