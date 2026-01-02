@@ -1,0 +1,91 @@
+<div class="container mx-auto px-4 py-8">
+  <a routerLink="/client/workout-logs" class="text-blue-600 hover:underline mb-6 inline-block">
+    ← Back to Workout Logs
+  </a>
+
+  @if (error()) {
+    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+      {{ error() }}
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="text-center py-8">
+      <p class="text-gray-600">Loading workout log...</p>
+    </div>
+  } @else if (log(); as log) {
+    <div class="bg-white rounded-lg shadow p-6 mb-6">
+      <div class="flex justify-between items-start mb-6">
+        <div>
+          <h1 class="text-3xl font-bold">{{ log.programDayName || 'Workout' }}</h1>
+          <p class="text-gray-600 mt-1">{{ formatDate(log.completedAt) }}</p>
+        </div>
+      </div>
+
+      <!-- Summary Stats -->
+      <div class="grid grid-cols-3 gap-4 mb-6 p-4 bg-gray-50 rounded">
+        @if (log.durationMinutes) {
+          <div>
+            <p class="text-gray-600 text-sm">Duration</p>
+            <p class="text-2xl font-bold">{{ log.durationMinutes }}m</p>
+          </div>
+        }
+        <div>
+          <p class="text-gray-600 text-sm">Exercises</p>
+          <p class="text-2xl font-bold">{{ exercises().length }}</p>
+        </div>
+        <div>
+          <p class="text-gray-600 text-sm">Date</p>
+          <p class="font-semibold">{{ log.createdAt | date: 'short' }}</p>
+        </div>
+      </div>
+
+      <!-- Exercises -->
+      @if (exercises().length > 0) {
+        <div class="mt-8">
+          <h2 class="text-xl font-semibold mb-4">Exercises</h2>
+          <div class="space-y-3">
+            @for (exercise of exercises(); track $index) {
+              <div class="border rounded p-4 bg-gray-50">
+                <div class="grid grid-cols-4 gap-4">
+                  @if (exercise.exerciseId) {
+                    <div>
+                      <p class="text-gray-600 text-sm">Exercise ID</p>
+                      <p class="font-semibold">{{ exercise.exerciseId }}</p>
+                    </div>
+                  }
+                  @if (exercise.sets) {
+                    <div>
+                      <p class="text-gray-600 text-sm">Sets</p>
+                      <p class="font-semibold">{{ exercise.sets }}</p>
+                    </div>
+                  }
+                  @if (exercise.reps) {
+                    <div>
+                      <p class="text-gray-600 text-sm">Reps</p>
+                      <p class="font-semibold">{{ exercise.reps }}</p>
+                    </div>
+                  }
+                  @if (exercise.weight) {
+                    <div>
+                      <p class="text-gray-600 text-sm">Weight (kg)</p>
+                      <p class="font-semibold">{{ exercise.weight }}</p>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- Notes -->
+      @if (log.notes) {
+        <div class="mt-8 p-4 bg-blue-50 border border-blue-200 rounded">
+          <h3 class="font-semibold text-blue-900 mb-2">Notes</h3>
+          <p class="text-blue-800">{{ log.notes }}</p>
+        </div>
+      }
+    </div>
+  }
+</div>

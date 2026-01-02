@@ -1,0 +1,19 @@
+.container {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+h1 {
+  color: #1f2937;
+}
+
+textarea {
+  font-family: 'Courier New', Courier, monospace;
+  resize: vertical;
+}
+
+.help-text {
+  color: #6b7280;
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+}

@@ -32,7 +32,7 @@ export class ClientProgramsService {
    * @throws 400 Bad Request on server error
    */
   getActivePrograms(): Observable<ProgramResponse[]> {
-    return this.apiService.get<ProgramResponse[]>('/api/client/programs');
+    return this.apiService.get<ProgramResponse[]>('/api/client/clientprograms');
   }
 
   /**

@@ -97,6 +97,43 @@ export const routes: Routes = [
         canActivate: [profileCompletionGuard],
         loadComponent: () => import('./features/profile/components/profile.component').then(m => m.ProfileComponent)
       },
+      // Client Logs Feature Routes (Body State, Workout, Onboarding)
+      {
+        path: 'body-state',
+        canActivate: [profileCompletionGuard],
+        children: [
+          {
+            path: '',
+            loadComponent: () => import('./features/client-logs/components/body-state-list/body-state-list.component').then(m => m.BodyStateListComponent)
+          },
+          {
+            path: 'add',
+            loadComponent: () => import('./features/client-logs/components/body-state-add/body-state-add.component').then(m => m.BodyStateAddComponent)
+          }
+        ]
+      },
+      {
+        path: 'onboarding',
+        loadComponent: () => import('./features/client-logs/components/onboarding/onboarding.component').then(m => m.OnboardingComponent)
+      },
+      {
+        path: 'workout-logs',
+        canActivate: [profileCompletionGuard],
+        children: [
+          {
+            path: '',
+            loadComponent: () => import('./features/client-logs/components/workout-log-list/workout-log-list.component').then(m => m.WorkoutLogListComponent)
+          },
+          {
+            path: 'add',
+            loadComponent: () => import('./features/client-logs/components/workout-log-add/workout-log-add.component').then(m => m.WorkoutLogAddComponent)
+          },
+          {
+            path: ':id',
+            loadComponent: () => import('./features/client-logs/components/workout-log-detail/workout-log-detail.component').then(m => m.WorkoutLogDetailComponent)
+          }
+        ]
+      },
       // Client Programs Feature Routes
       {
         path: 'programs',

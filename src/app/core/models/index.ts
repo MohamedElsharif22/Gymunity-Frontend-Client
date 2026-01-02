@@ -3,6 +3,8 @@
  * Provides centralized access to all application models
  */
 export * from './auth.model';
+export * from './client-profile.model';
+export * from './client-logs.model';
 export * from './profile.model';
 export * from './subscription.model';
 export * from './program.model';

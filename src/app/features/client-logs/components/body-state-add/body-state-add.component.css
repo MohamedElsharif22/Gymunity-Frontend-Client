@@ -1,0 +1,24 @@
+.container {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+h1 {
+  color: #1f2937;
+  margin-bottom: 2rem;
+}
+
+label {
+  color: #374151;
+}
+
+textarea {
+  font-family: 'Courier New', Courier, monospace;
+  resize: vertical;
+}
+
+.error-text {
+  color: #dc2626;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}

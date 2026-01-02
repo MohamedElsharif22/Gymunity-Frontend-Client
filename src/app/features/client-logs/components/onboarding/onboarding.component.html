@@ -1,0 +1,123 @@
+<div class="container mx-auto px-4 py-8 max-w-2xl">
+  <h1 class="text-3xl font-bold mb-8">Onboarding</h1>
+
+  @if (checkingStatus()) {
+    <div class="text-center py-8">
+      <p class="text-gray-600">Checking onboarding status...</p>
+    </div>
+  } @else {
+    @if (isCompleted()) {
+      <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-6">
+        <p class="font-semibold">✓ Onboarding Completed</p>
+        <p class="text-sm mt-1">You have already completed your onboarding. Your fitness journey starts here!</p>
+      </div>
+    }
+
+    @if (error() && !success()) {
+      <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+        {{ error() }}
+      </div>
+    }
+
+    @if (success()) {
+      <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
+        Onboarding completed successfully!
+      </div>
+    }
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-6">
+      <!-- Height -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">
+          Height (cm) <span class="text-red-500">*</span>
+        </label>
+        <input
+          type="number"
+          formControlName="heightCm"
+          step="1"
+          min="50"
+          max="300"
+          [disabled]="isCompleted()"
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
+          placeholder="Enter your height in cm"
+        />
+        @if (form.get('heightCm')?.invalid && form.get('heightCm')?.touched) {
+          <p class="text-red-500 text-sm mt-1">Height must be between 50-300 cm</p>
+        }
+      </div>
+
+      <!-- Starting Weight -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">
+          Starting Weight (kg) <span class="text-red-500">*</span>
+        </label>
+        <input
+          type="number"
+          formControlName="startingWeightKg"
+          step="0.1"
+          min="20"
+          max="500"
+          [disabled]="isCompleted()"
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
+          placeholder="Enter your starting weight in kg"
+        />
+        @if (form.get('startingWeightKg')?.invalid && form.get('startingWeightKg')?.touched) {
+          <p class="text-red-500 text-sm mt-1">Weight must be between 20-500 kg</p>
+        }
+      </div>
+
+      <!-- Fitness Goal -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">
+          Fitness Goal <span class="text-red-500">*</span>
+        </label>
+        <select
+          formControlName="goal"
+          [disabled]="isCompleted()"
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
+        >
+          <option value="">Select your fitness goal</option>
+          @for (option of goalOptions; track option.value) {
+            <option [value]="option.value">{{ option.label }}</option>
+          }
+        </select>
+        @if (form.get('goal')?.invalid && form.get('goal')?.touched) {
+          <p class="text-red-500 text-sm mt-1">Please select a fitness goal</p>
+        }
+      </div>
+
+      <!-- Experience Level -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">
+          Experience Level <span class="text-red-500">*</span>
+        </label>
+        <select
+          formControlName="experienceLevel"
+          [disabled]="isCompleted()"
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
+        >
+          <option value="">Select your experience level</option>
+          @for (option of experienceLevelOptions; track option.value) {
+            <option [value]="option.value">{{ option.label }}</option>
+          }
+        </select>
+        @if (form.get('experienceLevel')?.invalid && form.get('experienceLevel')?.touched) {
+          <p class="text-red-500 text-sm mt-1">Please select your experience level</p>
+        }
+      </div>
+
+      <!-- Buttons -->
+      @if (!isCompleted()) {
+        <div class="pt-6">
+          <button
+            type="submit"
+            [disabled]="loading() || form.invalid"
+            class="w-full bg-blue-600 text-white font-medium py-2 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 transition"
+          >
+            {{ loading() ? 'Completing Onboarding...' : 'Complete Onboarding' }}
+          </button>
+        </div>
+      }
+    </form>
+  }
+</div>
