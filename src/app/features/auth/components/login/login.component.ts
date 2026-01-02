@@ -1,7 +1,7 @@
 import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterModule } from '@angular/router';
+import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../../../core/services/auth.service';
 import { LoginRequest } from '../../../../core/models';
 
@@ -94,6 +94,7 @@ export class LoginComponent {
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
 
   loginForm = this.fb.group({
     emailOrUserName: ['', [Validators.required]],
@@ -102,6 +103,11 @@ export class LoginComponent {
 
   isLoading = this.authService.isLoading;
   error = signal<string | null>(null);
+  private returnUrl: string = '/dashboard';
+
+  constructor() {
+    this.returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/dashboard';
+  }
 
   onSubmit() {
     if (this.loginForm.invalid) {
@@ -114,7 +120,7 @@ export class LoginComponent {
     
     this.authService.login(credentials).subscribe({
       next: () => {
-        this.router.navigate(['/dashboard']);
+        this.router.navigateByUrl(this.returnUrl);
       },
       error: (err: any) => {
         const errorMessage = err.error?.message || err.error?.errors?.[0] || 'Login failed. Please try again.';

@@ -7,7 +7,7 @@ import { CommonModule } from '@angular/common';
   standalone: true,
   imports: [RouterOutlet, CommonModule],
   template: '<router-outlet></router-outlet>',
-  styleUrl: './app.css',
+  styleUrls: ['./app.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class App {}

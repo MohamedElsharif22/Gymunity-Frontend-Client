@@ -1,4 +1,5 @@
 import { Component, OnInit, inject, computed } from '@angular/core';
+import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { AuthService } from '../../../../core/services/auth.service';
@@ -73,7 +74,8 @@ import { User } from '../../../../core/models';
 })
 export class HeaderComponent implements OnInit {
   private authService = inject(AuthService);
-  currentUser = computed(() => this.authService.currentUser());
+  private router = inject(Router);
+  currentUser = this.authService.currentUser;
 
   ngOnInit() {
     // Computed signal automatically updates
@@ -81,5 +83,6 @@ export class HeaderComponent implements OnInit {
 
   logout() {
     this.authService.logout();
+    this.router.navigate(['/auth/login']);
   }
 }

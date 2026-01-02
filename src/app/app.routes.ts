@@ -97,6 +97,33 @@ export const routes: Routes = [
         canActivate: [profileCompletionGuard],
         loadComponent: () => import('./features/profile/components/profile.component').then(m => m.ProfileComponent)
       },
+      // Client Programs Feature Routes
+      {
+        path: 'programs',
+        canActivate: [authGuard],
+        children: [
+          {
+            path: '',
+            loadComponent: () => import('./features/programs/components/programs-list/programs-list.component').then(m => m.ProgramsListComponent)
+          },
+          {
+            path: ':programId',
+            loadComponent: () => import('./features/programs/components/program-details/program-details.component').then(m => m.ProgramDetailsComponent)
+          },
+          {
+            path: ':programId/weeks',
+            loadComponent: () => import('./features/programs/components/program-weeks/program-weeks.component').then(m => m.ProgramWeeksComponent)
+          },
+          {
+            path: 'weeks/:weekId/days',
+            loadComponent: () => import('./features/programs/components/program-days/program-days.component').then(m => m.ProgramDaysComponent)
+          },
+          {
+            path: 'days/:dayId',
+            loadComponent: () => import('./features/programs/components/day-details/day-details.component').then(m => m.DayDetailsComponent)
+          }
+        ]
+      },
       {
         path: '',
         redirectTo: 'dashboard',
