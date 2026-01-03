@@ -22,17 +22,15 @@ import { SidebarComponent } from './sidebar/sidebar.component';
       </div>
 
       <!-- Header -->
-      <div class="relative z-10">
-        <app-header></app-header>
-      </div>
+      <app-header></app-header>
 
       <!-- Main Content -->
-      <div class="flex flex-1 relative z-10">
+      <div class="flex flex-1 relative z-10 mt-16 md:mt-20">
         <!-- Sidebar -->
         <app-sidebar></app-sidebar>
 
         <!-- Page Content Area -->
-        <main class="flex-1 overflow-auto">
+        <main class="flex-1 overflow-auto md:ml-72">
           <!-- Content Wrapper with Padding and Max Width -->
           <div class="relative">
             <!-- Scroll to Top Button -->
@@ -52,9 +50,9 @@ import { SidebarComponent } from './sidebar/sidebar.component';
             </div>
 
             <!-- Footer -->
-            <footer class="bg-white/80 backdrop-blur-sm border-t border-gray-200 mt-auto">
-              <div class="max-w-7xl mx-auto px-4 md:px-8 py-8">
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <footer class="bg-gradient-to-b from-white to-gray-50 border-t border-gray-200 backdrop-blur-sm">
+              <div class="max-w-7xl mx-auto px-4 md:px-8 py-12">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
                   <!-- Brand Section -->
                   <div class="md:col-span-2">
                     <div class="flex items-center gap-3 mb-4">
@@ -64,7 +62,7 @@ import { SidebarComponent } from './sidebar/sidebar.component';
                         </svg>
                       </div>
                       <h3 class="text-xl font-bold bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">
-                        FitTracker
+                        Gymunity
                       </h3>
                     </div>
                     <p class="text-gray-600 text-sm mb-4 max-w-sm">
@@ -89,33 +87,33 @@ import { SidebarComponent } from './sidebar/sidebar.component';
                     </div>
                   </div>
 
-                  <!-- Quick Links -->
-                  <div>
-                    <h4 class="font-bold text-gray-900 mb-4">Quick Links</h4>
-                    <ul class="space-y-2">
-                      <li><a routerLink="/dashboard" class="text-gray-600 hover:text-sky-600 transition text-sm">Dashboard</a></li>
-                      <li><a routerLink="/programs" class="text-gray-600 hover:text-sky-600 transition text-sm">Programs</a></li>
-                      <li><a routerLink="/trainers" class="text-gray-600 hover:text-sky-600 transition text-sm">Trainers</a></li>
-                      <li><a routerLink="/classes" class="text-gray-600 hover:text-sky-600 transition text-sm">Classes</a></li>
-                    </ul>
-                  </div>
+                    <!-- Quick Links -->
+                    <div>
+                      <h4 class="font-bold text-gray-900 mb-4">Quick Links</h4>
+                      <ul class="space-y-3">
+                        <li><a routerLink="/dashboard" class="text-gray-600 hover:text-sky-600 transition text-sm font-medium">Dashboard</a></li>
+                        <li><a routerLink="/programs" class="text-gray-600 hover:text-sky-600 transition text-sm font-medium">Programs</a></li>
+                        <li><a routerLink="/trainers" class="text-gray-600 hover:text-sky-600 transition text-sm font-medium">Trainers</a></li>
+                        <li><a routerLink="/classes" class="text-gray-600 hover:text-sky-600 transition text-sm font-medium">Classes</a></li>
+                      </ul>
+                    </div>
 
-                  <!-- Support -->
-                  <div>
-                    <h4 class="font-bold text-gray-900 mb-4">Support</h4>
-                    <ul class="space-y-2">
-                      <li><a href="#" class="text-gray-600 hover:text-sky-600 transition text-sm">Help Center</a></li>
-                      <li><a href="#" class="text-gray-600 hover:text-sky-600 transition text-sm">Contact Us</a></li>
-                      <li><a href="#" class="text-gray-600 hover:text-sky-600 transition text-sm">Privacy Policy</a></li>
-                      <li><a href="#" class="text-gray-600 hover:text-sky-600 transition text-sm">Terms of Service</a></li>
-                    </ul>
-                  </div>
+                    <!-- Support -->
+                    <div>
+                      <h4 class="font-bold text-gray-900 mb-4">Support</h4>
+                      <ul class="space-y-3">
+                        <li><a href="#" class="text-gray-600 hover:text-sky-600 transition text-sm font-medium">Help Center</a></li>
+                        <li><a href="#" class="text-gray-600 hover:text-sky-600 transition text-sm font-medium">Contact Us</a></li>
+                        <li><a href="#" class="text-gray-600 hover:text-sky-600 transition text-sm font-medium">Privacy Policy</a></li>
+                        <li><a href="#" class="text-gray-600 hover:text-sky-600 transition text-sm font-medium">Terms of Service</a></li>
+                      </ul>
+                    </div>
                 </div>
 
                 <!-- Bottom Bar -->
-                <div class="border-t border-gray-200 mt-8 pt-6 flex flex-col md:flex-row justify-between items-center gap-4">
+                <div class="border-t border-gray-200 pt-6 flex flex-col md:flex-row justify-between items-center gap-4">
                   <p class="text-gray-600 text-sm">
-                    © 2024 FitTracker. All rights reserved.
+                    © 2024 Gymunity. All rights reserved.
                   </p>
                   <div class="flex items-center gap-6">
                     <a href="#" class="text-gray-600 hover:text-sky-600 transition text-sm font-medium">Privacy</a>

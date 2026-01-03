@@ -97,10 +97,41 @@ import { takeUntil } from 'rxjs/operators';
 
             <!-- Trainer Info -->
             <div class="mt-8 pt-8 border-t border-gray-200">
-              <p class="text-gray-600">
-                <span class="font-semibold">Trainer:</span> {{ program()!.trainerUserName }}
-                <span class="text-gray-500 text-sm ml-2">@{{ program()!.trainerHandle }}</span>
-              </p>
+              <h3 class="text-lg font-semibold text-gray-900 mb-4">Trainer Information</h3>
+              <div class="bg-gradient-to-r from-sky-50 to-blue-50 rounded-lg p-6 border border-sky-100">
+                <!-- Trainer Name & Handle -->
+                <div class="flex items-start justify-between mb-4">
+                  <div>
+                    <h4 class="text-xl font-bold text-gray-900">{{ program()!.trainerUserName || 'Unknown Trainer' }}</h4>
+                    <p *ngIf="program()!.trainerHandle" class="text-sky-600 font-medium text-sm">
+                      {{ program()!.trainerHandle }}
+                    </p>
+                  </div>
+                  <div *ngIf="program()!.trainerProfileId" class="text-right">
+                    <span class="inline-block bg-sky-600 text-white rounded-full px-3 py-1 text-xs font-semibold">
+                      ID: {{ program()!.trainerProfileId }}
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Trainer Profile Link -->
+                <div class="flex gap-3 pt-4 border-t border-sky-200">
+                  <a
+                    *ngIf="program()!.trainerProfileId"
+                    [routerLink]="['/trainers', program()!.trainerProfileId]"
+                    class="flex-1 bg-sky-600 hover:bg-sky-700 text-white font-semibold py-2 px-4 rounded-lg transition text-center text-sm"
+                  >
+                    View Trainer Profile
+                  </a>
+                  <a
+                    *ngIf="program()!.trainerUserName"
+                    [href]="'mailto:trainer@example.com'"
+                    class="flex-1 bg-white hover:bg-gray-50 text-sky-600 font-semibold py-2 px-4 rounded-lg transition text-center text-sm border border-sky-200"
+                  >
+                    Contact Trainer
+                  </a>
+                </div>
+              </div>
             </div>
           </div>
 

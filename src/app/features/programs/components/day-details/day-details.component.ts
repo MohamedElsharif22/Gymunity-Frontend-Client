@@ -66,7 +66,7 @@ import { takeUntil } from 'rxjs/operators';
               <div class="flex items-start justify-between mb-4">
                 <div>
                   <h3 class="text-2xl font-bold text-gray-900">
-                    {{ exercise.orderIndex }}. {{ exercise.exerciseName }}
+                    {{ exercise.orderIndex }}. {{ exercise.excersiceName }}
                   </h3>
                   <div class="flex flex-wrap gap-2 mt-2">
                     <span class="inline-block px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded">

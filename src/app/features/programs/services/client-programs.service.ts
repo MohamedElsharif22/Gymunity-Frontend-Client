@@ -45,7 +45,7 @@ export class ClientProgramsService {
    * @throws 400 Bad Request on server error
    */
   getProgramById(programId: string | number): Observable<ProgramResponse> {
-    return this.apiService.get<ProgramResponse>(`/api/client/programs/${programId}`);
+    return this.apiService.get<ProgramResponse>(`/api/client/clientprograms/${programId}`);
   }
 
   // ==================== Program Weeks ====================
@@ -61,7 +61,7 @@ export class ClientProgramsService {
    */
   getProgramWeeks(programId: string | number): Observable<ProgramWeekResponse[]> {
     return this.apiService.get<ProgramWeekResponse[]>(
-      `/api/client/programs/${programId}/weeks`
+      `/api/client/clientprograms/${programId}/weeks`
     );
   }
 
@@ -80,7 +80,7 @@ export class ClientProgramsService {
    */
   getDaysByWeekId(weekId: string | number): Observable<ProgramDayResponse[]> {
     return this.apiService.get<ProgramDayResponse[]>(
-      `/api/client/programs/${weekId}/days`
+      `/api/client/clientprograms/${weekId}/days`
     );
   }
 
@@ -95,7 +95,7 @@ export class ClientProgramsService {
    */
   getDayById(dayId: string | number): Observable<ProgramDayResponse> {
     return this.apiService.get<ProgramDayResponse>(
-      `/api/client/programs/days/${dayId}`
+      `/api/client/clientprograms/days/${dayId}`
     );
   }
 }

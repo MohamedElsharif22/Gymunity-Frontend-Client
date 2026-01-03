@@ -74,10 +74,27 @@ import { takeUntil } from 'rxjs/operators';
                 </div>
               </div>
 
+              <!-- Trainer Info -->
               <div class="mt-4 pt-4 border-t border-gray-200">
-                <p class="text-sm text-gray-600">
-                  by <span class="font-semibold">{{ program.trainerUserName }}</span>
-                </p>
+                <div class="flex items-center justify-between gap-2">
+                  <div class="flex-1">
+                    <p class="text-sm text-gray-600">
+                      <span class="font-semibold text-gray-900">{{ program.trainerUserName || 'Unknown Trainer' }}</span>
+                    </p>
+                    <p *ngIf="program.trainerHandle" class="text-xs text-sky-600 font-medium">
+                      {{ program.trainerHandle }}
+                    </p>
+                  </div>
+                  <div *ngIf="program.trainerProfileId" class="flex-shrink-0">
+                    <a
+                      [routerLink]="['/trainers', program.trainerProfileId]"
+                      (click)="$event.stopPropagation()"
+                      class="inline-block bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold py-1 px-2 rounded transition"
+                    >
+                      Profile
+                    </a>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

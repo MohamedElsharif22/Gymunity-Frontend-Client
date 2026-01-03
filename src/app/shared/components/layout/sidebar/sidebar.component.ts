@@ -16,7 +16,7 @@ interface NavItem {
   standalone: true,
   imports: [CommonModule, RouterModule],
   template: `
-    <aside class="w-72 bg-white border-r border-gray-200 overflow-y-auto hidden md:flex flex-col shadow-lg">
+    <aside class="fixed left-0 top-20 md:top-20 bottom-0 w-72 bg-white border-r border-gray-200 overflow-y-auto hidden md:flex flex-col shadow-lg z-40">
       <!-- Logo/Brand Section -->
       <div class="p-6 border-b border-gray-100 bg-gradient-to-br from-sky-50 to-indigo-50">
         <div class="flex items-center gap-3">

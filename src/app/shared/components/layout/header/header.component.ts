@@ -10,11 +10,11 @@ import { AuthService } from '../../../../core/services/auth.service';
   standalone: true,
   imports: [CommonModule, RouterModule, FormsModule],
   template: `
-    <header class="sticky top-0 z-50 bg-white/95 backdrop-blur-xl border-b border-gray-200 shadow-sm">
+    <header class="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-xl border-b border-gray-200 shadow-md">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between h-16 md:h-20">
           <!-- Logo/Brand -->
-          <a routerLink="/dashboard" class="flex items-center gap-3 group">
+          <a routerLink="/dashboard" class="flex items-center gap-3 group shrink-0">
             <div class="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-sky-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transform group-hover:scale-110 transition-all duration-200">
               <svg class="w-6 h-6 md:w-7 md:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
@@ -107,7 +107,7 @@ import { AuthService } from '../../../../core/services/auth.service';
                   <p class="text-sm font-semibold text-gray-900 leading-tight">{{ currentUser()?.name }}</p>
                   <p class="text-xs text-gray-500 capitalize">Client</p>
                 </div>
-                <svg class="w-4 h-4 text-gray-400 hidden md:block group-hover:text-gray-600 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-4 h-4 text-gray-400 hidden md:block group-hover:text-gray-600 group-hover:rotate-180 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                 </svg>
               </button>
@@ -163,16 +163,16 @@ import { AuthService } from '../../../../core/services/auth.service';
                     </div>
                   </a>
                   
-                  <a routerLink="/settings" 
+                  <a routerLink="/memberships" 
                      class="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-indigo-50 transition group">
                     <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center group-hover:bg-indigo-200 transition">
                       <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                       </svg>
                     </div>
                     <div>
-                      <p class="font-semibold text-sm">Settings</p>
-                      <p class="text-xs text-gray-500">Preferences</p>
+                      <p class="font-semibold text-sm">Subscriptions</p>
+                      <p class="text-xs text-gray-500">Manage memberships</p>
                     </div>
                   </a>
                 </div>
