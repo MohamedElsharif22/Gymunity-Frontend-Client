@@ -1,13 +1,14 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ApiService } from '../../../core/services/api.service';
-import { Subscription, SubscribeRequest, Package } from '../../../core/models';
+import { Subscription, SubscribeRequest, Package, SubscribePackageRequest, ActivateSubscriptionRequest, SubscriptionResponse } from '../../../core/models';
 import { HttpParams } from '@angular/common/http';
 
 /**
  * Subscription Service
  * Handles trainer package subscriptions and memberships
  * Follows Angular best practices with providedIn: 'root' and inject()
+ * Reference: Client-Subscriptions.md
  */
 @Injectable({
   providedIn: 'root'
@@ -38,41 +39,79 @@ export class SubscriptionService {
     return this.apiService.get<Package[]>(`/api/homeclient/packages/by-trainer/${trainerId}`);
   }
 
-  // ==================== Subscriptions ====================
+  // ==================== Subscriptions (API Endpoints) ====================
 
   /**
    * Subscribe to a package
+   * Creates a subscription in UNPAID state
+   * POST /api/client/subscriptions/subscribe
    */
-  subscribe(request: SubscribeRequest): Observable<Subscription> {
-    return this.apiService.post<Subscription>('/api/client/subscriptions/subscribe', request);
+  subscribe(request: SubscribePackageRequest): Observable<SubscriptionResponse> {
+    return this.apiService.post<SubscriptionResponse>('/api/client/subscriptions/subscribe', request);
   }
 
   /**
-   * Get all current subscriptions
+   * Get all client subscriptions
+   * GET /api/client/subscriptions
+   * @param status Optional filter by SubscriptionStatus
    */
-  getMySubscriptions(): Observable<Subscription[]> {
-    return this.apiService.get<Subscription[]>('/api/client/subscriptions');
+  getClientSubscriptions(status?: string): Observable<SubscriptionResponse[]> {
+    let params = new HttpParams();
+    if (status) {
+      params = params.set('status', status);
+    }
+    return this.apiService.get<SubscriptionResponse[]>('/api/client/subscriptions', params);
   }
 
   /**
-   * Get subscription by ID
+   * Get single subscription details
+   * GET /api/client/subscriptions/{id}
    */
-  getSubscription(subscriptionId: number): Observable<Subscription> {
-    return this.apiService.get<Subscription>(`/api/client/subscriptions/${subscriptionId}`);
+  getSubscriptionById(subscriptionId: number): Observable<SubscriptionResponse> {
+    return this.apiService.get<SubscriptionResponse>(`/api/client/subscriptions/${subscriptionId}`);
   }
 
   /**
-   * Cancel an active subscription
+   * Cancel a subscription
+   * DELETE /api/client/subscriptions/{id}
    */
   cancelSubscription(subscriptionId: number): Observable<any> {
-    return this.apiService.post<any>(`/api/client/subscriptions/${subscriptionId}/cancel`, {});
+    return this.apiService.delete<any>(`/api/client/subscriptions/${subscriptionId}`);
   }
 
   /**
-   * Reactivate a cancelled subscription
+   * Activate a subscription after payment
+   * POST /api/client/subscriptions/{id}/activate
+   * Called after successful payment or webhook
    */
-  reactivateSubscription(subscriptionId: number): Observable<any> {
-    return this.apiService.post<any>(`/api/client/subscriptions/${subscriptionId}/reactivate`, {});
+  activateSubscription(subscriptionId: number, request: ActivateSubscriptionRequest): Observable<SubscriptionResponse> {
+    return this.apiService.post<SubscriptionResponse>(
+      `/api/client/subscriptions/${subscriptionId}/activate`,
+      request
+    );
+  }
+
+  // ==================== Legacy Methods (For backwards compatibility) ====================
+
+  /**
+   * @deprecated Use getClientSubscriptions() instead
+   */
+  getMySubscriptions(): Observable<SubscriptionResponse[]> {
+    return this.getClientSubscriptions();
+  }
+
+  /**
+   * @deprecated Use getSubscriptionById() instead
+   */
+  getSubscription(subscriptionId: number): Observable<SubscriptionResponse> {
+    return this.getSubscriptionById(subscriptionId);
+  }
+
+  /**
+   * @deprecated Use subscribe() with SubscribePackageRequest instead
+   */
+  subscribeLegacy(request: SubscribeRequest): Observable<SubscriptionResponse> {
+    return this.subscribe(request as SubscribePackageRequest);
   }
 
   /**
@@ -80,6 +119,13 @@ export class SubscriptionService {
    */
   hasAccessToTrainer(trainerUserId: string): Observable<boolean> {
     return this.apiService.get<boolean>(`/api/client/subscriptions/access/trainer/${trainerUserId}`);
+  }
+
+  /**
+   * Reactivate a cancelled subscription
+   */
+  reactivateSubscription(subscriptionId: number): Observable<any> {
+    return this.apiService.post<any>(`/api/client/subscriptions/${subscriptionId}/reactivate`, {});
   }
 }
 

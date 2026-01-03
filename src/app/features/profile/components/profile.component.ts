@@ -2,9 +2,11 @@ import { Component, OnInit, OnDestroy, inject, ChangeDetectionStrategy, signal }
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ClientProfileService } from '../../../core/services/client-profile.service';
+import { ClientLogsService } from '../../../core/services/client-logs.service';
 import { ClientProfileRequest, ClientProfileResponse, ClientGoal, ExperienceLevel, Gender } from '../../../core/models';
 import { Router } from '@angular/router';
-import { Subject, takeUntil } from 'rxjs';
+import { Subject, takeUntil, forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 
 /**
  * Profile Component
@@ -24,6 +26,7 @@ import { Subject, takeUntil } from 'rxjs';
 })
 export class ProfileComponent implements OnInit, OnDestroy {
   private profileService = inject(ClientProfileService);
+  private logsService = inject(ClientLogsService);
   private formBuilder = inject(FormBuilder);
   private router = inject(Router);
   private destroy$ = new Subject<void>();
@@ -86,16 +89,47 @@ export class ProfileComponent implements OnInit, OnDestroy {
     this.loading.set(true);
     this.error.set(null);
 
-    this.profileService
-      .getProfile()
+    // Fetch profile, body state log, and dashboard data in parallel
+    forkJoin({
+      profile: this.profileService.getProfile(),
+      bodyStateLog: this.logsService.getLastBodyStateLog().pipe(
+        catchError(err => {
+          console.warn('[ProfileComponent] Failed to load body state log:', err);
+          return of(null);
+        })
+      ),
+      dashboard: this.profileService.getDashboard().pipe(
+        catchError(err => {
+          console.warn('[ProfileComponent] Failed to load dashboard:', err);
+          return of(null);
+        })
+      )
+    })
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (profile) => {
-          this.profile.set(profile);
-          this.populateForm(profile);
+        next: (data) => {
+          console.log('[ProfileComponent] Profile response:', data.profile);
+          console.log('[ProfileComponent] Dashboard response:', data.dashboard);
+          
+          // Merge body state log and dashboard data into profile response
+          let profileData = { ...data.profile };
+          
+          // If dashboard has fitness metadata, merge it
+          if (data.dashboard?.summary) {
+            profileData.goal = profileData.goal || data.dashboard.summary.goal;
+            profileData.experienceLevel = profileData.experienceLevel || data.dashboard.summary.experienceLevel;
+          }
+          
+          const profileWithBodyState: ClientProfileResponse = {
+            ...profileData,
+            bodyStateLog: data.bodyStateLog || undefined
+          };
+          this.profile.set(profileWithBodyState);
+          this.populateForm(profileWithBodyState);
           this.loading.set(false);
         },
         error: (error) => {
+          console.error('[ProfileComponent] Error loading profile:', error);
           // Profile doesn't exist yet - allow creation
           this.loading.set(false);
           this.isEditing.set(true);
@@ -153,7 +187,17 @@ export class ProfileComponent implements OnInit, OnDestroy {
 
     service$.pipe(takeUntil(this.destroy$)).subscribe({
       next: (updatedProfile) => {
-        this.profile.set(updatedProfile);
+        // Merge the submitted form values into the response (in case backend doesn't return them)
+        const enrichedProfile: ClientProfileResponse = {
+          ...updatedProfile,
+          goal: updatedProfile.goal || request.goal,
+          experienceLevel: updatedProfile.experienceLevel || request.experienceLevel,
+          gender: updatedProfile.gender || request.gender,
+          heightCm: updatedProfile.heightCm || request.heightCm,
+          startingWeightKg: updatedProfile.startingWeightKg || request.startingWeightKg
+        };
+        
+        this.profile.set(enrichedProfile);
         this.isEditing.set(false);
         this.loading.set(false);
         this.success.set(`Profile ${operation === 'update' ? 'updated' : 'created'} successfully!`);

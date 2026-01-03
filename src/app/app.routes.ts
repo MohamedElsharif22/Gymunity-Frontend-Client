@@ -30,7 +30,7 @@ export const routes: Routes = [
     children: [
       {
         path: 'profile',
-        loadComponent: () => import('./features/profile/components/profile.component').then(m => m.ProfileComponent)
+        loadComponent: () => import('./features/profile/components').then(m => m.ProfileComponent)
       },
       {
         path: 'dashboard',
@@ -95,7 +95,7 @@ export const routes: Routes = [
       {
         path: 'settings',
         canActivate: [profileCompletionGuard],
-        loadComponent: () => import('./features/profile/components/profile.component').then(m => m.ProfileComponent)
+        loadComponent: () => import('./features/profile/components').then(m => m.ProfileComponent)
       },
       // Client Logs Feature Routes (Body State, Workout, Onboarding)
       {
