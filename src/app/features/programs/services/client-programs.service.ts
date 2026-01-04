@@ -1,11 +1,23 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
+import { HttpParams } from '@angular/common/http';
+import { map } from 'rxjs/operators';
 import { ApiService } from '../../../core/services/api.service';
 import {
   ProgramResponse,
   ProgramWeekResponse,
   ProgramDayResponse
 } from '../../../core/models';
+
+/**
+ * Program Pagination Response Type
+ */
+interface ProgramPaginationResponse {
+  pageIndex: number;
+  pageSize: number;
+  totalCount: number;
+  items: ProgramResponse[];
+}
 
 /**
  * Client Programs Service
@@ -27,12 +39,31 @@ export class ClientProgramsService {
    * Get all active programs available to the authenticated user
    * GET /api/client/programs/
    *
+   * Supports pagination with optional page and pageSize parameters
+   * Default: page 1, pageSize 100 (to get all programs)
+   *
+   * @param page - Page number (default: 1)
+   * @param pageSize - Items per page (default: 100)
    * @returns Observable<ProgramResponse[]> - List of programs
    * @throws 401 Unauthorized if user not authenticated
    * @throws 400 Bad Request on server error
    */
-  getActivePrograms(): Observable<ProgramResponse[]> {
-    return this.apiService.get<ProgramResponse[]>('/api/client/clientprograms');
+  getActivePrograms(page: number = 1, pageSize: number = 100): Observable<ProgramResponse[]> {
+    let params = new HttpParams();
+    params = params.set('page', page.toString());
+    params = params.set('pageSize', pageSize.toString());
+
+    return this.apiService.get<any>('/api/client/clientprograms', { params }).pipe(
+      map(response => {
+        // Handle both paginated and non-paginated response formats
+        if (Array.isArray(response)) {
+          return response;
+        }
+        
+        // Handle paginated response (items, data, or totalCount)
+        return response?.items || response?.data || [];
+      })
+    );
   }
 
   /**

@@ -4,6 +4,17 @@ import { profileCompletionGuard } from './core/guards/profile-completion.guard';
 import { LayoutComponent } from './shared/components/layout/layout.component';
 
 export const routes: Routes = [
+  // Landing page - accessible to everyone (NO GUARDS)
+  {
+    path: 'landing',
+    loadComponent: () => import('./features/landing/landing.component').then(m => m.LandingComponent)
+  },
+  // Root redirect to landing
+  {
+    path: '',
+    redirectTo: '/landing',
+    pathMatch: 'full'
+  },
   {
     path: 'auth',
     canActivate: [noAuthGuard],
@@ -23,6 +34,7 @@ export const routes: Routes = [
       }
     ]
   },
+  // Protected routes requiring authentication
   {
     path: '',
     canActivate: [authGuard],
@@ -173,8 +185,9 @@ export const routes: Routes = [
       }
     ]
   },
+  // Catch all - redirect to landing
   {
     path: '**',
-    redirectTo: '/dashboard'
+    redirectTo: '/landing'
   }
 ];

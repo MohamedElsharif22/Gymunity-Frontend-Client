@@ -13,20 +13,55 @@ import { AuthService } from '../../../../core/services/auth.service';
     <header class="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-xl border-b border-gray-200 shadow-md">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between h-16 md:h-20">
-          <!-- Logo/Brand -->
-          <a routerLink="/dashboard" class="flex items-center gap-3 group shrink-0">
-            <div class="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-sky-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transform group-hover:scale-110 transition-all duration-200">
-              <svg class="w-6 h-6 md:w-7 md:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+          <!-- Logo/Brand with Dropdown -->
+          <div class="flex items-center gap-0 group shrink-0 relative">
+            <a routerLink="/dashboard" class="flex items-center gap-3 group shrink-0">
+              <div class="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-sky-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transform group-hover:scale-110 transition-all duration-200">
+                <svg class="w-6 h-6 md:w-7 md:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                </svg>
+              </div>
+              <div class="hidden sm:block">
+                <h1 class="text-xl md:text-2xl font-bold bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">
+                  Gymunity
+                </h1>
+                <p class="text-xs text-gray-500 font-medium hidden md:block">Your Fitness Community</p>
+              </div>
+            </a>
+            <!-- Brand Dropdown -->
+            <button class="hidden sm:flex items-center justify-center p-2 ml-2 hover:bg-gray-100 rounded-lg transition group-hover:bg-gray-100">
+              <svg class="w-4 h-4 text-gray-600 group-hover:text-sky-600 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
               </svg>
+            </button>
+            <!-- Brand Dropdown Menu -->
+            <div class="hidden sm:block absolute left-0 mt-0 top-full bg-white rounded-xl shadow-xl border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform group-hover:translate-y-1 translate-y-0 w-48 z-50">
+              <a routerLink="/landing" 
+                 class="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-sky-50 transition group border-b border-gray-100 first:rounded-t-xl">
+                <div class="w-9 h-9 bg-sky-100 rounded-lg flex items-center justify-center group-hover:bg-sky-200 transition">
+                  <svg class="w-5 h-5 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                  </svg>
+                </div>
+                <div>
+                  <p class="font-semibold text-sm">Home</p>
+                  <p class="text-xs text-gray-500">Back to landing</p>
+                </div>
+              </a>
+              <a routerLink="/trainers" 
+                 class="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-orange-50 transition group border-b border-gray-100 last:rounded-b-xl">
+                <div class="w-9 h-9 bg-orange-100 rounded-lg flex items-center justify-center group-hover:bg-orange-200 transition">
+                  <svg class="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                  </svg>
+                </div>
+                <div>
+                  <p class="font-semibold text-sm">Explore Trainers</p>
+                  <p class="text-xs text-gray-500">Find trainers</p>
+                </div>
+              </a>
             </div>
-            <div class="hidden sm:block">
-              <h1 class="text-xl md:text-2xl font-bold bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">
-                Gymunity
-              </h1>
-              <p class="text-xs text-gray-500 font-medium hidden md:block">Your Fitness Community</p>
-            </div>
-          </a>
+          </div>
 
           <!-- Center Navigation (Desktop) -->
           <nav class="hidden lg:flex items-center gap-2 flex-1 mx-8 justify-center">
