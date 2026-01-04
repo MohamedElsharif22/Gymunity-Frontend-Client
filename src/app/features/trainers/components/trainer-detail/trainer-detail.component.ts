@@ -1,0 +1,333 @@
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  inject,
+  signal,
+  ChangeDetectionStrategy
+} from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { ActivatedRoute, RouterModule, Router } from '@angular/router';
+import { TrainerProfileService } from '../../services/trainer-profile.service';
+import { TrainerProfileDetail } from '../../../../core/models';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
+
+/**
+ * Trainer Detail Component
+ * Displays comprehensive trainer profile information
+ *
+ * Route parameter: trainerId (numeric ID)
+ * Data source: TrainerProfileService.getTrainerProfile(trainerId)
+ *
+ * Features:
+ * - Full trainer profile with cover image and photo
+ * - Trainer stats (experience, ratings, clients, specializations)
+ * - Video introduction (if available)
+ * - Verification badge and suspension status
+ * - Contact/booking buttons
+ * - Package offerings (if available)
+ */
+@Component({
+  selector: 'app-trainer-detail',
+  standalone: true,
+  imports: [CommonModule, RouterModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  template: `
+    <div class="flex-1 bg-gray-50 py-8 px-4 md:px-8">
+      <div class="max-w-4xl mx-auto">
+        <!-- Back Button -->
+        <button
+          (click)="goBack()"
+          class="mb-6 inline-flex items-center text-blue-600 hover:text-blue-700 font-medium transition"
+        >
+          ← Back
+        </button>
+
+        <!-- Loading State -->
+        @if (isLoading()) {
+          <div class="bg-white rounded-lg shadow p-8">
+            <div class="flex flex-col items-center justify-center">
+              <div class="w-12 h-12 border-4 border-gray-300 border-t-blue-500 rounded-full animate-spin"></div>
+              <p class="mt-4 text-gray-600">Loading trainer profile...</p>
+            </div>
+          </div>
+        }
+
+        <!-- Error State -->
+        @if (error()) {
+          <div class="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+            <p class="text-red-800 font-medium">{{ error() }}</p>
+            <button
+              (click)="loadTrainerProfile()"
+              class="mt-4 px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+            >
+              Try Again
+            </button>
+          </div>
+        }
+
+        <!-- Trainer Profile -->
+        @if (!isLoading() && !error() && trainer()) {
+          <div class="space-y-6">
+            <!-- Cover Image -->
+            @if (trainer()!.coverImageUrl) {
+              <div class="rounded-lg overflow-hidden shadow-lg h-64">
+                <img
+                  [src]="trainer()!.coverImageUrl"
+                  [alt]="trainer()!.handle"
+                  class="w-full h-full object-cover"
+                />
+              </div>
+            } @else {
+              <div class="rounded-lg bg-gradient-to-r from-blue-400 to-purple-500 h-64 shadow-lg"></div>
+            }
+
+            <!-- Profile Header Card -->
+            <div class="bg-white rounded-lg shadow-lg p-6 md:p-8 -mt-16 relative z-10">
+              <!-- Profile Info Row -->
+              <div class="flex flex-col md:flex-row items-start md:items-center gap-6">
+                <!-- Profile Photo -->
+                <div class="flex-shrink-0">
+                  @if (trainer()!.profilePhotoUrl) {
+                    <img
+                      [src]="trainer()!.profilePhotoUrl"
+                      [alt]="trainer()!.handle"
+                      class="w-32 h-32 rounded-full object-cover border-4 border-white shadow-lg"
+                    />
+                  } @else {
+                    <div
+                      class="w-32 h-32 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-bold text-4xl border-4 border-white shadow-lg"
+                    >
+                      {{ trainer()!.userName?.charAt(0)?.toUpperCase() ?? 'T' }}
+                    </div>
+                  }
+                </div>
+
+                <!-- Name and Basic Info -->
+                <div class="flex-1">
+                  <div class="flex items-center gap-3 mb-2">
+                    <h1 class="text-3xl font-bold text-gray-900">{{ trainer()!.userName }}</h1>
+                    @if (trainer()!.isVerified) {
+                      <div class="flex items-center gap-1 bg-blue-100 text-blue-800 px-3 py-1 rounded-full">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                          <path
+                            fill-rule="evenodd"
+                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                            clip-rule="evenodd"
+                          />
+                        </svg>
+                        <span class="text-xs font-semibold">Verified</span>
+                      </div>
+                    }
+                    @if (trainer()!.isSuspended) {
+                      <div class="flex items-center gap-1 bg-red-100 text-red-800 px-3 py-1 rounded-full">
+                        <span class="text-xs font-semibold">Suspended</span>
+                      </div>
+                    }
+                  </div>
+
+                  <p class="text-xl text-blue-600 font-semibold mb-3">@{{ trainer()!.handle }}</p>
+                  @if (trainer()!.bio) {
+                    <p class="text-gray-700 mb-4">{{ trainer()!.bio }}</p>
+                  }
+
+                  <!-- Quick Stats -->
+                  <div class="flex flex-wrap gap-6 pt-4 border-t border-gray-200">
+                    <div>
+                      <p class="text-2xl font-bold text-gray-900">{{ trainer()!.yearsExperience }}</p>
+                      <p class="text-sm text-gray-600">Years Experience</p>
+                    </div>
+                    <div>
+                      <div class="flex items-center gap-1">
+                        <span class="text-2xl font-bold text-gray-900">
+                          {{ trainer()!.ratingAverage?.toFixed(1) ?? '—' }}
+                        </span>
+                        <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                          <path
+                            d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.381-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"
+                          />
+                        </svg>
+                      </div>
+                      <p class="text-sm text-gray-600">Rating</p>
+                    </div>
+                    <div>
+                      <p class="text-2xl font-bold text-gray-900">{{ trainer()!.totalClients }}</p>
+                      <p class="text-sm text-gray-600">Total Clients</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Contact and Action Buttons -->
+            @if (!trainer()!.isSuspended) {
+              <div class="flex flex-col sm:flex-row gap-3">
+                <button
+                  class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+                >
+                  Book Session
+                </button>
+                <button
+                  class="flex-1 bg-white hover:bg-gray-50 text-blue-600 font-semibold py-3 px-6 rounded-lg border border-blue-200 transition-colors"
+                >
+                  Send Message
+                </button>
+              </div>
+            }
+
+            <!-- Specializations Section -->
+            @if ((trainer()!.specializations?.length ?? 0) > 0) {
+              <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-xl font-bold text-gray-900 mb-4">Specializations</h2>
+                <div class="flex flex-wrap gap-2">
+                  @for (spec of trainer()!.specializations; track spec) {
+                    <span class="bg-blue-100 text-blue-800 px-4 py-2 rounded-full font-medium">
+                      {{ spec }}
+                    </span>
+                  }
+                </div>
+              </div>
+            }
+
+            <!-- Pricing Information -->
+            @if (trainer()!.startingPrice) {
+              <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-xl font-bold text-gray-900 mb-4">Pricing</h2>
+                <div class="flex items-baseline gap-2">
+                  <span class="text-4xl font-bold text-gray-900">
+                    {{ trainer()!.startingPrice }}
+                  </span>
+                  <span class="text-gray-600">{{ trainer()!.currency }} / session</span>
+                </div>
+                <p class="text-sm text-gray-600 mt-2">Starting price for sessions</p>
+              </div>
+            }
+
+            <!-- Bio Section -->
+            @if (trainer()!.bio) {
+              <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-xl font-bold text-gray-900 mb-4">About</h2>
+                <p class="text-gray-700 leading-relaxed">{{ trainer()!.bio }}</p>
+              </div>
+            }
+
+            <!-- Video Introduction -->
+            @if (trainer()!.videoIntroUrl) {
+              <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-xl font-bold text-gray-900 mb-4">Introduction Video</h2>
+                <div class="aspect-video bg-black rounded-lg overflow-hidden">
+                  <iframe
+                    [src]="trainer()!.videoIntroUrl"
+                    allowfullscreen
+                    frameborder="0"
+                    class="w-full h-full"
+                  ></iframe>
+                </div>
+              </div>
+            }
+
+            <!-- Packages Section -->
+            @if ((trainer()!.packages?.length ?? 0) > 0) {
+              <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-xl font-bold text-gray-900 mb-4">Packages</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  @for (pkg of trainer()!.packages; track pkg.id) {
+                    <div class="border border-gray-200 rounded-lg p-4">
+                      <h3 class="font-bold text-gray-900">{{ pkg.name }}</h3>
+                      <p class="text-sm text-gray-600">{{ pkg.description }}</p>
+                      @if (pkg.price) {
+                        <p class="text-lg font-bold text-gray-900 mt-2">{{ pkg.price }}</p>
+                      }
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+
+            <!-- Metadata -->
+            <div class="bg-gray-50 rounded-lg p-4 text-sm text-gray-600">
+              <div class="grid grid-cols-2 gap-4">
+                @if (trainer()!.email) {
+                  <div>
+                    <span class="font-semibold text-gray-700">Email:</span> {{ trainer()!.email }}
+                  </div>
+                }
+                @if (trainer()!.verifiedAt) {
+                  <div>
+                    <span class="font-semibold text-gray-700">Verified:</span>
+                    {{ trainer()!.verifiedAt | date: 'short' }}
+                  </div>
+                }
+                @if (trainer()!.createdAt) {
+                  <div>
+                    <span class="font-semibold text-gray-700">Member Since:</span>
+                    {{ trainer()!.createdAt | date: 'MMMM yyyy' }}
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  `,
+  styles: []
+})
+export class TrainerDetailComponent implements OnInit, OnDestroy {
+  private readonly trainerProfileService = inject(TrainerProfileService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly destroy$ = new Subject<void>();
+
+  trainer = signal<TrainerProfileDetail | null>(null);
+  isLoading = signal(false);
+  error = signal<string | null>(null);
+
+  ngOnInit(): void {
+    const trainerId = this.route.snapshot.paramMap.get('trainerId');
+    if (trainerId) {
+      this.loadTrainerProfile(trainerId);
+    }
+  }
+
+  loadTrainerProfile(trainerId?: string): void {
+    const id = trainerId || this.route.snapshot.paramMap.get('trainerId');
+    if (!id) {
+      this.error.set('No trainer ID provided');
+      return;
+    }
+
+    this.isLoading.set(true);
+    this.error.set(null);
+
+    this.trainerProfileService
+      .getTrainerProfile(id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (profile: TrainerProfileDetail) => {
+          this.trainer.set(profile);
+          this.isLoading.set(false);
+          console.log('[TrainerDetailComponent] Trainer profile loaded:', profile);
+        },
+        error: (err: any) => {
+          this.isLoading.set(false);
+          const errorMessage =
+            err?.error?.message ||
+            err?.error?.errors?.[0] ||
+            'Failed to load trainer profile';
+          this.error.set(errorMessage);
+          console.error('[TrainerDetailComponent] Error loading trainer:', err);
+        }
+      });
+  }
+
+  goBack(): void {
+    this.router.navigate(['/trainers']);
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+}

@@ -2,7 +2,8 @@ import { Component, inject, signal, ChangeDetectionStrategy, OnInit, OnDestroy }
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule, Router } from '@angular/router';
 import { ClientProgramsService } from '../../services/client-programs.service';
-import { ProgramResponse } from '../../../../core/models';
+import { TrainerDiscoveryService } from '../../../trainers/services/trainer-discovery.service';
+import { ProgramResponse, TrainerCard } from '../../../../core/models';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
@@ -98,7 +99,105 @@ import { takeUntil } from 'rxjs/operators';
             <!-- Trainer Info -->
             <div class="mt-8 pt-8 border-t border-gray-200">
               <h3 class="text-lg font-semibold text-gray-900 mb-4">Trainer Information</h3>
-              <div class="bg-gradient-to-r from-sky-50 to-blue-50 rounded-lg p-6 border border-sky-100">
+              
+              <!-- Loading State -->
+              <div *ngIf="trainerLoading()" class="bg-gradient-to-r from-sky-50 to-blue-50 rounded-lg p-6 border border-sky-100">
+                <div class="flex items-center justify-center space-x-2">
+                  <div class="w-2 h-2 bg-sky-600 rounded-full animate-bounce" style="animation-delay: 0s;"></div>
+                  <div class="w-2 h-2 bg-sky-600 rounded-full animate-bounce" style="animation-delay: 0.2s;"></div>
+                  <div class="w-2 h-2 bg-sky-600 rounded-full animate-bounce" style="animation-delay: 0.4s;"></div>
+                  <span class="text-gray-600 text-sm ml-2">Loading trainer details...</span>
+                </div>
+              </div>
+
+              <!-- Full Trainer Details (from TrainerDiscovery) -->
+              <div *ngIf="!trainerLoading() && trainer()" class="bg-gradient-to-r from-sky-50 to-blue-50 rounded-lg p-6 border border-sky-100">
+                <!-- Profile Section -->
+                <div class="flex items-start gap-4 mb-6">
+                  <!-- Profile Photo -->
+                  <div class="flex-shrink-0">
+                    <img
+                      *ngIf="trainer()!.profilePhotoUrl"
+                      [src]="trainer()!.profilePhotoUrl"
+                      [alt]="trainer()!.fullName"
+                      class="w-20 h-20 rounded-full object-cover border-2 border-sky-200"
+                    />
+                    <div
+                      *ngIf="!trainer()!.profilePhotoUrl"
+                      class="w-20 h-20 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-bold text-2xl border-2 border-sky-200"
+                    >
+                      {{ trainer()!.fullName.charAt(0).toUpperCase() }}
+                    </div>
+                  </div>
+
+                  <!-- Trainer Info -->
+                  <div class="flex-1">
+                    <div class="flex items-center gap-2">
+                      <h4 class="text-xl font-bold text-gray-900">{{ trainer()!.fullName }}</h4>
+                      <svg *ngIf="trainer()!.isVerified" class="w-5 h-5 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                      </svg>
+                    </div>
+                    <p class="text-sky-600 font-medium text-sm">@{{ trainer()!.handle }}</p>
+                    <p *ngIf="trainer()!.bio" class="text-gray-600 text-sm mt-2 max-w-md">{{ trainer()!.bio }}</p>
+                  </div>
+                </div>
+
+                <!-- Stats -->
+                <div class="grid grid-cols-4 gap-3 mb-6 py-4 border-y border-sky-200">
+                  <div class="text-center">
+                    <p class="text-2xl font-bold text-gray-900">{{ trainer()!.yearsExperience }}</p>
+                    <p class="text-xs text-gray-600">Years</p>
+                  </div>
+                  <div class="text-center">
+                    <div class="flex items-center justify-center gap-1">
+                      <span class="text-lg font-bold text-gray-900">{{ trainer()!.ratingAverage.toFixed(1) }}</span>
+                      <svg class="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.381-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                      </svg>
+                    </div>
+                    <p class="text-xs text-gray-600">({{ trainer()!.totalReviews }})</p>
+                  </div>
+                  <div class="text-center">
+                    <p class="text-2xl font-bold text-gray-900">{{ trainer()!.totalClients }}</p>
+                    <p class="text-xs text-gray-600">Clients</p>
+                  </div>
+                  <div class="text-center">
+                    <p class="text-lg font-bold text-gray-900">{{ trainer()!.currency }} {{ trainer()!.startingPrice }}</p>
+                    <p class="text-xs text-gray-600">Starting</p>
+                  </div>
+                </div>
+
+                <!-- Specializations -->
+                <div *ngIf="trainer()!.specializations && trainer()!.specializations.length > 0" class="mb-4">
+                  <p class="text-xs font-semibold text-gray-700 mb-2">Specializations</p>
+                  <div class="flex flex-wrap gap-2">
+                    <span *ngFor="let spec of trainer()!.specializations.slice(0, 4)" class="text-xs bg-sky-200 text-sky-800 px-2 py-1 rounded">
+                      {{ spec }}
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Trainer Profile Link -->
+                <div class="flex gap-3 pt-4 border-t border-sky-200">
+                  <a
+                    [routerLink]="['/trainers', trainer()!.id]"
+                    class="flex-1 bg-sky-600 hover:bg-sky-700 text-white font-semibold py-2 px-4 rounded-lg transition text-center text-sm"
+                  >
+                    View Full Profile
+                  </a>
+                  <a
+                    *ngIf="trainer()!.hasActiveSubscription"
+                    href="javascript:void(0)"
+                    class="flex-1 bg-white hover:bg-gray-50 text-sky-600 font-semibold py-2 px-4 rounded-lg transition text-center text-sm border border-sky-200"
+                  >
+                    Book Session
+                  </a>
+                </div>
+              </div>
+
+              <!-- Fallback to Basic Trainer Info (if TrainerDiscovery not available) -->
+              <div *ngIf="!trainerLoading() && !trainer()" class="bg-gradient-to-r from-sky-50 to-blue-50 rounded-lg p-6 border border-sky-100">
                 <!-- Trainer Name & Handle -->
                 <div class="flex items-start justify-between mb-4">
                   <div>
@@ -150,12 +249,15 @@ import { takeUntil } from 'rxjs/operators';
 })
 export class ProgramDetailsComponent implements OnInit, OnDestroy {
   private programsService = inject(ClientProgramsService);
+  private trainerDiscoveryService = inject(TrainerDiscoveryService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private destroy$ = new Subject<void>();
 
   program = signal<ProgramResponse | null>(null);
+  trainer = signal<TrainerCard | null>(null);
   loading = signal(false);
+  trainerLoading = signal(false);
   error = signal<string | null>(null);
 
   ngOnInit() {
@@ -177,12 +279,37 @@ export class ProgramDetailsComponent implements OnInit, OnDestroy {
           this.program.set(program);
           this.loading.set(false);
           console.log('[ProgramDetailsComponent] Program loaded:', program);
+          
+          // Load trainer details if trainerProfileId is available
+          if (program.trainerProfileId) {
+            this.loadTrainerDetails(program.trainerProfileId.toString());
+          }
         },
         error: (err) => {
           this.loading.set(false);
           const errorMessage = err.error?.message || err.error?.errors?.[0] || 'Failed to load program.';
           this.error.set(errorMessage);
           console.error('[ProgramDetailsComponent] Error loading program:', err);
+        }
+      });
+  }
+
+  private loadTrainerDetails(trainerId: string) {
+    this.trainerLoading.set(true);
+
+    this.trainerDiscoveryService
+      .getTrainerById(trainerId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (trainer) => {
+          this.trainer.set(trainer);
+          this.trainerLoading.set(false);
+          console.log('[ProgramDetailsComponent] Trainer loaded:', trainer);
+        },
+        error: (err) => {
+          this.trainerLoading.set(false);
+          console.error('[ProgramDetailsComponent] Error loading trainer:', err);
+          // Don't show error for trainer loading, it's not critical
         }
       });
   }

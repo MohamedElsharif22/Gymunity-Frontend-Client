@@ -2,7 +2,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { HomeClientService } from '../../trainers/services/home-client.service';
-import { Package } from '../../../core/models';
+import { PackageClient } from '../../../core/models';
 
 @Component({
   selector: 'app-packages',
@@ -52,13 +52,11 @@ import { Package } from '../../../core/models';
                 <!-- Package Details -->
                 <div class="px-6 py-4">
                   <dl class="space-y-3 text-sm">
-                    <!-- Trainer Name -->
-                    @if (pkg.trainerName) {
-                      <div class="flex justify-between">
-                        <dt class="text-gray-600">Trainer</dt>
-                        <dd class="font-medium text-gray-900">{{ pkg.trainerName }}</dd>
-                      </div>
-                    }
+                    <!-- Trainer ID -->
+                    <div class="flex justify-between">
+                      <dt class="text-gray-600">Trainer ID</dt>
+                      <dd class="font-medium text-gray-900 truncate">{{ pkg.trainerId }}</dd>
+                    </div>
 
                     <!-- Yearly Price -->
                     @if (pkg.priceYearly) {
@@ -69,10 +67,10 @@ import { Package } from '../../../core/models';
                     }
 
                     <!-- Number of Programs -->
-                    @if (pkg.programIds && pkg.programIds.length > 0) {
+                    @if (pkg.programs && pkg.programs.length > 0) {
                       <div class="flex justify-between">
                         <dt class="text-gray-600">Programs</dt>
-                        <dd class="font-medium text-gray-900">{{ pkg.programIds.length }}</dd>
+                        <dd class="font-medium text-gray-900">{{ pkg.programs.length }}</dd>
                       </div>
                     }
 
@@ -115,7 +113,7 @@ export class PackagesComponent implements OnInit {
   private homeClientService = inject(HomeClientService);
   private router = inject(Router);
 
-  packages = signal<Package[]>([]);
+  packages = signal<PackageClient[]>([]);
   isLoading = signal(false);
 
   ngOnInit() {
