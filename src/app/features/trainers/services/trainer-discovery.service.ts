@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ApiService } from '../../../core/services/api.service';
 import { TrainerCard, TrainerSearchOptions, TrainerDiscoveryResponse } from '../../../core/models';
+import { environment } from '../../../../environments/environment';
 
 /**
  * Trainer Discovery Service
@@ -18,6 +19,24 @@ import { TrainerCard, TrainerSearchOptions, TrainerDiscoveryResponse } from '../
 })
 export class TrainerDiscoveryService {
   private readonly apiService = inject(ApiService);
+  private apiUrl = '';
+
+  constructor() {
+    // Get API URL from environment
+    this.apiUrl = (environment as any).apiUrl;
+  }
+
+  /**
+   * Convert relative image URLs to absolute URLs
+   * If URL is already absolute or null, return as-is
+   */
+  private resolveImageUrl(relativeUrl: string | null): string | null {
+    if (!relativeUrl) return null;
+    if (relativeUrl.startsWith('http://') || relativeUrl.startsWith('https://')) {
+      return relativeUrl;
+    }
+    return `${this.apiUrl}/${relativeUrl}`;
+  }
 
 /**
    * Search trainers with optional filtering and sorting
@@ -61,11 +80,22 @@ export class TrainerDiscoveryService {
         console.log('[TrainerDiscoveryService] Raw API response:', response);
         
         // Handle both old (data/count) and new (items/totalCount) response formats
+        const trainers = (response?.items ?? response?.data ?? []) as TrainerCard[];
+        
+        // Transform trainer data: resolve image URLs and handle nulls
+        const transformedTrainers = trainers.map(trainer => ({
+          ...trainer,
+          profilePhotoUrl: this.resolveImageUrl(trainer.profilePhotoUrl),
+          coverImageUrl: this.resolveImageUrl(trainer.coverImageUrl),
+          specializations: trainer.specializations || [],
+          startingPrice: trainer.startingPrice ?? 0
+        }));
+        
         const result: TrainerDiscoveryResponse = {
           pageIndex: response?.pageIndex || 1,
           pageSize: response?.pageSize || 20,
           totalCount: response?.totalCount ?? response?.count ?? 0,
-          items: response?.items ?? response?.data ?? []
+          items: transformedTrainers
         };
         
         console.log('[TrainerDiscoveryService] Mapped response:', result);

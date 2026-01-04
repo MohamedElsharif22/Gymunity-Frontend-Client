@@ -55,13 +55,19 @@ export class ClientProgramsService {
 
     return this.apiService.get<any>('/api/client/clientprograms', { params }).pipe(
       map(response => {
+        console.log('[ClientProgramsService] Raw programs response:', response);
+        
         // Handle both paginated and non-paginated response formats
+        let programs: ProgramResponse[] = [];
         if (Array.isArray(response)) {
-          return response;
+          programs = response;
+        } else {
+          // Handle paginated response (items, data, or totalCount)
+          programs = response?.items || response?.data || [];
         }
         
-        // Handle paginated response (items, data, or totalCount)
-        return response?.items || response?.data || [];
+        console.log('[ClientProgramsService] Mapped programs:', programs);
+        return programs;
       })
     );
   }
@@ -76,7 +82,14 @@ export class ClientProgramsService {
    * @throws 400 Bad Request on server error
    */
   getProgramById(programId: string | number): Observable<ProgramResponse> {
-    return this.apiService.get<ProgramResponse>(`/api/client/clientprograms/${programId}`);
+    console.log('[ClientProgramsService] Getting program:', programId);
+    return this.apiService.get<ProgramResponse>(`/api/client/clientprograms/${programId}`).pipe(
+      map(response => {
+        console.log('[ClientProgramsService] Program response:', response);
+        console.log('[ClientProgramsService] Trainer info - Name:', response.trainerUserName, 'Handle:', response.trainerHandle, 'ProfileId:', response.trainerProfileId);
+        return response;
+      })
+    );
   }
 
   // ==================== Program Weeks ====================
@@ -100,24 +113,37 @@ export class ClientProgramsService {
 
   /**
    * Get all days for a specific week within a program
-   * GET /api/client/programs/{weekId}/days
+   * GET /api/client/clientprograms/{weekId}/days
    *
-   * NOTE: The route parameter is weekId (not programId), which is the unique identifier of a week
+   * Backend endpoint: [HttpGet("{weekId}/days")]
+   * Returns all ProgramDayResponse items for the given weekId
    *
    * @param weekId - The ID of the program week
-   * @returns Observable<ProgramDayResponse[]> - List of days in the week
-   * @throws 401 Unauthorized if user not authenticated or not authorized to access week
+   * @returns Observable<ProgramDayResponse[]> - List of days in the week with exercises
+   * @throws 401 Unauthorized if user not authenticated or not authorized
    * @throws 400 Bad Request on server error
    */
   getDaysByWeekId(weekId: string | number): Observable<ProgramDayResponse[]> {
-    return this.apiService.get<ProgramDayResponse[]>(
+    console.log('[ClientProgramsService] Getting days for week:', weekId);
+    return this.apiService.get<any>(
       `/api/client/clientprograms/${weekId}/days`
+    ).pipe(
+      map((response: any) => {
+        console.log('[ClientProgramsService] Days response for week', weekId, ':', response);
+        // Backend returns array directly
+        if (Array.isArray(response)) {
+          console.log(`[ClientProgramsService] Found ${response.length} days for week ${weekId}`);
+          return response as ProgramDayResponse[];
+        }
+        // Fallback for paginated responses
+        return (response?.items || response?.data || []) as ProgramDayResponse[];
+      })
     );
   }
 
   /**
    * Get a specific program day by ID
-   * GET /api/client/programs/days/{dayId}
+   * GET /api/client/clientprograms/days/{dayId}
    *
    * @param dayId - The ID of the program day
    * @returns Observable<ProgramDayResponse> - Day details with exercises
@@ -125,8 +151,14 @@ export class ClientProgramsService {
    * @throws 400 Bad Request on server error
    */
   getDayById(dayId: string | number): Observable<ProgramDayResponse> {
+    console.log('[ClientProgramsService] Getting day details:', dayId);
     return this.apiService.get<ProgramDayResponse>(
       `/api/client/clientprograms/days/${dayId}`
+    ).pipe(
+      map(response => {
+        console.log('[ClientProgramsService] Day details response:', response);
+        return response;
+      })
     );
   }
 }

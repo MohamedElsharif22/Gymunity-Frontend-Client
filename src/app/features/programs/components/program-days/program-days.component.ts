@@ -67,7 +67,15 @@ import { takeUntil } from 'rxjs/operators';
                 </div>
                 <div>
                   <h3 class="text-xl font-bold text-gray-900">{{ day.title || 'Day ' + day.dayNumber }}</h3>
-                  <p class="text-gray-600 text-sm">{{ day.exercises.length }} exercises</p>
+                  <p class="text-gray-600 text-sm">
+                    @if (day.exercises && day.exercises.length > 0) {
+                      {{ day.exercises.length }} exercises
+                    } @else if (day.exercises === null) {
+                      Exercises not loaded
+                    } @else {
+                      No exercises
+                    }
+                  </p>
                   <p *ngIf="day.notes" class="text-gray-500 text-sm mt-1">{{ day.notes }}</p>
                 </div>
               </div>
@@ -110,14 +118,33 @@ export class ProgramDaysComponent implements OnInit, OnDestroy {
     this.loading.set(true);
     this.error.set(null);
 
+    console.log('[ProgramDaysComponent] Loading days for week:', weekId);
+
+    // Call backend endpoint: GET /api/client/clientprograms/{weekId}/days
+    // Returns all days for this week (exercises may be null)
     this.programsService
       .getDaysByWeekId(weekId)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (days) => {
+          console.log('[ProgramDaysComponent] Days loaded from backend:', days);
+          console.log(`[ProgramDaysComponent] Total days for week ${weekId}:`, days.length);
+          
+          // Log day details
+          days.forEach((day, index) => {
+            const exerciseCount = day.exercises ? day.exercises.length : 0;
+            console.log(`[ProgramDaysComponent] Day ${index}:`, {
+              id: day.id,
+              title: day.title,
+              programWeekId: day.programWeekId,
+              dayNumber: day.dayNumber,
+              exercisesStatus: day.exercises === null ? 'null' : day.exercises === undefined ? 'undefined' : `array(${day.exercises.length})`,
+              exerciseCount: exerciseCount
+            });
+          });
+          
           this.days.set(days);
           this.loading.set(false);
-          console.log('[ProgramDaysComponent] Days loaded:', days);
         },
         error: (err) => {
           this.loading.set(false);

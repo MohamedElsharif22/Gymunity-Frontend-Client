@@ -2,9 +2,10 @@ import { Component, inject, signal, ChangeDetectionStrategy, OnInit, OnDestroy }
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { ClientProgramsService } from '../../services/client-programs.service';
-import { ProgramResponse } from '../../../../core/models';
-import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { TrainerDiscoveryService } from '../../../trainers/services/trainer-discovery.service';
+import { ProgramResponse, TrainerCard } from '../../../../core/models';
+import { Subject, forkJoin, of } from 'rxjs';
+import { takeUntil, switchMap, map, catchError } from 'rxjs/operators';
 
 /**
  * Programs List Component
@@ -76,20 +77,42 @@ import { takeUntil } from 'rxjs/operators';
 
               <!-- Trainer Info -->
               <div class="mt-4 pt-4 border-t border-gray-200">
-                <div class="flex items-center justify-between gap-2">
-                  <div class="flex-1">
-                    <p class="text-sm text-gray-600">
-                      <span class="font-semibold text-gray-900">{{ program.trainerUserName || 'Unknown Trainer' }}</span>
-                    </p>
-                    <p *ngIf="program.trainerHandle" class="text-xs text-sky-600 font-medium">
-                      {{ program.trainerHandle }}
-                    </p>
+                <p class="text-xs text-gray-500 mb-2">Trainer</p>
+                <div class="flex items-center justify-between gap-3">
+                  <div class="flex items-center gap-2 flex-1 min-w-0">
+                    <!-- Trainer Photo -->
+                    <div class="flex-shrink-0">
+                      <img
+                        *ngIf="program.trainer && program.trainer.profilePhotoUrl"
+                        [src]="program.trainer.profilePhotoUrl"
+                        [alt]="program.trainer.fullName"
+                        class="w-8 h-8 rounded-full object-cover"
+                      />
+                      <div
+                        *ngIf="!program.trainer || !program.trainer.profilePhotoUrl"
+                        class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-bold text-xs"
+                      >
+                        {{ (program.trainer?.fullName || program.trainerUserName || 'T').charAt(0).toUpperCase() }}
+                      </div>
+                    </div>
+                    
+                    <!-- Trainer Name & Handle -->
+                    <div class="min-w-0">
+                      <p class="text-sm font-semibold text-gray-900 truncate">
+                        {{ program.trainer?.fullName || program.trainerUserName || 'Unknown Trainer' }}
+                      </p>
+                      <p *ngIf="program.trainer?.handle || program.trainerHandle" class="text-xs text-sky-600 font-medium truncate">
+                        @{{ program.trainer?.handle || program.trainerHandle }}
+                      </p>
+                    </div>
                   </div>
-                  <div *ngIf="program.trainerProfileId" class="flex-shrink-0">
+                  
+                  <div *ngIf="program.trainerHandle" class="flex-shrink-0">
                     <a
-                      [routerLink]="['/trainers', program.trainerProfileId]"
+                      [routerLink]="['/trainers', program.trainerHandle]"
                       (click)="$event.stopPropagation()"
-                      class="inline-block bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold py-1 px-2 rounded transition"
+                      class="inline-flex items-center gap-1 bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold py-1.5 px-3 rounded transition whitespace-nowrap"
+                      title="View trainer profile"
                     >
                       Profile
                     </a>
@@ -121,9 +144,10 @@ import { takeUntil } from 'rxjs/operators';
 })
 export class ProgramsListComponent implements OnInit, OnDestroy {
   private programsService = inject(ClientProgramsService);
+  private trainerDiscoveryService = inject(TrainerDiscoveryService);
   private destroy$ = new Subject<void>();
 
-  programs = signal<ProgramResponse[]>([]);
+  programs = signal<(ProgramResponse & { trainer?: TrainerCard })[]>([]);
   loading = signal(false);
   error = signal<string | null>(null);
 
@@ -137,12 +161,53 @@ export class ProgramsListComponent implements OnInit, OnDestroy {
 
     this.programsService
       .getActivePrograms()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (programs) => {
-          this.programs.set(programs);
-          this.loading.set(false);
+      .pipe(
+        switchMap((programs) => {
           console.log('[ProgramsListComponent] Programs loaded:', programs);
+          
+          if (programs.length === 0) {
+            return of([]);
+          }
+
+          // Create observables for each program's trainer lookup
+          const programObservables = programs.map(program => {
+            console.log(`[ProgramsListComponent] Processing program "${program.title}", trainerHandle: "${program.trainerHandle}"`);
+            
+            if (program.trainerHandle && program.trainerHandle.trim()) {
+              // Search for trainer if handle exists
+              return this.trainerDiscoveryService.searchTrainers({ search: program.trainerHandle }).pipe(
+                map(response => {
+                  const trainer = response?.items?.[0];
+                  console.log(`[ProgramsListComponent] Trainer found for handle "${program.trainerHandle}":`, trainer?.fullName);
+                  return { ...program, trainer } as (ProgramResponse & { trainer?: TrainerCard });
+                }),
+                // On error, return program without trainer
+                catchError((err) => {
+                  console.warn(`[ProgramsListComponent] Failed to load trainer for handle "${program.trainerHandle}":`, err);
+                  return of({ ...program, trainer: undefined } as (ProgramResponse & { trainer?: TrainerCard }));
+                })
+              );
+            } else {
+              console.log(`[ProgramsListComponent] No trainer handle for program "${program.title}"`);
+              // Return program without enrichment if no trainer handle
+              return of({ ...program, trainer: undefined } as (ProgramResponse & { trainer?: TrainerCard }));
+            }
+          });
+
+          // Use forkJoin to wait for all trainer lookups
+          return forkJoin(programObservables).pipe(
+            map((enrichedPrograms) => {
+              console.log('[ProgramsListComponent] All programs enriched:', enrichedPrograms);
+              return enrichedPrograms;
+            })
+          );
+        }),
+        takeUntil(this.destroy$)
+      )
+      .subscribe({
+        next: (enrichedPrograms) => {
+          this.programs.set(enrichedPrograms);
+          this.loading.set(false);
         },
         error: (err) => {
           this.loading.set(false);

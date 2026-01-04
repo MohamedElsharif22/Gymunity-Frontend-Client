@@ -168,9 +168,12 @@ export class DayDetailsComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (day) => {
+          console.log('[DayDetailsComponent] Day loaded from API:', day);
+          console.log('[DayDetailsComponent] Exercises count:', day.exercises?.length ?? 0);
+          console.log('[DayDetailsComponent] Exercises data:', day.exercises);
+          
           this.day.set(day);
           this.loading.set(false);
-          console.log('[DayDetailsComponent] Day loaded:', day);
         },
         error: (err) => {
           this.loading.set(false);

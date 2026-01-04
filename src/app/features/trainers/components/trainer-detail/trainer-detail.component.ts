@@ -247,18 +247,18 @@ export class TrainerDetailComponent implements OnInit, OnDestroy {
     }
 
     // Fall back to loading from API if not in state
-    const trainerId = this.route.snapshot.paramMap.get('id');
-    if (trainerId) {
-      this.loadTrainerProfile(trainerId);
+    const trainerHandle = this.route.snapshot.paramMap.get('id');
+    if (trainerHandle) {
+      this.loadTrainerProfile(trainerHandle);
     } else {
-      this.error.set('No trainer ID provided');
+      this.error.set('No trainer handle provided');
     }
   }
 
-  loadTrainerProfile(trainerId?: string): void {
-    const id = trainerId || this.route.snapshot.paramMap.get('id');
-    if (!id) {
-      this.error.set('No trainer ID provided');
+  loadTrainerProfile(trainerHandle?: string): void {
+    const handle = trainerHandle || this.route.snapshot.paramMap.get('id');
+    if (!handle) {
+      this.error.set('No trainer handle provided');
       return;
     }
 
@@ -266,7 +266,7 @@ export class TrainerDetailComponent implements OnInit, OnDestroy {
     this.error.set(null);
 
     this.trainerProfileService
-      .getTrainerProfile(id)
+      .getTrainerProfile(handle)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (profile: TrainerCard) => {
