@@ -24,17 +24,17 @@ import { LoginRequest } from '../../../../core/models';
 
         <!-- Login Form -->
         <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="space-y-6">
-          <!-- Email/Username -->
+        <!-- Email -->
           <div>
-            <label class="block text-sm font-semibold text-gray-900 mb-2">Email or Username</label>
+            <label class="block text-sm font-semibold text-gray-900 mb-2">Email</label>
             <input
-              type="text"
-              formControlName="emailOrUserName"
-              placeholder="Enter your email or username"
+              type="email"
+              formControlName="email"
+              placeholder="Enter your email"
               class="input-field"
             />
-            <p *ngIf="loginForm.get('emailOrUserName')?.invalid && loginForm.get('emailOrUserName')?.touched" class="text-red-500 text-sm mt-1">
-              Please enter a valid email or username
+            <p *ngIf="loginForm.get('email')?.invalid && loginForm.get('email')?.touched" class="text-red-500 text-sm mt-1">
+              Please enter a valid email address
             </p>
           </div>
 
@@ -96,7 +96,7 @@ export class LoginComponent {
   private router = inject(Router);
 
   loginForm = this.fb.group({
-    emailOrUserName: ['', [Validators.required]],
+    email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required]]
   });
 
@@ -110,8 +110,12 @@ export class LoginComponent {
     }
 
     this.error.set(null);
-    const credentials: LoginRequest = this.loginForm.value as LoginRequest;
-    
+    const formValue = this.loginForm.value as { email: string; password: string };
+    const credentials: LoginRequest = {
+      emailOrUserName: formValue.email,
+      password: formValue.password
+    };
+
     this.authService.login(credentials).subscribe({
       next: () => {
         this.router.navigate(['/dashboard']);

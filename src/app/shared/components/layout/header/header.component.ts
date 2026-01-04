@@ -25,6 +25,9 @@ import { User } from '../../../../core/models';
             <a routerLink="/packages" class="text-gray-700 hover:text-sky-600 font-medium transition">
               Packages
             </a>
+            <a routerLink="/workouts/history" class="text-gray-700 hover:text-sky-600 font-medium transition">
+              Workout History
+            </a>
           </nav>
 
           <!-- Search Bar -->

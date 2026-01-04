@@ -41,7 +41,7 @@ export interface ProgramDay {
 }
 
 export interface DayExercise {
-  id: number;
+  id?: number;
   programDayId: number;
   exerciseId: number;
   orderIndex: number;
@@ -53,8 +53,17 @@ export interface DayExercise {
   percent1RM?: number;
   notes?: string;
   videoUrl?: string;
+  videoDemoUrl?: string;
   exerciseDataJson?: string;
   exercise?: Exercise;
+  // Fields from actual API response
+  excersiceName?: string;
+  category?: string;
+  muscleGroup?: string;
+  equipment?: string;
+  thumbnailUrl?: string;
+  isCustom?: boolean;
+  trainerId?: string;
 }
 
 export interface Exercise {

@@ -72,9 +72,10 @@ export class ProgramService {
   // ==================== Program Days ====================
 
   /**
-   * Get all days in a program
+   * Get all days for a program (not week)
    */
   getProgramDays(programId: number): Observable<ProgramDay[]> {
+    console.log('[ProgramService] Fetching days for program:', programId);
     return this.apiService.get<ProgramDay[]>(`/api/client/clientprograms/${programId}/days`);
   }
 
@@ -82,6 +83,7 @@ export class ProgramService {
    * Get day by ID with exercises
    */
   getDayById(dayId: number): Observable<ProgramDay> {
+    console.log('[ProgramService] Fetching day:', dayId);
     return this.apiService.get<ProgramDay>(`/api/client/clientprograms/days/${dayId}`);
   }
 

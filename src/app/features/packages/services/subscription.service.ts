@@ -96,10 +96,10 @@ export class SubscriptionService {
   /**
    * Activate subscription after payment
    */
-  activateSubscription(subscriptionId: number, request: ActivateSubscriptionRequest): Observable<{ success: boolean; message: string; data: SubscriptionResponse }> {
-    return this.apiService.post<{ success: boolean; message: string; data: SubscriptionResponse }>(
-      `/api/client/subscriptions/${subscriptionId}/activate`,
-      request
-    );
-  }
+  // activateSubscription(subscriptionId: number, request: ActivateSubscriptionRequest): Observable<{ success: boolean; message: string; data: SubscriptionResponse }> {
+  //   return this.apiService.post<{ success: boolean; message: string; data: SubscriptionResponse }>(
+  //     `/api/client/subscriptions/${subscriptionId}/activate`,
+  //     request
+  //   );
+  // }
 }

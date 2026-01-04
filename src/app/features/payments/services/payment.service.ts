@@ -47,12 +47,20 @@ export class PaymentService {
   /**
    * Initiate payment for a subscription
    */
-  initiatePayment(request: InitiatePaymentRequest): Observable<PaymentResponse> {
-    return this.apiService.post<PaymentResponse>(
-      '/api/client/payments/initiate',
-      request
-    );
-  }
+  // initiatePayment(request: InitiatePaymentRequest): Observable<PaymentResponse> {
+  //   return this.apiService.post<PaymentResponse>(
+  //     '/api/client/payments/initiate',
+  //     request
+  //   );
+  // }
+initiatePayment(
+  request: InitiatePaymentRequest
+): Observable<{ success: boolean; data: PaymentResponse }> {
+  return this.apiService.post<{ success: boolean; data: PaymentResponse }>(
+    '/api/client/payments/initiate',
+    request
+  );
+}
 
   /**
    * Get all client payments

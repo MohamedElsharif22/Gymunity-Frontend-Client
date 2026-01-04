@@ -1,6 +1,9 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { PaymentService } from '../../services/payment.service';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'app-payment-failed',
@@ -27,10 +30,15 @@ import { Router, RouterModule } from '@angular/router';
           <!-- Content Section -->
           <div class="p-8">
             <div class="space-y-6">
-              <!-- Message -->
+              <!-- Failure Reason Message -->
               <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded">
                 <p class="text-red-800">
-                  <strong>What happened?</strong> There was an issue processing your payment. Your subscription has not been activated.
+                  <strong>What happened?</strong>
+                  <span *ngIf="failureReason()">{{ failureReason() }}</span>
+                  <span *ngIf="!failureReason()">There was an issue processing your payment. Your subscription has not been activated.</span>
+                </p>
+                <p class="text-red-700 text-sm mt-2" *ngIf="paymentId()">
+                  Payment ID: <code class="bg-red-100 px-2 py-1 rounded">{{ paymentId() }}</code>
                 </p>
               </div>
 
@@ -86,8 +94,63 @@ import { Router, RouterModule } from '@angular/router';
   `,
   styles: []
 })
-export class PaymentFailedComponent {
+export class PaymentFailedComponent implements OnInit, OnDestroy {
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
+  private paymentService = inject(PaymentService);
+  private destroy$ = new Subject<void>();
+
+  failureReason = signal<string>('');
+  paymentId = signal<string>('');
+
+  ngOnInit() {
+    // Get failure reason from query params or router state
+    this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(params => {
+      if (params['reason']) {
+        this.failureReason.set(decodeURIComponent(params['reason']));
+      }
+      if (params['paymentId']) {
+        this.paymentId.set(params['paymentId']);
+        // Fetch payment details to get failure reason from backend
+        this.fetchPaymentFailureDetails(params['paymentId']);
+      }
+    });
+
+    // Also check navigation extras state
+    const navigation = this.router.getCurrentNavigation();
+    if (navigation && navigation.extras && navigation.extras.state) {
+      const state = navigation.extras.state as any;
+      if (state['failureReason']) {
+        this.failureReason.set(state['failureReason']);
+      }
+      if (state['paymentId']) {
+        this.paymentId.set(state['paymentId']);
+      }
+    }
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  private fetchPaymentFailureDetails(paymentId: string) {
+    // Fetch payment details from backend to get failure reason
+    this.paymentService.getPaymentHistory()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response: any) => {
+          const payments = response.data?.payments || [];
+          const failedPayment = payments.find((p: any) => p.id === parseInt(paymentId));
+          if (failedPayment && failedPayment.failureReason) {
+            this.failureReason.set(failedPayment.failureReason);
+          }
+        },
+        error: (err) => {
+          console.error('Failed to fetch payment details:', err);
+        }
+      });
+  }
 
   goBack() {
     this.router.navigate(['/packages']);

@@ -111,13 +111,19 @@ export class AuthService {
 
   private setAuthData(response: AuthResponse): void {
     localStorage.setItem(this.tokenKey, response.token);
+    // Sanitize profilePhotoUrl: avoid using the API root as an image URL
+    const rawPhoto = response.profilePhotoUrl?.toString().trim();
+    const apiRoot = this.apiUrl?.toString().replace(/\/+$/, '');
+    const normalizedRaw = rawPhoto?.replace(/\/+$/, '');
+    const profilePhotoUrl = (normalizedRaw && apiRoot && normalizedRaw !== apiRoot) ? rawPhoto : undefined;
+
     const user: User = {
       id: response.id,
       name: response.name,
       userName: response.userName,
       email: response.email,
       role: response.role,
-      profilePhotoUrl: response.profilePhotoUrl
+      profilePhotoUrl: profilePhotoUrl
     };
     localStorage.setItem(this.userKey, JSON.stringify(user));
     this.currentUserSignal.set(user);

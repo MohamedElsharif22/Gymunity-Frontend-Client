@@ -1,4 +1,4 @@
 export const environment = {
     production: true,
-    apiUrl: 'https://api.gymunity.com/api'
+    apiUrl: 'https://gymunity-fp-apis.runasp.net'
 };
