@@ -53,7 +53,7 @@ export const routes: Routes = [
         loadComponent: () => import('./features/trainers/components/trainers.component').then(m => m.TrainersComponent)
       },
       {
-        path: 'trainers/:trainerId',
+        path: 'trainers/:id',
         canActivate: [profileCompletionGuard],
         loadComponent: () => import('./features/trainers/components/trainer-detail/trainer-detail.component').then(m => m.TrainerDetailComponent)
       },

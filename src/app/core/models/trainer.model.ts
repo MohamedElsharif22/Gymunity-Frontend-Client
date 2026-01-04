@@ -28,14 +28,15 @@ export interface TrainerCard {
 /**
  * Pagination - Generic pagination wrapper for list responses
  * Used for paginated API responses from the backend
+ * Per TrainerDiscovery API: uses 'items' array and 'totalCount' field
  *
  * @template T - The type of items in the paginated list
  */
 export interface Pagination<T> {
   pageIndex: number;
   pageSize: number;
-  count: number; // Total count of items
-  data: T[];     // Array of items
+  totalCount: number; // Total count of items (API field name)
+  items: T[];         // Array of items (API field name)
 }
 
 /**
@@ -60,31 +61,12 @@ export interface TrainerSearchOptions {
 }
 
 /**
- * TrainerProfileDetail - Full trainer profile information
- * Retrieved from /api/trainer/TrainerProfile/Id/{id} endpoint
- * Used for detailed trainer profile page
+ * TrainerProfileDetailResponse - Detailed trainer profile response from API
+ * GET /api/client/TrainerDiscovery/{trainerId}
+ * Contains comprehensive trainer information for the detail page
  */
-export interface TrainerProfileDetail {
-  id: number;
-  userId: string;
-  userName?: string;
-  email?: string;
-  handle?: string;
-  bio?: string;
-  profilePhotoUrl?: string | null;
-  coverImageUrl?: string | null;
-  videoIntroUrl?: string | null;
-  isVerified?: boolean;
-  verifiedAt?: string | null;
-  isSuspended?: boolean;
-  suspendedAt?: string | null;
-  ratingAverage?: number;
-  totalClients?: number;
-  yearsExperience?: number;
-  specializations?: string[];
-  packages?: any[]; // TODO: Define package DTO if needed
-  startingPrice?: number;
-  currency?: string;
-  createdAt?: string;
-  updatedAt?: string;
+export interface TrainerProfileDetailResponse {
+  data?: TrainerCard; // The actual trainer card data (nullable in response)
+  message?: string;
+  statusCode?: number;
 }

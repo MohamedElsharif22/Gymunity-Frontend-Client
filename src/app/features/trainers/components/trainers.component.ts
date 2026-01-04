@@ -8,15 +8,14 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { RouterLink, Router } from '@angular/router';
 import { TrainerDiscoveryService } from '../services/trainer-discovery.service';
-import { HomeClientService } from '../services/home-client.service';
-import { TrainerCard, TrainerSearchOptions, TrainerClient } from '../../../core/models';
+import { TrainerCard, TrainerSearchOptions } from '../../../core/models';
 
 @Component({
   selector: 'app-trainers',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="flex-1 p-6 md:p-8">
@@ -292,7 +291,7 @@ import { TrainerCard, TrainerSearchOptions, TrainerClient } from '../../../core/
                 <!-- Action Buttons -->
                 <div class="flex gap-2">
                   <button
-                    [routerLink]="['/trainers', trainer.id]"
+                    (click)="viewTrainerProfile(trainer)"
                     class="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium"
                   >
                     View Profile
@@ -315,7 +314,7 @@ import { TrainerCard, TrainerSearchOptions, TrainerClient } from '../../../core/
 })
 export class TrainersComponent implements OnInit {
   private readonly trainerDiscoveryService = inject(TrainerDiscoveryService);
-  private readonly homeClientService = inject(HomeClientService);
+  private readonly router = inject(Router);
 
   // State signals
   trainers = signal<TrainerCard[]>([]);
@@ -326,7 +325,6 @@ export class TrainersComponent implements OnInit {
   minExperience = signal('');
   sortBy = signal('');
   totalCount = signal(0);
-  useHomeClientSearch = signal(false); // Toggle between TrainerDiscovery and HomeClient APIs
 
   // Computed signals
   availableSpecialties = computed(() => {
@@ -388,91 +386,25 @@ export class TrainersComponent implements OnInit {
     this.isLoading.set(true);
     this.error.set(null);
 
-    // Use HomeClient service if toggle is on and search term exists
-    if (this.useHomeClientSearch() && this.searchTerm()) {
-      this.homeClientService.search(this.searchTerm()).subscribe({
-        next: response => {
-          // Convert TrainerClient[] to TrainerCard[]
-          const trainers: TrainerCard[] = (response?.trainers || []).map(t => this.convertToTrainerCard(t));
-          this.trainers.set(trainers);
-          this.totalCount.set(trainers.length);
-          this.isLoading.set(false);
-          console.log('[TrainersComponent] Loaded trainers from HomeClient:', trainers);
-        },
-        error: err => {
-          console.error('[TrainersComponent] Error loading trainers from HomeClient:', err);
-          this.error.set('Failed to load trainers. Please try again.');
-          this.isLoading.set(false);
-        }
-      });
-    } else if (this.useHomeClientSearch()) {
-      // Load all trainers from HomeClient if no search term
-      this.homeClientService.getAllTrainers().subscribe({
-        next: response => {
-          // Convert TrainerClient[] to TrainerCard[]
-          const trainers: TrainerCard[] = (response || []).map(t => this.convertToTrainerCard(t));
-          this.trainers.set(trainers);
-          this.totalCount.set(trainers.length);
-          this.isLoading.set(false);
-          console.log('[TrainersComponent] Loaded all trainers from HomeClient:', trainers);
-        },
-        error: err => {
-          console.error('[TrainersComponent] Error loading trainers from HomeClient:', err);
-          this.error.set('Failed to load trainers. Please try again.');
-          this.isLoading.set(false);
-        }
-      });
-    } else {
-      // Use original TrainerDiscoveryService
-      this.trainerDiscoveryService.searchTrainers().subscribe({
-        next: response => {
-          const trainers = response?.data || [];
-          this.trainers.set(trainers);
-          this.totalCount.set(response?.count || 0);
-          this.isLoading.set(false);
-          console.log('[TrainersComponent] Loaded trainers from TrainerDiscovery:', trainers);
-        },
-        error: err => {
-          console.error('[TrainersComponent] Error loading trainers from TrainerDiscovery:', err);
-          this.error.set('Failed to load trainers. Please try again.');
-          this.isLoading.set(false);
-        }
-      });
-    }
-  }
-
-  private convertToTrainerCard(client: TrainerClient): TrainerCard {
-    return {
-      id: String(client.id),
-      fullName: client.userName,
-      handle: client.handle,
-      profilePhotoUrl: null, // Not available in HomeClient API
-      coverImageUrl: client.coverImageUrl || null,
-      bio: client.bio,
-      isVerified: false, // Not available in HomeClient API
-      ratingAverage: client.ratingAverage,
-      totalReviews: 0, // Not available in HomeClient API
-      totalClients: client.totalClients,
-      yearsExperience: 0, // Not available in HomeClient API
-      specializations: [], // Not available in HomeClient API
-      startingPrice: 0, // Not available in HomeClient API
-      currency: 'USD', // Default currency
-      hasActiveSubscription: false, // Not available in HomeClient API
-    };
+    this.trainerDiscoveryService.searchTrainers().subscribe({
+      next: response => {
+        const trainers = response?.items || [];
+        this.trainers.set(trainers);
+        this.totalCount.set(response?.totalCount || 0);
+        this.isLoading.set(false);
+        console.log('[TrainersComponent] Loaded trainers:', trainers.length, 'of', response?.totalCount);
+      },
+      error: err => {
+        console.error('[TrainersComponent] Error loading trainers:', err);
+        this.error.set('Failed to load trainers. Please try again.');
+        this.isLoading.set(false);
+      }
+    });
   }
 
   onSearchChange(event: Event): void {
     const target = event.target as HTMLInputElement;
     this.searchTerm.set(target.value);
-    // Auto-load results when using HomeClient search
-    if (this.useHomeClientSearch()) {
-      this.loadTrainers();
-    }
-  }
-
-  toggleSearchSource(): void {
-    this.useHomeClientSearch.update(v => !v);
-    this.loadTrainers();
   }
 
   onSpecialtyChange(event: Event): void {
@@ -494,5 +426,10 @@ export class TrainersComponent implements OnInit {
     console.log('[TrainersComponent] Contacting trainer:', trainer);
     // TODO: Implement contact trainer functionality (chat, email, etc.)
     alert(`Contact trainer: ${trainer.fullName}`);
+  }
+
+  viewTrainerProfile(trainer: TrainerCard): void {
+    console.log('[TrainersComponent] Viewing trainer profile:', trainer.id);
+    this.router.navigate(['/trainers', trainer.id], { state: { trainer } });
   }
 }

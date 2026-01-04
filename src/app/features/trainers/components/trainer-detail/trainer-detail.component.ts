@@ -8,8 +8,9 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule, Router } from '@angular/router';
+import { Location } from '@angular/common';
 import { TrainerProfileService } from '../../services/trainer-profile.service';
-import { TrainerProfileDetail } from '../../../../core/models';
+import { TrainerCard } from '../../../../core/models';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
@@ -99,7 +100,7 @@ import { takeUntil } from 'rxjs/operators';
                     <div
                       class="w-32 h-32 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-bold text-4xl border-4 border-white shadow-lg"
                     >
-                      {{ trainer()!.userName?.charAt(0)?.toUpperCase() ?? 'T' }}
+                      {{ trainer()!.fullName.charAt(0).toUpperCase() }}
                     </div>
                   }
                 </div>
@@ -107,7 +108,7 @@ import { takeUntil } from 'rxjs/operators';
                 <!-- Name and Basic Info -->
                 <div class="flex-1">
                   <div class="flex items-center gap-3 mb-2">
-                    <h1 class="text-3xl font-bold text-gray-900">{{ trainer()!.userName }}</h1>
+                    <h1 class="text-3xl font-bold text-gray-900">{{ trainer()!.fullName }}</h1>
                     @if (trainer()!.isVerified) {
                       <div class="flex items-center gap-1 bg-blue-100 text-blue-800 px-3 py-1 rounded-full">
                         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -118,11 +119,6 @@ import { takeUntil } from 'rxjs/operators';
                           />
                         </svg>
                         <span class="text-xs font-semibold">Verified</span>
-                      </div>
-                    }
-                    @if (trainer()!.isSuspended) {
-                      <div class="flex items-center gap-1 bg-red-100 text-red-800 px-3 py-1 rounded-full">
-                        <span class="text-xs font-semibold">Suspended</span>
                       </div>
                     }
                   </div>
@@ -141,7 +137,7 @@ import { takeUntil } from 'rxjs/operators';
                     <div>
                       <div class="flex items-center gap-1">
                         <span class="text-2xl font-bold text-gray-900">
-                          {{ trainer()!.ratingAverage?.toFixed(1) ?? '—' }}
+                          {{ trainer()!.ratingAverage.toFixed(1) }}
                         </span>
                         <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
                           <path
@@ -161,23 +157,21 @@ import { takeUntil } from 'rxjs/operators';
             </div>
 
             <!-- Contact and Action Buttons -->
-            @if (!trainer()!.isSuspended) {
-              <div class="flex flex-col sm:flex-row gap-3">
-                <button
-                  class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
-                >
-                  Book Session
-                </button>
-                <button
-                  class="flex-1 bg-white hover:bg-gray-50 text-blue-600 font-semibold py-3 px-6 rounded-lg border border-blue-200 transition-colors"
-                >
-                  Send Message
-                </button>
-              </div>
-            }
+            <div class="flex flex-col sm:flex-row gap-3">
+              <button
+                class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+              >
+                Book Session
+              </button>
+              <button
+                class="flex-1 bg-white hover:bg-gray-50 text-blue-600 font-semibold py-3 px-6 rounded-lg border border-blue-200 transition-colors"
+              >
+                Send Message
+              </button>
+            </div>
 
             <!-- Specializations Section -->
-            @if ((trainer()!.specializations?.length ?? 0) > 0) {
+            @if (trainer()!.specializations.length > 0) {
               <div class="bg-white rounded-lg shadow p-6">
                 <h2 class="text-xl font-bold text-gray-900 mb-4">Specializations</h2>
                 <div class="flex flex-wrap gap-2">
@@ -212,61 +206,19 @@ import { takeUntil } from 'rxjs/operators';
               </div>
             }
 
-            <!-- Video Introduction -->
-            @if (trainer()!.videoIntroUrl) {
+            <!-- Specializations Section -->
+            @if (trainer()!.specializations.length > 0) {
               <div class="bg-white rounded-lg shadow p-6">
-                <h2 class="text-xl font-bold text-gray-900 mb-4">Introduction Video</h2>
-                <div class="aspect-video bg-black rounded-lg overflow-hidden">
-                  <iframe
-                    [src]="trainer()!.videoIntroUrl"
-                    allowfullscreen
-                    frameborder="0"
-                    class="w-full h-full"
-                  ></iframe>
-                </div>
-              </div>
-            }
-
-            <!-- Packages Section -->
-            @if ((trainer()!.packages?.length ?? 0) > 0) {
-              <div class="bg-white rounded-lg shadow p-6">
-                <h2 class="text-xl font-bold text-gray-900 mb-4">Packages</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  @for (pkg of trainer()!.packages; track pkg.id) {
-                    <div class="border border-gray-200 rounded-lg p-4">
-                      <h3 class="font-bold text-gray-900">{{ pkg.name }}</h3>
-                      <p class="text-sm text-gray-600">{{ pkg.description }}</p>
-                      @if (pkg.price) {
-                        <p class="text-lg font-bold text-gray-900 mt-2">{{ pkg.price }}</p>
-                      }
-                    </div>
+                <h2 class="text-xl font-bold text-gray-900 mb-4">Specializations</h2>
+                <div class="flex flex-wrap gap-2">
+                  @for (spec of trainer()!.specializations; track spec) {
+                    <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
+                      {{ spec }}
+                    </span>
                   }
                 </div>
               </div>
             }
-
-            <!-- Metadata -->
-            <div class="bg-gray-50 rounded-lg p-4 text-sm text-gray-600">
-              <div class="grid grid-cols-2 gap-4">
-                @if (trainer()!.email) {
-                  <div>
-                    <span class="font-semibold text-gray-700">Email:</span> {{ trainer()!.email }}
-                  </div>
-                }
-                @if (trainer()!.verifiedAt) {
-                  <div>
-                    <span class="font-semibold text-gray-700">Verified:</span>
-                    {{ trainer()!.verifiedAt | date: 'short' }}
-                  </div>
-                }
-                @if (trainer()!.createdAt) {
-                  <div>
-                    <span class="font-semibold text-gray-700">Member Since:</span>
-                    {{ trainer()!.createdAt | date: 'MMMM yyyy' }}
-                  </div>
-                }
-              </div>
-            </div>
           </div>
         }
       </div>
@@ -278,21 +230,33 @@ export class TrainerDetailComponent implements OnInit, OnDestroy {
   private readonly trainerProfileService = inject(TrainerProfileService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly location = inject(Location);
   private readonly destroy$ = new Subject<void>();
 
-  trainer = signal<TrainerProfileDetail | null>(null);
+  trainer = signal<TrainerCard | null>(null);
   isLoading = signal(false);
   error = signal<string | null>(null);
 
   ngOnInit(): void {
-    const trainerId = this.route.snapshot.paramMap.get('trainerId');
+    // First try to get trainer from navigation state (from trainers list)
+    const state = this.location.getState() as any;
+    if (state?.trainer) {
+      this.trainer.set(state.trainer);
+      console.log('[TrainerDetailComponent] Trainer loaded from navigation state:', state.trainer);
+      return;
+    }
+
+    // Fall back to loading from API if not in state
+    const trainerId = this.route.snapshot.paramMap.get('id');
     if (trainerId) {
       this.loadTrainerProfile(trainerId);
+    } else {
+      this.error.set('No trainer ID provided');
     }
   }
 
   loadTrainerProfile(trainerId?: string): void {
-    const id = trainerId || this.route.snapshot.paramMap.get('trainerId');
+    const id = trainerId || this.route.snapshot.paramMap.get('id');
     if (!id) {
       this.error.set('No trainer ID provided');
       return;
@@ -305,7 +269,7 @@ export class TrainerDetailComponent implements OnInit, OnDestroy {
       .getTrainerProfile(id)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (profile: TrainerProfileDetail) => {
+        next: (profile: TrainerCard) => {
           this.trainer.set(profile);
           this.isLoading.set(false);
           console.log('[TrainerDetailComponent] Trainer profile loaded:', profile);
@@ -315,9 +279,12 @@ export class TrainerDetailComponent implements OnInit, OnDestroy {
           const errorMessage =
             err?.error?.message ||
             err?.error?.errors?.[0] ||
-            'Failed to load trainer profile';
+            'Failed to load trainer profile. The detail endpoint may not be available.';
           this.error.set(errorMessage);
-          console.error('[TrainerDetailComponent] Error loading trainer:', err);
+          console.error('[TrainerDetailComponent] Error loading trainer profile:', err);
+          console.log('[TrainerDetailComponent] Error details - URL:', err?.url);
+          console.log('[TrainerDetailComponent] Error details - Status:', err?.status);
+          console.log('[TrainerDetailComponent] Error details - Message:', err?.error?.message);
         }
       });
   }

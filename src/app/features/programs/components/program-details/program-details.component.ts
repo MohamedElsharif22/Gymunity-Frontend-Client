@@ -2,7 +2,7 @@ import { Component, inject, signal, ChangeDetectionStrategy, OnInit, OnDestroy }
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule, Router } from '@angular/router';
 import { ClientProgramsService } from '../../services/client-programs.service';
-import { TrainerDiscoveryService } from '../../../trainers/services/trainer-discovery.service';
+import { TrainerProfileService } from '../../../trainers/services/trainer-profile.service';
 import { ProgramResponse, TrainerCard } from '../../../../core/models';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
@@ -249,7 +249,7 @@ import { takeUntil } from 'rxjs/operators';
 })
 export class ProgramDetailsComponent implements OnInit, OnDestroy {
   private programsService = inject(ClientProgramsService);
-  private trainerDiscoveryService = inject(TrainerDiscoveryService);
+  private trainerProfileService = inject(TrainerProfileService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private destroy$ = new Subject<void>();
@@ -297,18 +297,18 @@ export class ProgramDetailsComponent implements OnInit, OnDestroy {
   private loadTrainerDetails(trainerId: string) {
     this.trainerLoading.set(true);
 
-    this.trainerDiscoveryService
-      .getTrainerById(trainerId)
+    this.trainerProfileService
+      .getTrainerProfile(trainerId)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (trainer) => {
           this.trainer.set(trainer);
           this.trainerLoading.set(false);
-          console.log('[ProgramDetailsComponent] Trainer loaded:', trainer);
+          console.log('[ProgramDetailsComponent] Trainer profile loaded:', trainer);
         },
         error: (err) => {
           this.trainerLoading.set(false);
-          console.error('[ProgramDetailsComponent] Error loading trainer:', err);
+          console.error('[ProgramDetailsComponent] Error loading trainer profile:', err);
           // Don't show error for trainer loading, it's not critical
         }
       });

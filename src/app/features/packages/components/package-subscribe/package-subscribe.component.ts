@@ -1,9 +1,8 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
-import { HomeClientService } from '../../../../features/trainers/services/home-client.service';
 import { SubscriptionService, SubscribePackageRequest, SubscriptionResponse } from '../../services/subscription.service';
-import { PackageClient } from '../../../../core/models';
+import { PackageDetails } from '../../../../core/models';
 
 @Component({
   selector: 'app-package-subscribe',
@@ -195,13 +194,12 @@ import { PackageClient } from '../../../../core/models';
   styles: []
 })
 export class PackageSubscribeComponent implements OnInit {
-  private homeClientService = inject(HomeClientService);
   private subscriptionService = inject(SubscriptionService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
 
   packageId!: number;
-  packageData = signal<PackageClient | null>(null);
+  packageData = signal<PackageDetails | null>(null);
   isLoading = signal(false);
   isSubscribing = signal(false);
   error = signal(false);
@@ -212,24 +210,6 @@ export class PackageSubscribeComponent implements OnInit {
   ngOnInit() {
     this.route.params.subscribe(params => {
       this.packageId = parseInt(params['id'], 10);
-      if (this.packageId) {
-        this.loadPackageDetails();
-      }
-    });
-  }
-
-  private loadPackageDetails() {
-    this.isLoading.set(true);
-    this.homeClientService.getPackageById(this.packageId.toString()).subscribe({
-      next: (data: PackageClient) => {
-        this.packageData.set(data);
-        this.isLoading.set(false);
-      },
-      error: (err: any) => {
-        console.error('Error loading package:', err);
-        this.error.set(true);
-        this.isLoading.set(false);
-      }
     });
   }
 
