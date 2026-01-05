@@ -35,13 +35,16 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
         }
       });
     } else {
-      // For JSON requests, set both Authorization and Content-Type
-      request = request.clone({
-        setHeaders: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      // Only set Content-Type for requests that have a body (e.g. POST/PUT/PATCH)
+      const setHeaders: Record<string, string> = {
+        Authorization: `Bearer ${token}`
+      };
+
+      if (request.method !== 'GET' && request.method !== 'DELETE' && !request.headers.has('Content-Type')) {
+        setHeaders['Content-Type'] = 'application/json';
+      }
+
+      request = request.clone({ setHeaders });
     }
 
     console.log(`[AuthInterceptor] Request with token:`, {
@@ -58,9 +61,14 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
         console.error('[AuthInterceptor] 401 Unauthorized - Invalid or expired token');
         // Token is invalid or expired
         authService.logout();
-        router.navigate(['/auth/login'], {
-          queryParams: { returnUrl: router.routerState.root.component }
-        });
+        // Redirect to login and preserve current URL for return
+        try {
+          router.navigate(['/auth/login'], {
+            queryParams: { returnUrl: router.url || request.url }
+          });
+        } catch (e) {
+          router.navigate(['/auth/login']);
+        }
       }
 
       // Handle 403 Forbidden errors

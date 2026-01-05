@@ -121,11 +121,21 @@ import { UserRole } from '../../../../core/models';
         </form>
 
         <!-- Sign In Link -->
-        <div class="px-8 pb-8 text-center text-gray-600 border-t border-gray-200 pt-6">
-          Already have an account?
-          <a routerLink="/auth/login" class="font-semibold text-sky-600 hover:text-sky-700">
-            Sign in
-          </a>
+        <div class="px-8 pb-8 text-center text-gray-600 border-t border-gray-200 pt-6 space-y-3">
+          <div>
+            Already have an account?
+            <a routerLink="/auth/login" class="font-semibold text-sky-600 hover:text-sky-700">
+              Sign in
+            </a>
+          </div>
+          <div class="text-sm">
+            <a routerLink="/landing" class="text-sky-600 hover:text-sky-700 inline-flex items-center gap-1">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+              </svg>
+              Back to Landing
+            </a>
+          </div>
         </div>
       </div>
     </div>
@@ -185,7 +195,7 @@ export class RegisterComponent {
 
     this.authService.register(formData).subscribe({
       next: () => {
-        this.router.navigate(['/dashboard']);
+        this.router.navigate(['/landing']);
       },
       error: (err: any) => {
         const errorMessage = err.error?.message || err.error?.errors?.[0] || 'Registration failed. Please try again.';

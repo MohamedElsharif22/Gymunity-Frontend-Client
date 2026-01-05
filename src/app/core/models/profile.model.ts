@@ -1,59 +1,15 @@
 /**
- * Client profile, onboarding, and dashboard models
+ * Body State and Health Tracking Models
  * Aligns with Gymunity Backend API specification
  */
 
-export interface ClientProfile {
-  id: number;
-  userName: string;
-  heightCm: number;
-  startingWeightKg: number;
-  gender: string;
-  goal: string;
-  experienceLevel: string;
-  updatedAt?: Date;
-  createdAt?: Date;
-  bodyStateLog?: BodyStateLog | null;
-}
-
-export interface CreateClientProfileRequest {
-  userName: string;
-  heightCm: number;
-  startingWeightKg: number;
-  gender: string;
-  goal: string;
-  experienceLevel: string;
-}
-
-export interface UpdateClientProfileRequest {
-  userName: string;
-  heightCm: number;
-  startingWeightKg: number;
-  gender: string;
-  goal: string;
-  experienceLevel: string;
-}
-
-export interface OnboardingCompleteRequest {
-  heightCm: number;
-  startingWeightKg: number;
-  gender: string;
-  goal: string;
-  experienceLevel: string;
-}
-
-export interface DashboardResponse {
-  userName: string;
-  goal: string;
-  experienceLevel: string;
-  isOnboardingCompleted: boolean;
-  lastBodyState?: BodyStateLog;
-  bodyStateHistory?: BodyStateLog[];
-  profileCreatedAt?: Date;
-}
-
+/**
+ * Body state log for tracking progress
+ * Records weight, body composition, measurements, and photos
+ */
 export interface BodyStateLog {
-  id?: number;
+  id: number;
+  clientProfileId: number;
   weightKg: number;
   bodyFatPercent?: number;
   measurementsJson?: string;
@@ -61,5 +17,6 @@ export interface BodyStateLog {
   photoSideUrl?: string;
   photoBackUrl?: string;
   notes?: string;
-  loggedAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
 }

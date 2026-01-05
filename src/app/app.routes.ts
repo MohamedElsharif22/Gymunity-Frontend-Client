@@ -4,6 +4,17 @@ import { profileCompletionGuard } from './core/guards/profile-completion.guard';
 import { LayoutComponent } from './shared/components/layout/layout.component';
 
 export const routes: Routes = [
+  // Landing page - accessible to everyone (NO GUARDS)
+  {
+    path: 'landing',
+    loadComponent: () => import('./features/landing/landing.component').then(m => m.LandingComponent)
+  },
+  // Root redirect to landing
+  {
+    path: '',
+    redirectTo: '/landing',
+    pathMatch: 'full'
+  },
   {
     path: 'auth',
     canActivate: [noAuthGuard],
@@ -23,6 +34,7 @@ export const routes: Routes = [
       }
     ]
   },
+  // Protected routes requiring authentication
   {
     path: '',
     canActivate: [authGuard],
@@ -30,7 +42,7 @@ export const routes: Routes = [
     children: [
       {
         path: 'profile',
-        loadComponent: () => import('./features/profile/components/profile.component').then(m => m.ProfileComponent)
+        loadComponent: () => import('./features/profile/components').then(m => m.ProfileComponent)
       },
       {
         path: 'dashboard',
@@ -43,14 +55,14 @@ export const routes: Routes = [
         loadComponent: () => import('./features/memberships/components/memberships.component').then(m => m.MembershipsComponent)
       },
       {
-        path: 'classes',
-        canActivate: [profileCompletionGuard],
-        loadComponent: () => import('./features/classes/components/classes.component').then(m => m.ClassesComponent)
-      },
-      {
         path: 'trainers',
         canActivate: [profileCompletionGuard],
         loadComponent: () => import('./features/trainers/components/trainers.component').then(m => m.TrainersComponent)
+      },
+      {
+        path: 'trainers/:id',
+        canActivate: [profileCompletionGuard],
+        loadComponent: () => import('./features/trainers/components/trainer-detail/trainer-detail.component').then(m => m.TrainerDetailComponent)
       },
       {
         path: 'programs',
@@ -108,14 +120,73 @@ export const routes: Routes = [
         loadComponent: () => import('./features/payments/components/payment-error/payment-error.component').then(m => m.PaymentErrorComponent)
       },
       {
-        path: 'bookings',
-        canActivate: [profileCompletionGuard],
-        loadComponent: () => import('./features/bookings/components/bookings.component').then(m => m.BookingsComponent)
-      },
-      {
         path: 'settings',
         canActivate: [profileCompletionGuard],
-        loadComponent: () => import('./features/profile/components/profile.component').then(m => m.ProfileComponent)
+        loadComponent: () => import('./features/profile/components').then(m => m.ProfileComponent)
+      },
+      // Client Logs Feature Routes (Body State, Workout, Onboarding)
+      {
+        path: 'body-state',
+        canActivate: [profileCompletionGuard],
+        children: [
+          {
+            path: '',
+            loadComponent: () => import('./features/client-logs/components/body-state-list/body-state-list.component').then(m => m.BodyStateListComponent)
+          },
+          {
+            path: 'add',
+            loadComponent: () => import('./features/client-logs/components/body-state-add/body-state-add.component').then(m => m.BodyStateAddComponent)
+          }
+        ]
+      },
+      {
+        path: 'onboarding',
+        loadComponent: () => import('./features/client-logs/components/onboarding/onboarding.component').then(m => m.OnboardingComponent)
+      },
+      {
+        path: 'workout-logs',
+        canActivate: [profileCompletionGuard],
+        children: [
+          {
+            path: '',
+            loadComponent: () => import('./features/client-logs/components/workout-log-list/workout-log-list.component').then(m => m.WorkoutLogListComponent)
+          },
+          {
+            path: 'add',
+            loadComponent: () => import('./features/client-logs/components/workout-log-add/workout-log-add.component').then(m => m.WorkoutLogAddComponent)
+          },
+          {
+            path: ':id',
+            loadComponent: () => import('./features/client-logs/components/workout-log-detail/workout-log-detail.component').then(m => m.WorkoutLogDetailComponent)
+          }
+        ]
+      },
+      // Client Programs Feature Routes
+      {
+        path: 'programs',
+        canActivate: [authGuard],
+        children: [
+          {
+            path: '',
+            loadComponent: () => import('./features/programs/components/programs-list/programs-list.component').then(m => m.ProgramsListComponent)
+          },
+          {
+            path: ':programId',
+            loadComponent: () => import('./features/programs/components/program-details/program-details.component').then(m => m.ProgramDetailsComponent)
+          },
+          {
+            path: ':programId/weeks',
+            loadComponent: () => import('./features/programs/components/program-weeks/program-weeks.component').then(m => m.ProgramWeeksComponent)
+          },
+          {
+            path: 'weeks/:weekId/days',
+            loadComponent: () => import('./features/programs/components/program-days/program-days.component').then(m => m.ProgramDaysComponent)
+          },
+          {
+            path: 'days/:dayId',
+            loadComponent: () => import('./features/programs/components/day-details/day-details.component').then(m => m.DayDetailsComponent)
+          }
+        ]
       },
       {
         path: 'exercise/:exerciseId/execute',
@@ -139,8 +210,9 @@ export const routes: Routes = [
       }
     ]
   },
+  // Catch all - redirect to landing
   {
     path: '**',
-    redirectTo: '/dashboard'
+    redirectTo: '/landing'
   }
 ];

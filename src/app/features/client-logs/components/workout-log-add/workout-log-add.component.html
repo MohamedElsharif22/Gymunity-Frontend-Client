@@ -1,0 +1,104 @@
+<div class="container mx-auto px-4 py-8 max-w-2xl">
+  <h1 class="text-3xl font-bold mb-8">Log Workout</h1>
+
+  @if (error()) {
+    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+      {{ error() }}
+    </div>
+  }
+
+  @if (success()) {
+    <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
+      Workout logged successfully! Redirecting...
+    </div>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-6">
+    <!-- Program Day ID (Required) -->
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">
+        Program Day ID <span class="text-red-500">*</span>
+      </label>
+      <input
+        type="number"
+        formControlName="programDayId"
+        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        placeholder="Enter program day ID"
+      />
+      @if (form.get('programDayId')?.invalid && form.get('programDayId')?.touched) {
+        <p class="text-red-500 text-sm mt-1">Program day ID is required</p>
+      }
+    </div>
+
+    <!-- Duration -->
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">
+        Duration (minutes)
+      </label>
+      <input
+        type="number"
+        formControlName="durationMinutes"
+        min="1"
+        max="600"
+        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        placeholder="e.g., 60"
+      />
+      @if (form.get('durationMinutes')?.invalid && form.get('durationMinutes')?.touched) {
+        <p class="text-red-500 text-sm mt-1">Duration must be between 1-600 minutes</p>
+      }
+    </div>
+
+    <!-- Exercises JSON (Required) -->
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">
+        Exercises (JSON) <span class="text-red-500">*</span>
+      </label>
+      <textarea
+        formControlName="exercisesLoggedJson"
+        rows="6"
+        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-sm"
+        placeholder='[{"exerciseId": 1001, "sets": 4, "reps": 6, "weight": 100}]'
+      ></textarea>
+      @if (exercisesError()) {
+        <p class="text-red-500 text-sm mt-1">{{ exercisesError() }}</p>
+      }
+      @if (form.get('exercisesLoggedJson')?.invalid && form.get('exercisesLoggedJson')?.touched) {
+        <p class="text-red-500 text-sm mt-1">Exercises JSON is required</p>
+      }
+      <p class="text-gray-500 text-xs mt-2">
+        Format: Array of objects with exerciseId, sets, reps, and optional weight
+      </p>
+    </div>
+
+    <!-- Notes -->
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">
+        Notes
+      </label>
+      <textarea
+        formControlName="notes"
+        rows="3"
+        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        placeholder="Any additional notes about your workout..."
+      ></textarea>
+    </div>
+
+    <!-- Buttons -->
+    <div class="flex gap-4 pt-6">
+      <button
+        type="submit"
+        [disabled]="loading()"
+        class="flex-1 bg-blue-600 text-white font-medium py-2 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 transition"
+      >
+        {{ loading() ? 'Saving...' : 'Log Workout' }}
+      </button>
+      <button
+        type="button"
+        routerLink="/client/workout-logs"
+        class="flex-1 bg-gray-300 text-gray-700 font-medium py-2 rounded-lg hover:bg-gray-400 transition"
+      >
+        Cancel
+      </button>
+    </div>
+  </form>
+</div>

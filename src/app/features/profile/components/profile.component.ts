@@ -1,261 +1,255 @@
-import { Component, inject, signal, ChangeDetectionStrategy, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, ChangeDetectionStrategy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, ActivatedRoute } from '@angular/router';
-import { ClientProfileService } from '../services/client-profile.service';
-import { OnboardingCompleteRequest, ClientProfile } from '../../../core/models';
-import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { ClientProfileService } from '../../../core/services/client-profile.service';
+import { ClientLogsService } from '../../../core/services/client-logs.service';
+import { ClientProfileRequest, ClientProfileResponse, ClientGoal, ExperienceLevel, Gender } from '../../../core/models';
+import { Router } from '@angular/router';
+import { Subject, takeUntil, forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 
+/**
+ * Profile Component
+ * Displays and allows editing of client profile information
+ * Can create new profile or update existing profile
+ */
 @Component({
   selector: 'app-profile',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
+  templateUrl: './profile.component.html',
+  styleUrls: ['./profile.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
-    <div class="min-h-screen bg-gray-50 py-12 px-4">
-      <div class="max-w-2xl mx-auto">
-        <!-- Header -->
-        <div class="mb-8">
-          <h1 class="text-4xl font-bold text-gray-900">{{ isEditMode() ? 'Edit Your Profile' : 'Complete Your Profile' }}</h1>
-          <p class="text-gray-600 mt-2">{{ isEditMode() ? 'Update your fitness information' : 'Help us personalize your fitness journey' }}</p>
-        </div>
-
-        <!-- Loading State -->
-        <div *ngIf="profileLoading()" class="bg-white rounded-xl shadow-md p-8 mb-8">
-          <div class="flex items-center justify-center space-x-3">
-            <div class="w-3 h-3 bg-sky-600 rounded-full animate-bounce" style="animation-delay: 0s;"></div>
-            <div class="w-3 h-3 bg-sky-600 rounded-full animate-bounce" style="animation-delay: 0.2s;"></div>
-            <div class="w-3 h-3 bg-sky-600 rounded-full animate-bounce" style="animation-delay: 0.4s;"></div>
-            <span class="text-gray-600 ml-4">Loading your profile...</span>
-          </div>
-        </div>
-
-        <!-- Profile Form Card -->
-        <div class="bg-white rounded-xl shadow-md p-8" *ngIf="!profileLoading()">
-          <form [formGroup]="profileForm" (ngSubmit)="onSubmit()" class="space-y-6">
-            <!-- Height -->
-            <div>
-              <label class="block text-sm font-semibold text-gray-900 mb-2">Height (cm)</label>
-              <input
-                type="number"
-                formControlName="heightCm"
-                placeholder="Enter your height in centimeters"
-                class="input-field"
-                min="100"
-                max="250"
-              />
-              <p *ngIf="profileForm.get('heightCm')?.invalid && profileForm.get('heightCm')?.touched" class="text-red-600 text-sm mt-1">
-                Height is required and must be between 100-250 cm
-              </p>
-            </div>
-
-            <!-- Starting Weight -->
-            <div>
-              <label class="block text-sm font-semibold text-gray-900 mb-2">Starting Weight (kg)</label>
-              <input
-                type="number"
-                formControlName="startingWeightKg"
-                placeholder="Enter your starting weight"
-                class="input-field"
-                min="20"
-                max="500"
-              />
-              <p *ngIf="profileForm.get('startingWeightKg')?.invalid && profileForm.get('startingWeightKg')?.touched" class="text-red-600 text-sm mt-1">
-                Weight is required and must be between 20-500 kg
-              </p>
-            </div>
-
-            <!-- Gender -->
-            <div>
-              <label class="block text-sm font-semibold text-gray-900 mb-2">Gender</label>
-              <select formControlName="gender" class="input-field">
-                <option value="" [selected]="!profileForm.get('gender')?.value">Select your gender</option>
-                <option value="male" [selected]="profileForm.get('gender')?.value === 'male'">Male</option>
-                <option value="female" [selected]="profileForm.get('gender')?.value === 'female'">Female</option>
-                <option value="other" [selected]="profileForm.get('gender')?.value === 'other'">Other</option>
-              </select>
-              <p *ngIf="profileForm.get('gender')?.invalid && profileForm.get('gender')?.touched" class="text-red-600 text-sm mt-1">
-                Gender is required
-              </p>
-            </div>
-
-            <!-- Fitness Goal -->
-            <div>
-              <label class="block text-sm font-semibold text-gray-900 mb-2">Fitness Goal</label>
-              <select formControlName="goal" class="input-field">
-                <option value="" [selected]="!profileForm.get('goal')?.value">Select your fitness goal</option>
-                <option value="weight_loss" [selected]="profileForm.get('goal')?.value === 'weight_loss'">Weight Loss</option>
-                <option value="muscle_gain" [selected]="profileForm.get('goal')?.value === 'muscle_gain'">Muscle Gain</option>
-                <option value="strength" [selected]="profileForm.get('goal')?.value === 'strength'">Strength Building</option>
-                <option value="endurance" [selected]="profileForm.get('goal')?.value === 'endurance'">Endurance</option>
-                <option value="flexibility" [selected]="profileForm.get('goal')?.value === 'flexibility'">Flexibility</option>
-                <option value="general_fitness" [selected]="profileForm.get('goal')?.value === 'general_fitness'">General Fitness</option>
-              </select>
-              <p *ngIf="profileForm.get('goal')?.invalid && profileForm.get('goal')?.touched" class="text-red-600 text-sm mt-1">
-                Fitness goal is required
-              </p>
-            </div>
-
-            <!-- Experience Level -->
-            <div>
-              <label class="block text-sm font-semibold text-gray-900 mb-2">Experience Level</label>
-              <select formControlName="experienceLevel" class="input-field">
-                <option value="" [selected]="!profileForm.get('experienceLevel')?.value">Select your experience level</option>
-                <option value="beginner" [selected]="profileForm.get('experienceLevel')?.value === 'beginner'">Beginner</option>
-                <option value="intermediate" [selected]="profileForm.get('experienceLevel')?.value === 'intermediate'">Intermediate</option>
-                <option value="advanced" [selected]="profileForm.get('experienceLevel')?.value === 'advanced'">Advanced</option>
-                <option value="professional" [selected]="profileForm.get('experienceLevel')?.value === 'professional'">Professional</option>
-              </select>
-              <p *ngIf="profileForm.get('experienceLevel')?.invalid && profileForm.get('experienceLevel')?.touched" class="text-red-600 text-sm mt-1">
-                Experience level is required
-              </p>
-            </div>
-
-            <!-- Error Message -->
-            <div *ngIf="error()" class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-              {{ error() }}
-            </div>
-
-            <!-- Submit Button -->
-            <button
-              type="submit"
-              [disabled]="isLoading() || profileForm.invalid || profileLoading()"
-              class="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed mt-8"
-            >
-              {{ isLoading() ? (isEditMode() ? 'Updating Profile...' : 'Saving Profile...') : (isEditMode() ? 'Update Profile' : 'Complete Profile') }}
-            </button>
-
-            <!-- Cancel Button (Edit Mode Only) -->
-            <button
-              *ngIf="isEditMode()"
-              type="button"
-              (click)="onCancel()"
-              [disabled]="isLoading()"
-              class="w-full mt-3 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Cancel
-            </button>
-          </form>
-        </div>
-      </div>
-    </div>
-  `,
-  styles: []
+  host: {
+    'class': 'profile-container'
+  }
 })
 export class ProfileComponent implements OnInit, OnDestroy {
-  private fb = inject(FormBuilder);
   private profileService = inject(ClientProfileService);
+  private logsService = inject(ClientLogsService);
+  private formBuilder = inject(FormBuilder);
   private router = inject(Router);
-  private route = inject(ActivatedRoute);
   private destroy$ = new Subject<void>();
 
-  profileForm = this.fb.group({
-    heightCm: ['', [Validators.required, Validators.min(100), Validators.max(250)]],
-    startingWeightKg: ['', [Validators.required, Validators.min(20), Validators.max(500)]],
-    gender: ['', [Validators.required]],
-    goal: ['', [Validators.required]],
-    experienceLevel: ['', [Validators.required]]
+  // Enums for template
+  readonly ClientGoal = ClientGoal;
+  readonly ExperienceLevel = ExperienceLevel;
+  readonly Gender = Gender;
+
+  // State signals
+  loading = signal(false);
+  error = signal<string | null>(null);
+  success = signal<string | null>(null);
+  profile = signal<ClientProfileResponse | null>(null);
+  isEditing = signal(false);
+
+  // Enum options for dropdowns
+  goalOptions = [
+    { value: ClientGoal.FatLoss, label: 'Fat Loss' },
+    { value: ClientGoal.MuscleGain, label: 'Muscle Gain' },
+    { value: ClientGoal.Maintenance, label: 'Maintenance' },
+    { value: ClientGoal.Endurance, label: 'Endurance' },
+    { value: ClientGoal.Flexibility, label: 'Flexibility' },
+    { value: ClientGoal.Strength, label: 'Strength' },
+    { value: ClientGoal.WeightLoss, label: 'Weight Loss' },
+    { value: ClientGoal.WeightGain, label: 'Weight Gain' },
+    { value: ClientGoal.GeneralFitness, label: 'General Fitness' }
+  ];
+
+  experienceLevelOptions = [
+    { value: ExperienceLevel.Beginner, label: 'Beginner' },
+    { value: ExperienceLevel.Intermediate, label: 'Intermediate' },
+    { value: ExperienceLevel.Advanced, label: 'Advanced' }
+  ];
+
+  genderOptions = [
+    { value: Gender.Male, label: 'Male' },
+    { value: Gender.Female, label: 'Female' }
+  ];
+
+  profileForm = this.formBuilder.group({
+    userName: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(50)]],
+    heightCm: [null as number | null, [Validators.min(50), Validators.max(300)]],
+    startingWeightKg: [null as number | null, [Validators.min(20), Validators.max(500)]],
+    gender: [null as Gender | null],
+    goal: [null as ClientGoal | null],
+    experienceLevel: [null as ExperienceLevel | null]
   });
 
-  isLoading = signal(false);
-  profileLoading = signal(false);
-  error = signal<string | null>(null);
-  isEditMode = signal(false);
-  returnUrl = '';
-  currentProfile: ClientProfile | null = null;
-
-  ngOnInit() {
-    this.returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/dashboard';
-    this.loadProfileData();
+  ngOnInit(): void {
+    this.loadProfile();
   }
 
-  /**
-   * Load existing profile data from backend
-   * If profile exists, populate form and set to edit mode
-   * If profile doesn't exist (404), component is in creation mode
-   */
-  private loadProfileData() {
-    this.profileLoading.set(true);
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  private loadProfile(): void {
+    this.loading.set(true);
     this.error.set(null);
 
-    this.profileService.getMyProfile()
+    // Fetch profile, body state log, and dashboard data in parallel
+    forkJoin({
+      profile: this.profileService.getProfile(),
+      bodyStateLog: this.logsService.getLastBodyStateLog().pipe(
+        catchError(err => {
+          console.warn('[ProfileComponent] Failed to load body state log:', err);
+          return of(null);
+        })
+      ),
+      dashboard: this.profileService.getDashboard().pipe(
+        catchError(err => {
+          console.warn('[ProfileComponent] Failed to load dashboard:', err);
+          return of(null);
+        })
+      )
+    })
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (profile: ClientProfile) => {
-          this.currentProfile = profile;
-          this.isEditMode.set(true);
-
-          // Populate form with existing profile data using patchValue
-          this.profileForm.patchValue({
-            heightCm: profile.heightCm.toString(),
-            startingWeightKg: profile.startingWeightKg.toString(),
-            gender: profile.gender,
-            goal: profile.goal,
-            experienceLevel: profile.experienceLevel
-          });
-
-          this.profileLoading.set(false);
-          console.log('[ProfileComponent] Profile loaded successfully:', profile);
-        },
-        error: (err: any) => {
-          // Profile doesn't exist yet - user is in creation mode
-          this.isEditMode.set(false);
-          this.profileLoading.set(false);
-
-          // This is expected for new users (404), not an error
-          if (err.status !== 404) {
-            console.warn('[ProfileComponent] Error loading profile:', err);
+        next: (data) => {
+          console.log('[ProfileComponent] Profile response:', data.profile);
+          console.log('[ProfileComponent] Dashboard response:', data.dashboard);
+          
+          // Merge body state log and dashboard data into profile response
+          let profileData = { ...data.profile };
+          
+          // If dashboard has fitness metadata, merge it
+          if (data.dashboard?.summary) {
+            profileData.goal = profileData.goal || data.dashboard.summary.goal;
+            profileData.experienceLevel = profileData.experienceLevel || data.dashboard.summary.experienceLevel;
           }
+          
+          const profileWithBodyState: ClientProfileResponse = {
+            ...profileData,
+            bodyStateLog: data.bodyStateLog || undefined
+          };
+          this.profile.set(profileWithBodyState);
+          this.populateForm(profileWithBodyState);
+          this.loading.set(false);
+        },
+        error: (error) => {
+          console.error('[ProfileComponent] Error loading profile:', error);
+          // Profile doesn't exist yet - allow creation
+          this.loading.set(false);
+          this.isEditing.set(true);
         }
       });
   }
 
-  onCancel() {
-    if (this.profileForm.dirty) {
-      if (confirm('You have unsaved changes. Are you sure you want to cancel?')) {
-        this.router.navigateByUrl(this.returnUrl);
-      }
-    } else {
-      this.router.navigateByUrl(this.returnUrl);
+  private populateForm(profile: ClientProfileResponse): void {
+    this.profileForm.patchValue({
+      userName: profile.userName || '',
+      heightCm: profile.heightCm || null,
+      startingWeightKg: profile.startingWeightKg || null,
+      gender: profile.gender || null,
+      goal: profile.goal || null,
+      experienceLevel: profile.experienceLevel || null
+    });
+  }
+
+  onEdit(): void {
+    this.isEditing.set(true);
+  }
+
+  onCancel(): void {
+    this.isEditing.set(false);
+    if (this.profile()) {
+      this.populateForm(this.profile()!);
     }
   }
 
-  onSubmit() {
+  onSubmit(): void {
     if (this.profileForm.invalid) {
-      this.profileForm.markAllAsTouched();
+      this.error.set('Please fill in all required fields correctly');
       return;
     }
 
-    this.isLoading.set(true);
+    this.loading.set(true);
+    this.error.set(null);
+    this.success.set(null);
+
+    const formValue = this.profileForm.value;
+    const request: ClientProfileRequest = {
+      userName: formValue.userName || '',
+      heightCm: formValue.heightCm || undefined,
+      startingWeightKg: formValue.startingWeightKg || undefined,
+      gender: formValue.gender || undefined,
+      goal: formValue.goal || undefined,
+      experienceLevel: formValue.experienceLevel || undefined
+    };
+
+    const operation = this.profile() ? 'update' : 'create';
+
+    const service$ = operation === 'update'
+      ? this.profileService.updateProfile(request)
+      : this.profileService.createProfile(request);
+
+    service$.pipe(takeUntil(this.destroy$)).subscribe({
+      next: (updatedProfile) => {
+        // Merge the submitted form values into the response (in case backend doesn't return them)
+        const enrichedProfile: ClientProfileResponse = {
+          ...updatedProfile,
+          goal: updatedProfile.goal || request.goal,
+          experienceLevel: updatedProfile.experienceLevel || request.experienceLevel,
+          gender: updatedProfile.gender || request.gender,
+          heightCm: updatedProfile.heightCm || request.heightCm,
+          startingWeightKg: updatedProfile.startingWeightKg || request.startingWeightKg
+        };
+        
+        this.profile.set(enrichedProfile);
+        this.isEditing.set(false);
+        this.loading.set(false);
+        this.success.set(`Profile ${operation === 'update' ? 'updated' : 'created'} successfully!`);
+        setTimeout(() => this.success.set(null), 3000);
+      },
+      error: (error) => {
+        this.loading.set(false);
+        const errorMessage = error?.error?.message || `Failed to ${operation} profile. Please try again.`;
+        this.error.set(errorMessage);
+      }
+    });
+  }
+
+  onDelete(): void {
+    if (!confirm('Are you sure you want to delete your profile? This action cannot be undone.')) {
+      return;
+    }
+
+    this.loading.set(true);
     this.error.set(null);
 
-    const formData = this.profileForm.value as unknown as OnboardingCompleteRequest;
-
-    // Use different endpoint based on mode
-    const request$ = this.isEditMode()
-      ? this.profileService.updateProfile(formData as any)
-      : this.profileService.completeOnboarding(formData);
-
-    request$
+    this.profileService.deleteProfile()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: () => {
-          this.isLoading.set(false);
-          console.log('[ProfileComponent] Profile saved successfully');
-          this.router.navigateByUrl(this.returnUrl);
+          this.loading.set(false);
+          this.success.set('Profile deleted successfully');
+          setTimeout(() => this.router.navigate(['/auth/login']), 2000);
         },
-        error: (err: any) => {
-          this.isLoading.set(false);
-          const errorMessage = err.error?.message || err.error?.errors?.[0] || 'Failed to save profile. Please try again.';
+        error: (error) => {
+          this.loading.set(false);
+          const errorMessage = error?.error?.message || 'Failed to delete profile. Please try again.';
           this.error.set(errorMessage);
-          console.error('[ProfileComponent] Error saving profile:', err);
         }
       });
   }
 
-  ngOnDestroy() {
-    this.destroy$.next();
-    this.destroy$.complete();
+  getGoalLabel(goal: ClientGoal | undefined): string {
+    if (!goal) return '';
+    const option = this.goalOptions.find(o => o.value === goal);
+    return option?.label || '';
+  }
+
+  getExperienceLevelLabel(level: ExperienceLevel | undefined): string {
+    if (!level) return '';
+    const option = this.experienceLevelOptions.find(o => o.value === level);
+    return option?.label || '';
+  }
+
+  getGenderLabel(gender: Gender | undefined): string {
+    if (!gender) return '';
+    const option = this.genderOptions.find(o => o.value === gender);
+    return option?.label || '';
   }
 }

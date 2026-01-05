@@ -1,9 +1,8 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
-import { HomeClientService } from '../../../../features/trainers/services/home-client.service';
 import { SubscriptionService, SubscribePackageRequest, SubscriptionResponse } from '../../services/subscription.service';
-import { Package } from '../../../../core/models';
+import { PackageDetails } from '../../../../core/models';
 
 @Component({
   selector: 'app-package-subscribe',
@@ -35,11 +34,9 @@ import { Package } from '../../../../core/models';
                 <!-- Header -->
                 <div class="mb-6">
                   <h1 class="text-4xl font-bold text-gray-900 mb-2">{{ packageData()?.name }}</h1>
-                  @if (packageData()?.trainerName) {
-                    <p class="text-gray-600">
-                      By <span class="font-semibold text-sky-600">{{ packageData()?.trainerName }}</span>
-                    </p>
-                  }
+                  <p class="text-gray-600">
+                    Trainer ID: <span class="font-semibold text-sky-600">{{ packageData()?.trainerId }}</span>
+                  </p>
                 </div>
 
                 <!-- Description -->
@@ -51,13 +48,6 @@ import { Package } from '../../../../core/models';
 
                 <!-- Package Info Grid -->
                 <div class="grid grid-cols-2 md:grid-cols-3 gap-6 mb-8 pb-8 border-b border-gray-200">
-                  @if (packageData()?.programIds && packageData()?.programIds!.length > 0) {
-                    <div>
-                      <p class="text-sm text-gray-600 mb-2">Programs Included</p>
-                      <p class="text-2xl font-bold text-sky-600">{{ packageData()?.programIds!.length }}</p>
-                    </div>
-                  }
-
                   <div>
                     <p class="text-sm text-gray-600 mb-2">Duration</p>
                     <div class="flex items-center gap-2">
@@ -90,16 +80,18 @@ import { Package } from '../../../../core/models';
                 </div>
 
                 <!-- Features Section -->
-                @if (packageData()?.programIds && packageData()?.programIds!.length > 0) {
+                @if (packageData()?.programs && packageData()?.programs!.length > 0) {
                   <div>
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4">What's Included</h3>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Programs Included</h3>
                     <ul class="space-y-3">
-                      <li class="flex items-start gap-3">
-                        <svg class="w-5 h-5 text-green-600 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                          <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                        </svg>
-                        <span class="text-gray-700">{{ packageData()?.programIds!.length }} training programs</span>
-                      </li>
+                      @for (program of packageData()?.programs; track program.title) {
+                        <li class="flex items-start gap-3">
+                          <svg class="w-5 h-5 text-green-600 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                          </svg>
+                          <span class="text-gray-700">{{ program.title }}</span>
+                        </li>
+                      }
                       <li class="flex items-start gap-3">
                         <svg class="w-5 h-5 text-green-600 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                           <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
@@ -202,13 +194,12 @@ import { Package } from '../../../../core/models';
   styles: []
 })
 export class PackageSubscribeComponent implements OnInit {
-  private homeClientService = inject(HomeClientService);
   private subscriptionService = inject(SubscriptionService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
 
   packageId!: number;
-  packageData = signal<Package | null>(null);
+  packageData = signal<PackageDetails | null>(null);
   isLoading = signal(false);
   isSubscribing = signal(false);
   error = signal(false);
@@ -219,24 +210,6 @@ export class PackageSubscribeComponent implements OnInit {
   ngOnInit() {
     this.route.params.subscribe(params => {
       this.packageId = parseInt(params['id'], 10);
-      if (this.packageId) {
-        this.loadPackageDetails();
-      }
-    });
-  }
-
-  private loadPackageDetails() {
-    this.isLoading.set(true);
-    this.homeClientService.getPackageById(this.packageId).subscribe({
-      next: (data: Package) => {
-        this.packageData.set(data);
-        this.isLoading.set(false);
-      },
-      error: (err: any) => {
-        console.error('Error loading package:', err);
-        this.error.set(true);
-        this.isLoading.set(false);
-      }
     });
   }
 

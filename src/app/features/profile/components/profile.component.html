@@ -1,0 +1,253 @@
+<div class="profile-page">
+  <!-- Header -->
+  <div class="profile-header">
+    <h1>My Profile</h1>
+    <p class="subtitle">Manage your fitness profile and personal information</p>
+  </div>
+
+  <!-- Related Features Navigation -->
+  <div class="related-features mb-6">
+    <div class="features-grid">
+      <a href="/body-state" class="feature-card">
+        <span class="feature-icon">⚖️</span>
+        <span class="feature-text">My Body State Logs</span>
+      </a>
+      <a href="/workout-logs" class="feature-card">
+        <span class="feature-icon">💪</span>
+        <span class="feature-text">Workout Logs</span>
+      </a>
+      <a href="/onboarding" class="feature-card">
+        <span class="feature-icon">✓</span>
+        <span class="feature-text">Onboarding</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  @if (loading()) {
+    <div class="loading-container">
+      <div class="spinner"></div>
+      <p>Loading profile...</p>
+    </div>
+  }
+
+  <!-- Error Message -->
+  @if (error()) {
+    <div class="alert alert-error">
+      <span class="alert-icon">⚠️</span>
+      <span class="alert-text">{{ error() }}</span>
+    </div>
+  }
+
+  <!-- Success Message -->
+  @if (success()) {
+    <div class="alert alert-success">
+      <span class="alert-icon">✓</span>
+      <span class="alert-text">{{ success() }}</span>
+    </div>
+  }
+
+  <!-- Profile Content -->
+  @if (!loading() && !isEditing()) {
+    <!-- View Mode -->
+    <div class="profile-card">
+      @if (profile(); as p) {
+        <div class="profile-content">
+          <div class="profile-header-card">
+            <div class="profile-image-placeholder">
+              {{ p.userName.charAt(0).toUpperCase() }}
+            </div>
+            <div class="profile-header-info">
+              <h2>{{ p.userName }}</h2>
+              <p class="meta">{{ getGoalLabel(p.goal) }} • {{ getExperienceLevelLabel(p.experienceLevel) }}</p>
+            </div>
+          </div>
+
+          <div class="profile-details">
+            <div class="detail-group">
+              <h3>Physical Information</h3>
+              @if (p.heightCm) {
+                <div class="detail-row">
+                  <span class="label">Height:</span>
+                  <span class="value">{{ p.heightCm }} cm</span>
+                </div>
+              }
+              @if (p.startingWeightKg) {
+                <div class="detail-row">
+                  <span class="label">Starting Weight:</span>
+                  <span class="value">{{ p.startingWeightKg }} kg</span>
+                </div>
+              }
+              @if (p.gender) {
+                <div class="detail-row">
+                  <span class="label">Gender:</span>
+                  <span class="value">{{ getGenderLabel(p.gender) }}</span>
+                </div>
+              }
+            </div>
+
+            <div class="detail-group">
+              <h3>Fitness Profile</h3>
+              @if (p.goal) {
+                <div class="detail-row">
+                  <span class="label">Goal:</span>
+                  <span class="value">{{ getGoalLabel(p.goal) }}</span>
+                </div>
+              }
+              @if (p.experienceLevel) {
+                <div class="detail-row">
+                  <span class="label">Experience Level:</span>
+                  <span class="value">{{ getExperienceLevelLabel(p.experienceLevel) }}</span>
+                </div>
+              }
+            </div>
+
+            <div class="detail-group">
+              <h3>Account Information</h3>
+              <div class="detail-row">
+                <span class="label">Created:</span>
+                <span class="value">{{ p.createdAt | date: 'MMM dd, yyyy' }}</span>
+              </div>
+              @if (p.updatedAt) {
+                <div class="detail-row">
+                  <span class="label">Last Updated:</span>
+                  <span class="value">{{ p.updatedAt | date: 'MMM dd, yyyy' }}</span>
+                </div>
+              }
+            </div>
+
+            @if (p.bodyStateLog) {
+              <div class="detail-group">
+                <h3>Latest Body Measurements</h3>
+                <div class="detail-row">
+                  <span class="label">Current Weight:</span>
+                  <span class="value">{{ p.bodyStateLog.weightKg }} kg</span>
+                </div>
+                @if (p.bodyStateLog.bodyFatPercent) {
+                  <div class="detail-row">
+                    <span class="label">Body Fat:</span>
+                    <span class="value">{{ p.bodyStateLog.bodyFatPercent }}%</span>
+                  </div>
+                }
+                <div class="detail-row">
+                  <span class="label">Recorded:</span>
+                  <span class="value">{{ p.bodyStateLog.createdAt | date: 'MMM dd, yyyy' }}</span>
+                </div>
+              </div>
+            }
+          </div>
+
+          <div class="action-buttons">
+            <button class="btn btn-primary" (click)="onEdit()" [disabled]="loading()">
+              Edit Profile
+            </button>
+            <button class="btn btn-danger" (click)="onDelete()" [disabled]="loading()">
+              Delete Profile
+            </button>
+          </div>
+        </div>
+      } @else {
+        <div class="empty-state">
+          <p>No profile found</p>
+          <button class="btn btn-primary" (click)="onEdit()">Create Profile</button>
+        </div>
+      }
+    </div>
+  } @else if (!loading() && isEditing()) {
+    <!-- Edit Mode -->
+    <div class="profile-card">
+      <form [formGroup]="profileForm" (ngSubmit)="onSubmit()">
+        <div class="form-section">
+          <h3>Basic Information</h3>
+          <div class="form-group">
+            <label for="userName">Username *</label>
+            <input
+              id="userName"
+              type="text"
+              formControlName="userName"
+              class="form-input"
+              placeholder="Enter username (3-50 characters)"
+            >
+            @if (profileForm.get('userName')?.invalid && profileForm.get('userName')?.touched) {
+              <span class="error">Username must be between 3 and 50 characters</span>
+            }
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3>Physical Information</h3>
+          <div class="form-group">
+            <label for="heightCm">Height (cm)</label>
+            <input
+              id="heightCm"
+              type="number"
+              formControlName="heightCm"
+              class="form-input"
+              placeholder="Enter height in cm (50-300)"
+            >
+            @if (profileForm.get('heightCm')?.invalid && profileForm.get('heightCm')?.touched) {
+              <span class="error">Height must be between 50 and 300 cm</span>
+            }
+          </div>
+
+          <div class="form-group">
+            <label for="startingWeightKg">Starting Weight (kg)</label>
+            <input
+              id="startingWeightKg"
+              type="number"
+              step="0.1"
+              formControlName="startingWeightKg"
+              class="form-input"
+              placeholder="Enter starting weight in kg (20-500)"
+            >
+            @if (profileForm.get('startingWeightKg')?.invalid && profileForm.get('startingWeightKg')?.touched) {
+              <span class="error">Weight must be between 20 and 500 kg</span>
+            }
+          </div>
+
+          <div class="form-group">
+            <label for="gender">Gender</label>
+            <select id="gender" formControlName="gender" class="form-input">
+              <option [value]="null">Select gender</option>
+              @for (option of genderOptions; track option.value) {
+                <option [value]="option.value">{{ option.label }}</option>
+              }
+            </select>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3>Fitness Profile</h3>
+          <div class="form-group">
+            <label for="goal">Fitness Goal</label>
+            <select id="goal" formControlName="goal" class="form-input">
+              <option [value]="null">Select fitness goal</option>
+              @for (option of goalOptions; track option.value) {
+                <option [value]="option.value">{{ option.label }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="experienceLevel">Experience Level</label>
+            <select id="experienceLevel" formControlName="experienceLevel" class="form-input">
+              <option [value]="null">Select experience level</option>
+              @for (option of experienceLevelOptions; track option.value) {
+                <option [value]="option.value">{{ option.label }}</option>
+              }
+            </select>
+          </div>
+        </div>
+
+        <div class="action-buttons">
+          <button type="submit" class="btn btn-primary" [disabled]="loading() || profileForm.invalid">
+            {{ profile() ? 'Update Profile' : 'Create Profile' }}
+          </button>
+          <button type="button" class="btn btn-secondary" (click)="onCancel()" [disabled]="loading()">
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  }
+</div>
