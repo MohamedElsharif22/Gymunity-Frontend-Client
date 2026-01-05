@@ -1,6 +1,6 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, tap } from 'rxjs';
+import { Observable, tap, finalize } from 'rxjs';
 import { ApiService } from './api.service';
 import {
   User,
@@ -40,8 +40,8 @@ export class AuthService {
     return this.http.post<AuthResponse>(`${this.apiUrl}/api/account/login`, credentials).pipe(
       tap(response => {
         this.setAuthData(response);
-        this.loadingSignal.set(false);
-      })
+      }),
+      finalize(() => this.loadingSignal.set(false))
     );
   }
 
@@ -50,8 +50,8 @@ export class AuthService {
     return this.http.post<AuthResponse>(`${this.apiUrl}/api/account/register`, formData).pipe(
       tap(response => {
         this.setAuthData(response);
-        this.loadingSignal.set(false);
-      })
+      }),
+      finalize(() => this.loadingSignal.set(false))
     );
   }
 
@@ -60,8 +60,8 @@ export class AuthService {
     return this.http.post<AuthResponse>(`${this.apiUrl}/api/account/google-auth`, request).pipe(
       tap(response => {
         this.setAuthData(response);
-        this.loadingSignal.set(false);
-      })
+      }),
+      finalize(() => this.loadingSignal.set(false))
     );
   }
 

@@ -55,11 +55,6 @@ export const routes: Routes = [
         loadComponent: () => import('./features/memberships/components/memberships.component').then(m => m.MembershipsComponent)
       },
       {
-        path: 'classes',
-        canActivate: [profileCompletionGuard],
-        loadComponent: () => import('./features/classes/components/classes.component').then(m => m.ClassesComponent)
-      },
-      {
         path: 'trainers',
         canActivate: [profileCompletionGuard],
         loadComponent: () => import('./features/trainers/components/trainers.component').then(m => m.TrainersComponent)
@@ -103,11 +98,6 @@ export const routes: Routes = [
         path: 'payment/error',
         canActivate: [profileCompletionGuard],
         loadComponent: () => import('./features/payments/components/payment-error/payment-error.component').then(m => m.PaymentErrorComponent)
-      },
-      {
-        path: 'bookings',
-        canActivate: [profileCompletionGuard],
-        loadComponent: () => import('./features/bookings/components/bookings.component').then(m => m.BookingsComponent)
       },
       {
         path: 'settings',
