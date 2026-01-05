@@ -101,25 +101,4 @@ export class ProgramService {
   getExercisesByDayId(dayId: number): Observable<ProgramDay> {
     return this.apiService.get<ProgramDay>(`/api/client/ClientPrograms/days/${dayId}`);
   }
-
-  /**
-   * Get a specific exercise by ID
-   */
-  getExerciseById(exerciseId: number): Observable<Exercise> {
-    return this.apiService.get<Exercise>(`/api/client/exercises/${exerciseId}`);
-  }
-
-  /**
-   * Get user's active program from their subscription
-   */
-  getActiveProgram(): Observable<Program> {
-    return this.apiService.get<Program>('/api/client/ClientPrograms/active');
-  }
-
-  /**
-   * Get program day details with exercises
-   */
-  getProgramDay(programId: number, dayId: number): Observable<ProgramDay> {
-    return this.apiService.get<ProgramDay>(`/api/client/ClientPrograms/${programId}/days/${dayId}`);
-  }
 }

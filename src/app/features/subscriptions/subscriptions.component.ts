@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { SubscriptionService, SubscriptionResponse } from '../packages/services/subscription.service';
 import { ProgramService } from '../classes/services/program.service';
-import { WorkoutService } from '../workout/services/workout.service';
 import { Program, ProgramWeek, ProgramDay, DayExercise } from '../../core/models';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
@@ -14,300 +13,246 @@ import { takeUntil } from 'rxjs/operators';
   imports: [CommonModule, RouterModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-8 px-4">
-      <div class="max-w-7xl mx-auto">
-        <!-- Header -->
-        <div class="mb-8">
-          <h1 class="text-4xl font-bold text-slate-900 mb-2">My Subscription</h1>
-          <p class="text-slate-600">View your active package, programs, and workout schedule</p>
-        </div>
-
-        <!-- Active Subscription Card -->
-        <div *ngIf="activeSubscription()" class="bg-white rounded-lg shadow-lg overflow-hidden mb-8">
-          <!-- Header with Status -->
-          <div class="bg-gradient-to-r from-green-500 to-emerald-500 p-8 text-white">
-            <div class="flex justify-between items-start mb-4">
-              <div>
-                <h2 class="text-3xl font-bold">{{ activeSubscription()?.packageName }}</h2>
-                <p class="text-green-100 mt-2">{{ activeSubscription()?.packageDescription }}</p>
-              </div>
-              <div class="bg-white bg-opacity-20 backdrop-blur-sm px-4 py-2 rounded-lg">
-                <p class="text-sm font-semibold">Status: <span class="text-green-200">{{ activeSubscription()?.status }}</span></p>
-              </div>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6 text-sm">
-              <div>
-                <p class="text-green-100">Trainer</p>
-                <p class="font-semibold">{{ activeSubscription()?.trainerName }}</p>
-              </div>
-              <div>
-                <p class="text-green-100">Start Date</p>
-                <p class="font-semibold">{{ activeSubscription()?.startDate | date:'MMM dd, yyyy' }}</p>
-              </div>
-              <div>
-                <p class="text-green-100">End Date</p>
-                <p class="font-semibold">{{ activeSubscription()?.currentPeriodEnd | date:'MMM dd, yyyy' }}</p>
-              </div>
-              <div>
-                <p class="text-green-100">Days Remaining</p>
-                <p class="font-semibold">{{ activeSubscription()?.daysRemaining }} days</p>
-              </div>
-            </div>
-          </div>
-
-          <!-- Package Amount -->
-          <div class="px-8 py-4 bg-slate-50 border-b">
-            <div class="flex justify-between items-center">
-              <span class="text-slate-600 font-medium">Amount Paid</span>
-              <span class="text-2xl font-bold text-green-600">
-                {{ activeSubscription()?.currency }} {{ activeSubscription()?.amountPaid | number:'1.2-2' }}
-              </span>
-            </div>
-          </div>
+    <div class="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 py-12 px-4">
+      <div class="max-w-5xl mx-auto">
+        <!-- Header Section -->
+        <div class="text-center mb-12 animate-fadeIn">
+          <h1 class="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400 mb-3">
+            My Subscription
+          </h1>
+          <p class="text-xl text-slate-300">Your premium fitness journey</p>
         </div>
 
         <!-- Loading State -->
-        <div *ngIf="!activeSubscription() && isLoading()" class="text-center py-12">
+        <div *ngIf="!activeSubscription() && isLoading()" class="text-center py-20">
           <div class="inline-block">
-            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
-            <p class="text-slate-600 mt-4">Loading your subscription...</p>
+            <div class="animate-spin rounded-full h-16 w-16 border-4 border-emerald-500/30 border-t-emerald-400"></div>
+            <p class="text-slate-300 mt-6 text-lg">Loading your subscription...</p>
           </div>
         </div>
 
         <!-- No Active Subscription -->
-        <div *ngIf="!activeSubscription() && !isLoading()" class="bg-white rounded-lg shadow-lg p-8 text-center mb-8">
-          <p class="text-slate-600 mb-4">You don't have an active subscription yet.</p>
-          <a routerLink="/packages" class="inline-block bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-6 rounded-lg transition">
+        <div *ngIf="!activeSubscription() && !isLoading()" class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-12 text-center mb-8 animate-slideDown">
+          <svg class="w-20 h-20 text-slate-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+          <p class="text-slate-300 mb-6 text-lg">You don't have an active subscription yet.</p>
+          <a routerLink="/packages" class="inline-block bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white font-bold py-3 px-8 rounded-lg transition transform hover:scale-105">
             Browse Packages
           </a>
         </div>
 
-        <!-- Programs Section -->
-        <div *ngIf="activeSubscription()" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <!-- Weeks Navigation -->
-          <div class="lg:col-span-1">
-            <div class="bg-white rounded-lg shadow-lg p-6 sticky top-8">
-              <h3 class="text-xl font-bold text-slate-900 mb-4">Program Weeks</h3>
-              <div class="space-y-2">
-                <button
-                  *ngFor="let week of programWeeks()"
-                  (click)="selectWeek(week)"
-                  [class]="'w-full text-left px-4 py-3 rounded-lg font-medium transition ' +
-                    (selectedWeek()?.id === week.id ? 'bg-green-100 text-green-900 border-l-4 border-green-600' : 'bg-slate-100 text-slate-700 hover:bg-slate-200')">
-                  Week {{ week.weekNumber }}
-                </button>
-              </div>
-            </div>
-          </div>
+        <!-- Active Subscription Card -->
+        <div *ngIf="activeSubscription()" class="animate-slideDown">
+          <!-- Subscriptions Grid -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <!-- Main Subscription Card -->
+            <div class="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-md border border-white/20 rounded-xl overflow-hidden shadow-xl">
+              <!-- Premium Header -->
+              <div class="relative overflow-hidden bg-gradient-to-r from-emerald-600 via-cyan-500 to-blue-600 p-4 md:p-6">
+                <!-- Animated Background Elements -->
+                <div class="absolute inset-0 opacity-10">
+                  <div class="absolute top-0 left-0 w-20 h-20 bg-white rounded-full mix-blend-screen"></div>
+                  <div class="absolute bottom-0 right-0 w-20 h-20 bg-white rounded-full mix-blend-screen"></div>
+                </div>
 
-          <!-- Days and Exercises -->
-          <div class="lg:col-span-2">
-            <!-- Selected Week -->
-            <div *ngIf="selectedWeek()" class="bg-white rounded-lg shadow-lg overflow-hidden">
-              <div class="bg-gradient-to-r from-blue-500 to-cyan-500 px-8 py-6 text-white">
-                <h3 class="text-2xl font-bold">Week {{ selectedWeek()?.weekNumber }}</h3>
-              </div>
-
-              <!-- Days in Week -->
-              <div class="divide-y">
-                <div *ngFor="let day of selectedWeek()?.days" class="p-6 hover:bg-slate-50 transition">
-                  <div class="flex justify-between items-start gap-4">
-                    <button
-                      (click)="toggleDayExpanded(day.id)"
-                      class="flex-1 text-left">
-                      <div class="flex justify-between items-center mb-2">
-                        <h4 class="text-lg font-bold text-slate-900">
-                          Day {{ day.dayNumber }}: {{ day.title }}
-                        </h4>
-                        <svg [class]="'w-6 h-6 text-slate-400 transition transform ' + (expandedDays().includes(day.id) ? 'rotate-180' : '')"
-                          fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
-                        </svg>
+                <div class="relative z-10">
+                  <div class="flex items-start justify-between mb-4">
+                    <div>
+                      <div class="inline-block bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full mb-2">
+                        <p class="text-white/90 text-xs font-semibold">✓ Active</p>
                       </div>
-                      <p *ngIf="day.notes" class="text-sm text-slate-600">{{ day.notes }}</p>
-                    </button>
-
-                    <!-- Start Workout Button -->
-                    <button
-                      (click)="openWorkoutDialog(day)"
-                      class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg transition whitespace-nowrap">
-                      Start Workout
-                    </button>
-
-                    <!-- View Exercises Button -->
-                    <button
-                      (click)="viewDayExercises(day)"
-                      class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition whitespace-nowrap">
-                      👁 View Exercises
-                    </button>
-                  </div>
-
-                  <!-- Exercises for this day -->
-                  <div *ngIf="expandedDays().includes(day.id)" class="mt-4 pt-4 border-t space-y-4">
-                    <div *ngFor="let exercise of day.exercises" class="bg-blue-50 rounded-lg p-4">
-                      <div class="flex items-start justify-between mb-3">
-                        <div>
-                          <h5 class="font-bold text-slate-900">{{ exercise.excersiceName || exercise.exercise?.name }}</h5>
-                          <p class="text-sm text-slate-600">{{ exercise.muscleGroup }}</p>
-                        </div>
-                        <span class="text-xs bg-blue-200 text-blue-800 px-2 py-1 rounded">{{ exercise.equipment }}</span>
-                      </div>
-
-                      <!-- Exercise Image -->
-                      <div *ngIf="exercise.thumbnailUrl" class="mb-3 rounded-lg overflow-hidden">
-                        <img [src]="exercise.thumbnailUrl" [alt]="exercise.excersiceName" class="w-full h-40 object-cover">
-                      </div>
-
-                      <div class="grid grid-cols-2 gap-2 text-sm mb-3">
-                        <div class="bg-white p-2 rounded">
-                          <p class="text-slate-600">Sets</p>
-                          <p class="font-bold text-slate-900">{{ exercise.sets }}</p>
-                        </div>
-                        <div class="bg-white p-2 rounded">
-                          <p class="text-slate-600">Reps</p>
-                          <p class="font-bold text-slate-900">{{ exercise.reps }}</p>
-                        </div>
-                        <div class="bg-white p-2 rounded" *ngIf="exercise.restSeconds">
-                          <p class="text-slate-600">Rest</p>
-                          <p class="font-bold text-slate-900">{{ exercise.restSeconds }}s</p>
-                        </div>
-                        <div class="bg-white p-2 rounded" *ngIf="exercise.rpe">
-                          <p class="text-slate-600">RPE</p>
-                          <p class="font-bold text-slate-900">{{ exercise.rpe }}/10</p>
-                        </div>
-                      </div>
-
-                      <div *ngIf="exercise.category" class="mb-2">
-                        <span class="text-xs bg-purple-200 text-purple-800 px-2 py-1 rounded">{{ exercise.category }}</span>
-                      </div>
-
-                      <p *ngIf="exercise.notes" class="text-sm text-slate-700 bg-white p-2 rounded mb-2">
-                        <strong>Notes:</strong> {{ exercise.notes }}
+                      <h2 class="text-2xl font-black text-white mb-1">{{ activeSubscription()?.packageName }}</h2>
+                      <p class="text-white/80 text-sm">{{ activeSubscription()?.packageDescription }}</p>
+                    </div>
+                    <div class="text-right">
+                      <p class="text-white/70 text-xs font-semibold mb-1">TOTAL PAID</p>
+                      <p class="text-xl font-black text-white">
+                        {{ activeSubscription()?.currency }} {{ activeSubscription()?.amountPaid | number:'1.2-2' }}
                       </p>
+                    </div>
+                  </div>
 
-                      <a *ngIf="exercise.videoDemoUrl"
-                        [href]="exercise.videoDemoUrl"
-                        target="_blank"
-                        class="inline-block text-sm text-blue-600 hover:text-blue-800 font-semibold">
-                        📹 Watch Demo
-                      </a>
+                  <!-- Key Info Grid -->
+                  <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                    <div class="bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/20">
+                      <p class="text-white/70 text-xs font-semibold uppercase tracking-wide mb-1">Trainer</p>
+                      <p class="text-white font-bold text-sm">{{ activeSubscription()?.trainerName }}</p>
+                    </div>
+                    <div class="bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/20">
+                      <p class="text-white/70 text-xs font-semibold uppercase tracking-wide mb-1">Start Date</p>
+                      <p class="text-white font-bold text-sm">{{ activeSubscription()?.startDate | date:'MMM dd' }}</p>
+                    </div>
+                    <div class="bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/20">
+                      <p class="text-white/70 text-xs font-semibold uppercase tracking-wide mb-1">End Date</p>
+                      <p class="text-white font-bold text-sm">{{ activeSubscription()?.currentPeriodEnd | date:'MMM dd' }}</p>
+                    </div>
+                    <div class="bg-gradient-to-br from-orange-500/20 to-red-500/20 backdrop-blur-sm rounded-lg p-3 border border-orange-400/30">
+                      <p class="text-orange-200 text-xs font-semibold uppercase tracking-wide mb-1">Days Left</p>
+                      <p class="text-white font-black text-lg">{{ activeSubscription()?.daysRemaining }}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Benefits Section -->
+              <div class="p-4 md:p-6 border-t border-white/10">
+                <h3 class="text-lg font-bold text-white mb-4">What's Included</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <!-- Benefit 1 -->
+                  <div class="bg-white/5 border border-white/10 rounded-lg p-4 hover:bg-white/10 transition">
+                    <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-500 to-cyan-500 flex items-center justify-center mb-3">
+                      <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                      </svg>
+                    </div>
+                    <h4 class="text-white font-bold mb-1 text-sm">Workout Plans</h4>
+                    <p class="text-slate-400 text-xs">Personalized programs</p>
+                  </div>
+
+                  <!-- Benefit 2 -->
+                  <div class="bg-white/5 border border-white/10 rounded-lg p-4 hover:bg-white/10 transition">
+                    <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center mb-3">
+                      <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                      </svg>
+                    </div>
+                    <h4 class="text-white font-bold mb-1 text-sm">Expert Support</h4>
+                    <p class="text-slate-400 text-xs">Pro trainers</p>
+                  </div>
+
+                  <!-- Benefit 3 -->
+                  <div class="bg-white/5 border border-white/10 rounded-lg p-4 hover:bg-white/10 transition">
+                    <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-pink-500 to-orange-500 flex items-center justify-center mb-3">
+                      <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                      </svg>
+                    </div>
+                    <h4 class="text-white font-bold mb-1 text-sm">Progress Track</h4>
+                    <p class="text-slate-400 text-xs">Analytics</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Timeline Info -->
+              <div class="px-4 md:px-6 py-4 bg-white/5 border-t border-white/10">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
+                      <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                      </svg>
+                    </div>
+                    <div>
+                      <p class="text-slate-400 text-xs">Since</p>
+                      <p class="text-white font-bold text-sm">{{ activeSubscription()?.startDate | date:'MMM d, yyyy' }}</p>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-lg bg-red-500/20 flex items-center justify-center flex-shrink-0">
+                      <svg class="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                      </svg>
+                    </div>
+                    <div>
+                      <p class="text-slate-400 text-xs">Expires</p>
+                      <p class="text-white font-bold text-sm">{{ activeSubscription()?.currentPeriodEnd | date:'MMM d, yyyy' }}</p>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            <!-- No week selected -->
-            <div *ngIf="!selectedWeek()" class="bg-white rounded-lg shadow-lg p-12 text-center">
-              <p class="text-slate-600 mb-4">Select a week to view the workout program</p>
+            <!-- Add More Packages Card -->
+            <div class="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-md border border-dashed border-white/30 rounded-xl overflow-hidden shadow-xl flex items-center justify-center p-6 hover:bg-white/10 transition cursor-pointer" (click)="navigateToPackages()">
+              <div class="text-center">
+                <div class="w-16 h-16 rounded-full bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center mx-auto mb-4">
+                  <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                  </svg>
+                </div>
+                <h3 class="text-white font-bold text-lg mb-2">Add More Packages</h3>
+                <p class="text-slate-400 text-sm mb-4">Subscribe to additional packages to diversify your fitness journey</p>
+                <span class="inline-block bg-gradient-to-r from-amber-500 to-orange-500 text-white px-4 py-2 rounded-lg text-sm font-semibold">Browse Packages</span>
+              </div>
             </div>
           </div>
-        </div>
 
-        <!-- Action Buttons -->
-        <div *ngIf="activeSubscription()" class="mt-8 flex gap-4 justify-center">
-          <a routerLink="/dashboard" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition">
-            Back to Dashboard
-          </a>
-          <button
-            (click)="cancelSubscription()"
-            class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-6 rounded-lg transition">
-            Cancel Subscription
-          </button>
-        </div>
-
-        <!-- Workout Dialog Modal -->
-        <div *ngIf="showWorkoutDialog()" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div class="bg-white rounded-lg shadow-2xl max-w-2xl w-full max-h-screen overflow-y-auto">
-            <!-- Modal Header -->
-            <div class="bg-gradient-to-r from-green-500 to-emerald-500 px-8 py-6 text-white sticky top-0">
-              <div class="flex justify-between items-center">
-                <div>
-                  <h2 class="text-2xl font-bold">{{ selectedDay()?.title }}</h2>
-                  <p class="text-green-100 mt-1" *ngIf="selectedDay()?.notes">{{ selectedDay()?.notes }}</p>
-                </div>
-                <button
-                  (click)="closeWorkoutDialog()"
-                  class="text-white hover:bg-white hover:bg-opacity-20 rounded-full p-2 transition">
-                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                  </svg>
-                </button>
+          <!-- Action Buttons -->
+          <div class="flex gap-4 justify-center animate-slideUp" style="animation-delay: 0.2s;">
+            <a routerLink="/dashboard" 
+              class="relative overflow-hidden rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 p-1 transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/50">
+              <div class="relative bg-slate-900 rounded-[6px] px-8 py-3 flex items-center justify-center gap-2 font-bold text-white">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-3m2 3l2-3m2 3l2-3m2-4l2 3m-2-3V7m6 0v10m6-10v10m0 0l-2-3m2 3l-2-3"></path>
+                </svg>
+                Back to Dashboard
               </div>
-            </div>
-
-            <!-- Modal Content -->
-            <div class="p-8">
-              <!-- Ready Confirmation -->
-              <div class="bg-blue-50 border-l-4 border-blue-500 p-6 rounded mb-6">
-                <h3 class="text-lg font-bold text-blue-900 mb-2">Are you ready to start this workout?</h3>
-                <p class="text-blue-700">Make sure you have the equipment ready and sufficient time to complete all exercises.</p>
+            </a>
+            <button
+              (click)="cancelSubscription()"
+              class="relative overflow-hidden rounded-lg bg-gradient-to-r from-red-500 to-red-600 p-1 transition-all duration-300 hover:shadow-lg hover:shadow-red-500/50">
+              <div class="relative bg-slate-900 rounded-[6px] px-8 py-3 flex items-center justify-center gap-2 font-bold text-white">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                </svg>
+                Cancel Subscription
               </div>
-
-              <!-- Workout Summary -->
-              <div class="mb-6">
-                <h4 class="text-lg font-bold text-slate-900 mb-4">Workout Summary</h4>
-                <div class="grid grid-cols-3 gap-4">
-                  <div class="bg-slate-100 p-4 rounded text-center">
-                    <p class="text-2xl font-bold text-slate-900">{{ selectedDay()?.exercises?.length }}</p>
-                    <p class="text-sm text-slate-600">Exercises</p>
-                  </div>
-                  <div class="bg-slate-100 p-4 rounded text-center">
-                    <p class="text-2xl font-bold text-slate-900">~45-60</p>
-                    <p class="text-sm text-slate-600">Est. Duration (min)</p>
-                  </div>
-                  <div class="bg-slate-100 p-4 rounded text-center">
-                    <p class="text-2xl font-bold text-slate-900">{{ selectedDayTotalSets() }}</p>
-                    <p class="text-sm text-slate-600">Total Sets</p>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Exercise List Preview -->
-              <div class="mb-6">
-                <h4 class="text-lg font-bold text-slate-900 mb-4">Exercises</h4>
-                <div class="space-y-3">
-                  <div *ngFor="let exercise of selectedDay()?.exercises" class="bg-slate-50 p-4 rounded-lg border border-slate-200">
-                    <div class="flex items-start justify-between">
-                      <div class="flex-1">
-                        <h5 class="font-bold text-slate-900">{{ exercise.excersiceName }}</h5>
-                        <p class="text-sm text-slate-600 mt-1">
-                          {{ exercise.sets }} sets × {{ exercise.reps }} reps
-                          <span *ngIf="exercise.restSeconds" class="ml-2">• Rest: {{ exercise.restSeconds }}s</span>
-                        </p>
-                      </div>
-                      <span class="text-xs bg-green-200 text-green-800 px-2 py-1 rounded whitespace-nowrap ml-2">{{ exercise.category }}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Action Buttons -->
-              <div class="flex gap-4">
-                <button
-                  (click)="closeWorkoutDialog()"
-                  class="flex-1 px-6 py-3 border-2 border-slate-300 text-slate-700 font-bold rounded-lg hover:bg-slate-100 transition">
-                  Cancel
-                </button>
-                <button
-                  (click)="startWorkout(selectedDay()!)"
-                  class="flex-1 px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white font-bold rounded-lg hover:shadow-lg transition">
-                  ✓ Start Workout
-                </button>
-              </div>
-            </div>
+            </button>
           </div>
         </div>
       </div>
     </div>
-  `
+  `,
+  styles: [`
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    :host ::ng-deep {
+      .animate-fadeIn {
+        animation: fadeIn 0.6s ease-out;
+      }
+
+      .animate-slideDown {
+        animation: slideDown 0.6s ease-out forwards;
+        opacity: 0;
+      }
+
+      .animate-slideUp {
+        animation: slideUp 0.6s ease-out forwards;
+        opacity: 0;
+      }
+    }
+  `]
 })
 export class SubscriptionsComponent implements OnInit, OnDestroy {
   private subscriptionService = inject(SubscriptionService);
   private programService = inject(ProgramService);
   private router = inject(Router);
-  private workoutService = inject(WorkoutService);
   private destroy$ = new Subject<void>();
 
   // State signals
@@ -472,10 +417,8 @@ export class SubscriptionsComponent implements OnInit, OnDestroy {
   startWorkout(day: ProgramDay) {
     // Close the dialog first
     this.closeWorkoutDialog();
-    // Start workout in service
-    this.workoutService.startWorkout(day);
     // Navigate to workout day page
-    this.router.navigate(['/workout/day']);
+    this.router.navigate(['/programs', day.id]);
   }
 
   viewDayExercises(day: ProgramDay) {
@@ -500,4 +443,7 @@ export class SubscriptionsComponent implements OnInit, OnDestroy {
         });
     }
   }
-}
+
+  navigateToPackages() {
+    this.router.navigate(['/packages']);
+  }}

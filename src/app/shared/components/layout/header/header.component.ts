@@ -22,9 +22,6 @@ import { User } from '../../../../core/models';
 
           <!-- Navigation Links -->
           <nav class="hidden md:flex items-center gap-6 flex-1 mx-8">
-            <a routerLink="/packages" class="text-gray-700 hover:text-sky-600 font-medium transition">
-              Packages
-            </a>
             <a routerLink="/workouts/history" class="text-gray-700 hover:text-sky-600 font-medium transition">
               Workout History
             </a>

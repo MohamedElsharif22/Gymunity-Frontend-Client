@@ -43,12 +43,18 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
                 <h2 class="text-2xl font-bold text-gray-900">Select a Training Week</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                   @for (week of weeks(); track week.id) {
-                    <button
-                      (click)="selectWeek(week)"
-                      class="text-left bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition cursor-pointer p-4 hover:bg-sky-50">
-                      <h3 class="text-lg font-bold text-gray-900">{{ week.title }}</h3>
-                      <p class="text-sm text-sky-600 font-medium mt-2">Click to load days →</p>
-                    </button>
+                    <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition p-4 space-y-4">
+                      <div>
+                        <p class="text-sm text-gray-500 font-medium uppercase mb-1">Week</p>
+                        <h3 class="text-2xl font-bold text-gray-900">{{ week.weekNumber }}</h3>
+                        <p class="text-sm text-gray-600 mt-1">{{ week.title }}</p>
+                      </div>
+                      <button
+                        (click)="selectWeek(week)"
+                        class="w-full bg-sky-600 hover:bg-sky-700 text-white font-bold py-2 px-4 rounded-lg transition">
+                        Load Days →
+                      </button>
+                    </div>
                   }
                 </div>
               </div>

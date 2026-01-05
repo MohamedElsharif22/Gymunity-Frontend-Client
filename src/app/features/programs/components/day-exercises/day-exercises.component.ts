@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, inject, signal, ChangeDetectionStrategy }
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ProgramService, ProgramDay } from '../../services/program.service';
-import { WorkoutService } from '../../../workout/services/workout.service';
+import { WorkoutStateService } from '../../../workout/services/workout-state.service';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
@@ -55,7 +55,7 @@ export class ProgramDayExercisesComponent implements OnInit, OnDestroy {
 	private route = inject(ActivatedRoute);
 	private router = inject(Router);
 	private programService = inject(ProgramService);
-	private workoutService = inject(WorkoutService);
+	private workoutStateService = inject(WorkoutStateService);
 
 	private destroy$ = new Subject<void>();
 
@@ -98,32 +98,40 @@ export class ProgramDayExercisesComponent implements OnInit, OnDestroy {
 		const dayData = this.day();
 		if (!dayData) return;
 
-		// Start or resume a workout session for this day and jump to selected exercise
-		this.workoutService.startWorkout(dayData as any);
-		try {
-			(this.workoutService as any).currentExerciseIndex.set(index);
-		} catch {}
-
-		// Navigate to execute route for the exercise
 		const exercise = dayData.exercises?.[index] as any;
 		const exerciseId = exercise?.exerciseId ?? exercise?.id ?? null;
-		if (exerciseId) {
-			this.router.navigate(['/workout/execute', exerciseId]);
-		} else {
-			this.router.navigate(['/workout/execute']);
+
+		if (!exerciseId) return;
+
+		// Initialize workout state if not already done
+		if (!this.workoutStateService.session()) {
+			const dayId = dayData.id || (this.route.snapshot.paramMap.get('dayId') || this.route.snapshot.paramMap.get('id'));
+			this.workoutStateService.initializeWorkout(
+				Number(dayId),
+				dayData.exercises?.map((ex: any) => ({
+					id: ex.exerciseId ?? ex.id,
+					sets: Number(ex.sets),
+					reps: ex.reps
+				})) || []
+			);
 		}
+
+		this.router.navigate(['/exercise', exerciseId, 'execute']);
 	}
 
 	isExerciseCompleted(index: number): boolean {
-		const session = this.workoutService.currentWorkoutSession();
-		if (!session) return false;
-		return !!session.exercises[index]?.completed;
+		const dayData = this.day();
+		if (!dayData || !dayData.exercises) return false;
+		const exercise = dayData.exercises[index] as any;
+		const exerciseId = exercise?.exerciseId ?? exercise?.id;
+		return this.workoutStateService.isExerciseCompleted(exerciseId);
 	}
 
 	isExerciseLocked(index: number): boolean {
-		const session = this.workoutService.currentWorkoutSession();
-		if (!session) return false;
-		if (index === 0) return false;
-		return !session.exercises[index - 1]?.completed;
+		const dayData = this.day();
+		if (!dayData || !dayData.exercises) return false;
+		const exercise = dayData.exercises[index] as any;
+		const exerciseId = exercise?.exerciseId ?? exercise?.id;
+		return this.workoutStateService.isExerciseLocked(exerciseId);
 	}
 }

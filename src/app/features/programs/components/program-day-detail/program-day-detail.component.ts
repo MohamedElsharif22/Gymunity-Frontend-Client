@@ -1,8 +1,9 @@
-import { Component, OnInit, inject, signal, DestroyRef, computed } from '@angular/core';
+import { Component, OnInit, inject, signal, computed, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ProgramService, ProgramDay, Exercise } from '../../services/program.service';
-import { ExerciseStateService } from '../../services/exercise-state.service';
+import { WorkoutStateService } from '../../../workout/services/workout-state.service';
+import { WorkoutHistoryService } from '../../../workout/services/workout-history.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
@@ -40,7 +41,17 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
         @else if (day()) {
           <div class="space-y-6">
             <!-- Day Header -->
-            <div class="bg-gradient-to-r from-sky-600 to-sky-700 rounded-lg shadow-lg p-8 text-white">
+            <div class="bg-gradient-to-r from-sky-600 to-sky-700 rounded-lg shadow-lg p-8 text-white relative">
+              <!-- Completion Badge -->
+              @if (isDayCompleted()) {
+                <div class="absolute top-4 right-4 bg-green-500 text-white rounded-full p-3 flex items-center gap-2">
+                  <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                  </svg>
+                  <span class="font-semibold">Completed</span>
+                </div>
+              }
+
               <h1 class="text-4xl font-bold mb-2">{{ day()?.title }}</h1>
               <div class="flex items-center gap-4 mt-4">
                 <span class="bg-white bg-opacity-30 px-4 py-2 rounded-full font-semibold">
@@ -48,9 +59,6 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
                 </span>
                 <span class="bg-white bg-opacity-30 px-4 py-2 rounded-full font-semibold">
                   {{ exercises().length }} Exercises
-                </span>
-                <span class="bg-white bg-opacity-30 px-4 py-2 rounded-full font-semibold">
-                  ⏱️ {{ totalWorkoutTime() }} min
                 </span>
               </div>
               @if (day()?.notes) {
@@ -61,9 +69,16 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
             <!-- Exercises List -->
             <div class="space-y-4">
               @for (exercise of exercises(); track exercise.exerciseId) {
-                <div
-                  (click)="startExerciseExecution(exercise.exerciseId)"
-                  class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition cursor-pointer">
+                <div [class.opacity-60]="isExerciseCompleted(exercise.exerciseId)" class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition cursor-pointer relative" (click)="startExerciseExecution(exercise.exerciseId)">
+                  <!-- Completion Badge -->
+                  @if (isExerciseCompleted(exercise.exerciseId)) {
+                    <div class="absolute top-4 right-4 bg-green-500 text-white rounded-full p-2 z-10">
+                      <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                      </svg>
+                    </div>
+                  }
+
                   <div class="grid grid-cols-1 md:grid-cols-4 gap-6 p-6">
                     <!-- Exercise Info & Image -->
                     <div class="md:col-span-2">
@@ -117,10 +132,6 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
                           <p class="text-xs text-gray-600 uppercase font-semibold">Reps</p>
                           <p class="text-2xl font-bold text-sky-600">{{ exercise.reps }}</p>
                         </div>
-                        <div class="bg-blue-50 p-3 rounded-lg">
-                          <p class="text-xs text-gray-600 uppercase font-semibold">Total Reps</p>
-                          <p class="text-2xl font-bold text-blue-600">{{ getTotalReps(exercise) }}</p>
-                        </div>
                       </div>
                     </div>
 
@@ -130,10 +141,6 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
                         <div class="bg-gray-50 p-3 rounded-lg">
                           <p class="text-xs text-gray-600 uppercase font-semibold">Rest</p>
                           <p class="text-2xl font-bold text-sky-600">{{ exercise.restSeconds }}s</p>
-                        </div>
-                        <div class="bg-green-50 p-3 rounded-lg">
-                          <p class="text-xs text-gray-600 uppercase font-semibold">Exercise Time</p>
-                          <p class="text-lg font-bold text-green-600">{{ getExerciseTime(exercise) }} min</p>
                         </div>
 
                         <!-- Additional Parameters -->
@@ -169,8 +176,11 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
               </button>
               <button
                 (click)="startWorkout()"
+                [disabled]="isDayCompleted()"
+                [class.opacity-50]="isDayCompleted()"
+                [class.cursor-not-allowed]="isDayCompleted()"
                 class="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded-lg transition">
-                Start Workout
+                {{ isDayCompleted() ? '✓ Already Completed' : 'Start Workout' }}
               </button>
             </div>
           </div>
@@ -193,7 +203,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 })
 export class ProgramDayDetailComponent implements OnInit {
   private programService = inject(ProgramService);
-  private exerciseStateService = inject(ExerciseStateService);
+  private workoutStateService = inject(WorkoutStateService);
+  private workoutHistoryService = inject(WorkoutHistoryService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private destroyRef = inject(DestroyRef);
@@ -204,14 +215,23 @@ export class ProgramDayDetailComponent implements OnInit {
   programId!: number;
   dayId!: number;
 
-  // Computed total workout time
-  totalWorkoutTime = computed(() => {
-    const totalSeconds = this.exercises().reduce((sum, exercise) => {
-      const exerciseTime = this.getExerciseTimeSeconds(exercise);
-      return sum + exerciseTime;
-    }, 0);
-    return Math.ceil(totalSeconds / 60); // Convert to minutes
+  // Computed signal to track completed exercises in current session
+  completedExerciseIds = computed(() => {
+    const session = this.workoutStateService.session();
+    if (!session || !session.completedExerciseIds) {
+      return [];
+    }
+    return session.completedExerciseIds;
   });
+
+  // Check if day is completed from workout history
+  isDayCompleted = computed(() => {
+    return this.workoutHistoryService.isDayCompleted(this.dayId);
+  });
+
+  isExerciseCompleted = (exerciseId: number) => {
+    return this.completedExerciseIds().includes(exerciseId);
+  };
 
   ngOnInit() {
     // Get day data from navigation state
@@ -254,45 +274,40 @@ export class ProgramDayDetailComponent implements OnInit {
     });
   }
 
-  // Calculate total reps for an exercise
-  getTotalReps(exercise: Exercise): number {
-    const sets = parseInt(exercise.sets, 10) || 0;
-    const reps = parseInt(exercise.reps, 10) || 0;
-    return sets * reps;
-  }
+  // Data comes from selected day in parent component, no API call needed
 
-  // Calculate total time for a single exercise in minutes
-  getExerciseTime(exercise: Exercise): string {
-    const seconds = this.getExerciseTimeSeconds(exercise);
-    const minutes = Math.ceil(seconds / 60);
-    return minutes.toString();
-  }
+  startWorkout() {
+    const exercisesData = this.exercises().map((ex: any) => ({
+      id: ex.exerciseId ?? ex.id,
+      sets: Number(ex.sets),
+      reps: ex.reps
+    }));
 
-  // Calculate total time for a single exercise in seconds
-  private getExerciseTimeSeconds(exercise: Exercise): number {
-    // Estimate: 2 seconds per rep + rest time between sets
-    const secondsPerRep = 2;
-    const sets = parseInt(exercise.sets, 10) || 0;
-    const reps = parseInt(exercise.reps, 10) || 0;
-    const timePerSet = (reps * secondsPerRep) + exercise.restSeconds;
-    const totalTime = sets * timePerSet;
-    return totalTime;
+    console.log('🏋️ STARTING WORKOUT');
+    console.log(`📋 Total Exercises: ${exercisesData.length}`);
+    console.log('Exercises:', exercisesData);
+
+    // Initialize workout session with all exercises
+    this.workoutStateService.initializeWorkout(this.dayId, exercisesData);
+
+    console.log(`✅ Workout initialized for Day ID: ${this.dayId}`);
+    console.log(`🎯 Starting with first exercise...`);
+
+    // Navigate to the first exercise
+    if (exercisesData.length > 0) {
+      const firstExerciseId = exercisesData[0].id;
+      console.log(`➡️ Navigating to Exercise 1 (ID: ${firstExerciseId})`);
+      this.router.navigate(['/exercise', firstExerciseId, 'execute'], {
+        queryParams: { dayId: this.dayId, programId: this.programId }
+      });
+    }
   }
 
   startExerciseExecution(exerciseId: number) {
-    // Find the exercise data from the loaded exercises
-    const exerciseData = this.exercises().find(e => e.exerciseId === exerciseId);
-    // Store in service before navigating
-    if (exerciseData) {
-      this.exerciseStateService.setCurrentExercise(exerciseData);
-    }
-    // Navigate to exercise detail page
-    this.router.navigate(['/programs', this.programId, 'days', this.dayId, 'exercise', exerciseId]);
-  }
-
-  startWorkout() {
-    // Navigate to workout tracking component
-    this.router.navigate(['/programs', this.programId, 'days', this.dayId, 'workout']);
+    // Navigate to exercise execution page with dayId and programId as query params
+    this.router.navigate(['/exercise', exerciseId, 'execute'], {
+      queryParams: { dayId: this.dayId, programId: this.programId }
+    });
   }
 
   goToDetail() {
