@@ -1,8 +1,8 @@
+import { HomeClientService } from './../../trainers/services/home-client.service';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { Package, PackageDetails } from '../../../core/models';
-
 @Component({
   selector: 'app-packages',
   standalone: true,
@@ -110,12 +110,13 @@ import { Package, PackageDetails } from '../../../core/models';
 })
 export class PackagesComponent implements OnInit {
   private router = inject(Router);
-
+  private homeClientService = inject(HomeClientService);
   packages = signal<PackageDetails[]>([]);
   isLoading = signal(false);
 
   ngOnInit() {
     // Note: loadPackages() method removed - packages should be loaded from API
+    this.loadPackages();
     // This component is pending implementation to fetch packages from backend
   }
 
@@ -135,5 +136,20 @@ export class PackagesComponent implements OnInit {
 
   subscribeToPackage(packageId: number) {
     this.router.navigate(['/packages', packageId]);
+  }
+
+  private loadPackages() {
+    this.isLoading.set(true);
+    this.homeClientService.getAllPackages()
+      .subscribe({
+        next: (response) => {
+          this.packages.set(response);
+          this.isLoading.set(false);
+        },
+        error: (error) => {
+          console.error('Error loading packages:', error);
+          this.isLoading.set(false);
+        }
+      });
   }
 }

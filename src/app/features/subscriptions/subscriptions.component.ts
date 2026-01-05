@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, inject, signal, computed, ChangeDetection
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { SubscriptionService, SubscriptionResponse } from '../packages/services/subscription.service';
-import { ProgramService } from '../classes/services/program.service';
+import { ProgramService } from '../programs/services/program.service';
 import { Program, ProgramWeek, ProgramDay, DayExercise } from '../../core/models';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
@@ -293,7 +293,6 @@ export class SubscriptionsComponent implements OnInit, OnDestroy {
 
           if (active) {
             this.activeSubscription.set(active);
-            this.loadPackagePrograms();
           }
           this.isLoading.set(false);
         },
@@ -302,128 +301,6 @@ export class SubscriptionsComponent implements OnInit, OnDestroy {
           this.isLoading.set(false);
         }
       });
-  }
-
-  private loadPackagePrograms() {
-    // Get all programs and filter by package
-    this.programService.getAllActivePrograms()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (programs: any[]) => {
-          if (programs && programs.length > 0) {
-            // Load weeks for the first program
-            this.loadProgramWeeks(programs[0].id);
-          }
-        },
-        error: (err) => {
-          console.error('Error loading programs:', err);
-        }
-      });
-  }
-
-  private currentProgramId: number | null = null;
-
-  private loadProgramWeeks(programId: number) {
-    this.currentProgramId = programId;
-    this.programService.getProgramWeeks(programId)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (weeks: any[]) => {
-          // weeks should already have the structure from API
-          this.programWeeks.set(weeks);
-          // Select first week by default and load its days
-          if (weeks && weeks.length > 0) {
-            const firstWeek = weeks[0];
-            this.selectedWeek.set(firstWeek);
-            // Load all days for the program (not per week)
-            this.loadAllProgramDays(programId);
-          }
-        },
-        error: (err) => {
-          console.error('Error loading program weeks:', err);
-        }
-      });
-  }
-
-  private loadAllProgramDays(programId: number) {
-    // Load all days for the program
-    this.programService.getProgramDays(programId)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (daysData: any[]) => {
-          console.log('[SubscriptionsComponent] Days data received:', daysData);
-          console.log('[SubscriptionsComponent] Program weeks:', this.programWeeks());
-
-          // daysData should be an array of all days for the program
-          if (daysData && daysData.length > 0) {
-            // Group days by week
-            const weeks = this.programWeeks();
-            weeks.forEach(week => {
-              // Log to debug the grouping
-              console.log(`[SubscriptionsComponent] Looking for days for week ${week.id} (weekNumber: ${week.weekNumber})`);
-
-              // Filter days that belong to this week
-              const matchedDays = daysData.filter(day => {
-                const match = day.programWeekId === week.id;
-                console.log(`  Day ${day.id} (weekId: ${day.programWeekId}) matches: ${match}`);
-                return match;
-              });
-
-              console.log(`  Found ${matchedDays.length} days for week ${week.id}`);
-              week.days = matchedDays;
-            });
-            this.programWeeks.set([...weeks]);
-
-            // Update selected week with its days
-            const selectedWeek = this.selectedWeek();
-            if (selectedWeek) {
-              selectedWeek.days = daysData.filter(day => day.programWeekId === selectedWeek.id);
-              this.selectedWeek.set({ ...selectedWeek });
-            }
-          } else {
-            console.log('[SubscriptionsComponent] No days data received');
-          }
-        },
-        error: (err) => {
-          console.error('Error loading program days:', err);
-        }
-      });
-  }
-
-  selectWeek(week: ProgramWeek) {
-    this.selectedWeek.set(week);
-    this.expandedDays.set([]); // Reset expanded days
-  }
-
-  toggleDayExpanded(dayId: number) {
-    const expanded = this.expandedDays();
-    if (expanded.includes(dayId)) {
-      this.expandedDays.set(expanded.filter(id => id !== dayId));
-    } else {
-      this.expandedDays.set([...expanded, dayId]);
-    }
-  }
-
-  openWorkoutDialog(day: ProgramDay) {
-    this.selectedDay.set(day);
-    this.showWorkoutDialog.set(true);
-  }
-
-  closeWorkoutDialog() {
-    this.showWorkoutDialog.set(false);
-    this.selectedDay.set(null);
-  }
-
-  startWorkout(day: ProgramDay) {
-    // Close the dialog first
-    this.closeWorkoutDialog();
-    // Navigate to workout day page
-    this.router.navigate(['/programs', day.id]);
-  }
-
-  viewDayExercises(day: ProgramDay) {
-    // Navigate to exercises view page
-    this.router.navigate(['/workout/exercises'], { state: { day } });
   }
 
   cancelSubscription() {
