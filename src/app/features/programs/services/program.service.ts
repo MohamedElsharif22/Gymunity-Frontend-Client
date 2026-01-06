@@ -69,9 +69,9 @@ export class ProgramService {
   /**
    * Get all available programs
    */
-  getPrograms(): Observable<Program[]> {
-    return this.apiService.get<Program[]>('/api/client/ClientPrograms');
-  }
+  // getPrograms(): Observable<Program[]> {
+  //   return this.apiService.get<Program[]>('/api/client/ClientPrograms');
+  // }
 
   /**
    * Get program by ID

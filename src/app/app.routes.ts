@@ -65,11 +65,6 @@ export const routes: Routes = [
         loadComponent: () => import('./features/trainers/components/trainer-detail/trainer-detail.component').then(m => m.TrainerDetailComponent)
       },
       {
-        path: 'programs',
-        canActivate: [profileCompletionGuard],
-        loadComponent: () => import('./features/programs/components/programs.component').then(m => m.ProgramsComponent)
-      },
-      {
         path: 'discover-programs',
         canActivate: [profileCompletionGuard],
         loadComponent: () => import('./features/programs/components/discover-programs/discover-programs.component').then(m => m.DiscoverProgramsComponent)
@@ -171,10 +166,6 @@ export const routes: Routes = [
         path: 'programs',
         canActivate: [authGuard],
         children: [
-          {
-            path: '',
-            loadComponent: () => import('./features/programs/components/programs-list/programs-list.component').then(m => m.ProgramsListComponent)
-          },
           {
             path: ':programId',
             loadComponent: () => import('./features/programs/components/program-details/program-details.component').then(m => m.ProgramDetailsComponent)

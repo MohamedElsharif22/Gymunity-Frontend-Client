@@ -74,13 +74,13 @@ export class DashboardService {
           return of([]);
         })
       ),
-      activePrograms: this.programsService.getPrograms().pipe(
-        map(programs => programs.slice(0, 6)),
-        catchError(err => {
-          console.warn('[DashboardService] Error loading programs:', err);
-          return of([]);
-        })
-      ),
+      // activePrograms: this.programsService.getPrograms().pipe(
+      //   map(programs => programs.slice(0, 6)),
+      //   catchError(err => {
+      //     console.warn('[DashboardService] Error loading programs:', err);
+      //     return of([]);
+      //   })
+      // ),
       isOnboardingComplete: this.clientLogsService.isOnboardingCompleted().pipe(
         catchError(err => {
           console.warn('[DashboardService] Error checking onboarding:', err);
@@ -131,10 +131,10 @@ export class DashboardService {
         map(workouts => workouts.slice(0, 5)),
         catchError(() => of([]))
       ),
-      activePrograms: this.programsService.getPrograms().pipe(
-        map(programs => programs.slice(0, 6)),
-        catchError(() => of([]))
-      ),
+      // activePrograms: this.programsService.getPrograms().pipe(
+      //   map(programs => programs.slice(0, 6)),
+      //   catchError(() => of([]))
+      // ),
       isOnboardingComplete: of(true)
     }).pipe(
       map(data => this.processDashboardData(data))
