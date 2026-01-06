@@ -70,6 +70,11 @@ export const routes: Routes = [
         loadComponent: () => import('./features/programs/components/discover-programs/discover-programs.component').then(m => m.DiscoverProgramsComponent)
       },
       {
+        path: 'my-active-programs',
+        canActivate: [profileCompletionGuard],
+        loadComponent: () => import('./features/programs/components/my-active-programs/my-active-programs.component').then(m => m.MyActiveProgramsComponent)
+      },
+      {
         path: 'programs/:id',
         canActivate: [profileCompletionGuard],
         loadComponent: () => import('./features/programs/components/program-detail/program-detail.component').then(m => m.ProgramDetailComponent)

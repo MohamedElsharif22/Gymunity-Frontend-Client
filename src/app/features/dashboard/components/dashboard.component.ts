@@ -173,9 +173,9 @@ import { DashboardService, DashboardData } from '../services/dashboard.service';
                     </div>
                     <h2 class="text-2xl font-bold text-gray-900">Start Exercise</h2>
                   </div>
-                  <a routerLink="/programs" 
+                  <a routerLink="/packages" 
                      class="flex items-center gap-2 text-sky-600 hover:text-sky-700 font-medium transition group">
-                    View Programs
+                    View the Packages
                     <svg class="w-5 h-5 group-hover:translate-x-1 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
                     </svg>
@@ -188,7 +188,7 @@ import { DashboardService, DashboardData } from '../services/dashboard.service';
                       Ready to start your workout? Select a program and begin your exercise session.
                     </p>
                     <div class="flex gap-3 justify-center">
-                      <a routerLink="/programs" 
+                      <a routerLink="/discover-programs" 
                          class="inline-flex items-center gap-2 bg-sky-600 hover:bg-sky-700 text-white px-8 py-4 rounded-lg font-semibold transition shadow-lg">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
@@ -199,23 +199,55 @@ import { DashboardService, DashboardData } from '../services/dashboard.service';
                   </div>
 
                   @if (activePrograms().length > 0) {
-                    <div class="space-y-3">
-                      <p class="text-sm font-semibold text-gray-700 px-2">Your Active Programs:</p>
-                      @for (program of activePrograms().slice(0, 3); track program.id) {
-                        <a [routerLink]="['/programs', program.id]" 
-                           class="group block border-2 border-gray-100 hover:border-sky-300 rounded-lg p-4 hover:bg-sky-50/50 transition">
-                          <div class="flex justify-between items-start">
-                            <div class="flex-1">
-                              <p class="font-bold text-gray-900 group-hover:text-sky-600 transition">{{ program.title }}</p>
-                              <p class="text-sm text-gray-600">{{ program.trainerUserName || 'Professional Trainer' }}</p>
-                              <p class="text-xs text-gray-500 mt-1">{{ program.durationWeeks }} weeks • {{ program.type }}</p>
-                            </div>
-                            <svg class="w-5 h-5 text-gray-400 group-hover:text-sky-600 group-hover:translate-x-1 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                    <div class="space-y-4">
+                      <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center gap-3">
+                          <div class="bg-indigo-100 rounded-lg p-2">
+                            <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
                             </svg>
                           </div>
+                          <h3 class="text-lg font-bold text-gray-900">Your Active Programs</h3>
+                        </div>
+                        <a routerLink="/my-active-programs" 
+                           class="text-sm text-indigo-600 hover:text-indigo-700 font-semibold flex items-center gap-1 transition">
+                          View All
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                          </svg>
                         </a>
-                      }
+                      </div>
+                      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        @for (program of activePrograms().slice(0, 4); track program.id) {
+                          <a [routerLink]="['/programs', program.id]" 
+                             class="group border-2 border-gray-100 hover:border-indigo-300 rounded-xl p-4 hover:bg-indigo-50/50 transition-all hover:shadow-md">
+                            <div class="flex justify-between items-start gap-3">
+                              <div class="flex-1 min-w-0">
+                                <p class="font-bold text-gray-900 group-hover:text-indigo-600 transition truncate">{{ program.title }}</p>
+                                <p class="text-sm text-gray-600 truncate">by {{ program.trainerUserName || 'Professional Trainer' }}</p>
+                                <p class="text-xs text-gray-500 mt-2">{{ program.durationWeeks }}w • {{ program.type }}</p>
+                              </div>
+                              <svg class="w-5 h-5 text-gray-400 group-hover:text-indigo-600 group-hover:translate-x-1 transition flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                              </svg>
+                            </div>
+                          </a>
+                        }
+                      </div>
+                    </div>
+                  } @else {
+                    <div class="text-center py-8 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl border-2 border-indigo-100">
+                      <svg class="w-12 h-12 text-indigo-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                      </svg>
+                      <p class="text-gray-600 font-medium mb-3">No Active Programs Yet</p>
+                      <a routerLink="/discover-programs" 
+                         class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-lg font-semibold transition shadow-md">
+                        Discover Programs
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                        </svg>
+                      </a>
                     </div>
                   }
                 </div>

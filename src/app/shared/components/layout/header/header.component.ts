@@ -1,9 +1,13 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, DestroyRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../../../core/services/auth.service';
+import { ProgramService } from '../../../../features/programs/services/program.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { catchError } from 'rxjs/operators';
+import { of } from 'rxjs';
 
 @Component({
   selector: 'app-header',
@@ -110,6 +114,24 @@ import { AuthService } from '../../../../core/services/auth.service';
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
               </svg>
             </button>
+
+            <!-- My Active Programs Icon -->
+            <div class="relative group">
+              <button (click)="navigateToActivePrograms()" class="relative p-2 hover:bg-gray-100 rounded-xl transition group cursor-pointer">
+                <svg class="w-6 h-6 text-gray-600 group-hover:text-sky-600 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                </svg>
+                @if (activePrograms().length > 0) {
+                  <span class="absolute top-1 right-1 w-5 h-5 bg-sky-500 text-white text-xs rounded-full flex items-center justify-center font-bold">
+                    {{ activePrograms().length }}
+                  </span>
+                }
+              </button>
+              <!-- Tooltip -->
+              <div class="absolute right-0 mt-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 -bottom-12 z-50">
+                My Active Programs ({{ activePrograms().length }})
+              </div>
+            </div>
 
             <!-- Notifications -->
             <button class="relative p-2 hover:bg-gray-100 rounded-xl transition group">
@@ -296,15 +318,37 @@ import { AuthService } from '../../../../core/services/auth.service';
 })
 export class HeaderComponent implements OnInit {
   private authService = inject(AuthService);
+  private programService = inject(ProgramService);
   private router = inject(Router);
+  private destroyRef = inject(DestroyRef);
   
   currentUser = this.authService.currentUser;
   searchQuery = signal('');
   showMobileSearch = signal(false);
   showMobileMenu = signal(false);
+  activePrograms = signal<any[]>([]);
 
   ngOnInit() {
-    // Component initialization
+    this.loadActivePrograms();
+  }
+
+  private loadActivePrograms() {
+    this.programService.getActivePrograms()
+      .pipe(
+        catchError((err: any) => {
+          console.warn('Error loading active programs, falling back to all programs:', err);
+          return this.programService.getPrograms();
+        }),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe({
+        next: (programs: any[]) => {
+          this.activePrograms.set(programs);
+        },
+        error: (err: any) => {
+          console.error('Error loading programs:', err);
+        }
+      });
   }
 
   getUserInitial(): string {
@@ -323,6 +367,10 @@ export class HeaderComponent implements OnInit {
 
   toggleMobileMenu() {
     this.showMobileMenu.update(val => !val);
+  }
+
+  navigateToActivePrograms() {
+    this.router.navigate(['/my-active-programs']);
   }
 
   logout() {
