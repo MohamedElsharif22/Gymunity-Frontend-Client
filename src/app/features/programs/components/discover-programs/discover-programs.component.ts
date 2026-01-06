@@ -2,7 +2,7 @@ import { Component, inject, signal, ChangeDetectionStrategy, OnInit, DestroyRef 
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { HomeClientService } from '../../../trainers/services/home-client.service';
-import { Program } from '../../../../core/models';
+import { ProgramService, Program } from '../../services/program.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 /**
@@ -114,15 +114,22 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
                   </div>
 
                   <!-- Trainer Info -->
-                  @if (program.trainerName) {
-                    <div class="mb-4 flex items-center gap-2">
-                      <div class="w-8 h-8 rounded-full bg-gradient-to-br from-sky-400 to-indigo-500 flex items-center justify-center text-white text-xs font-bold">
-                        {{ program.trainerName.charAt(0).toUpperCase() }}
+                  @if (program.trainerUserName) {
+                    <div class="mb-4 flex items-center justify-between">
+                      <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-sky-400 to-indigo-500 flex items-center justify-center text-white text-xs font-bold">
+                          {{ program.trainerUserName.charAt(0).toUpperCase() }}
+                        </div>
+                        <div>
+                          <p class="text-sm font-semibold text-gray-900">{{ program.trainerUserName }}</p>
+                          <p class="text-xs text-gray-500">Trainer</p>
+                        </div>
                       </div>
-                      <div>
-                        <p class="text-sm font-semibold text-gray-900">{{ program.trainerName }}</p>
-                        <p class="text-xs text-gray-500">Trainer</p>
-                      </div>
+                      <button
+                        (click)="viewTrainerProfile(program.trainerProfileId); $event.stopPropagation()"
+                        class="px-3 py-1 bg-gray-200 hover:bg-gray-300 text-gray-900 text-sm font-medium rounded transition-colors">
+                        Profile
+                      </button>
                     </div>
                   }
 
@@ -161,8 +168,8 @@ export class DiscoverProgramsComponent implements OnInit {
     this.homeClientService.getAllPrograms().pipe(
       takeUntilDestroyed(this.destroyRef)
     ).subscribe({
-      next: (programs: Program[]) => {
-        this.programs.set(programs);
+      next: (programs: any[]) => {
+        this.programs.set(programs as Program[]);
         this.isLoading.set(false);
       },
       error: (err: unknown) => {
@@ -174,6 +181,19 @@ export class DiscoverProgramsComponent implements OnInit {
   }
 
   viewProgram(programId: number) {
-    this.router.navigate(['/discover/programs', programId]);
+    const program = this.programs().find(p => p.id === programId);
+    if (program && program.trainerProfileId) {
+      // Navigate to trainer's packages page using trainer ID
+      this.router.navigate(['/packages'], { 
+        queryParams: { trainerId: program.trainerProfileId } 
+      });
+    } else {
+      // Fallback to program details if trainer ID not available
+      this.router.navigate(['/discover/programs', programId]);
+    }
+  }
+
+  viewTrainerProfile(trainerProfileId: number) {
+    this.router.navigate(['/discover/trainers', trainerProfileId]);
   }
 }
