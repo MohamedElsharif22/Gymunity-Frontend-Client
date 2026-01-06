@@ -54,16 +54,18 @@ export class HomeClientService {
 
   /**
    * Get all trainers
+   * GET /api/client/homeclient/trainers
    */
-  getAllTrainers(): Observable<TrainerProfile[]> {
-    return this.apiService.get<TrainerProfile[]>('/api/homeclient/trainers');
+  getAllTrainers(): Observable<any[]> {
+    return this.apiService.get<any[]>('/api/homeclient/trainers');
   }
 
   /**
    * Get trainer by ID
+   * GET /api/client/homeclient/trainers/{id}
    */
-  getTrainerById(trainerId: number): Observable<TrainerProfile> {
-    return this.apiService.get<TrainerProfile>(`/api/homeclient/trainers/${trainerId}`);
+  getTrainerById(trainerId: number): Observable<any> {
+    return this.apiService.get<any>(`/api/homeclient/trainers/${trainerId}`);
   }
 
   // ==================== Programs ====================

@@ -22,12 +22,11 @@ import { takeUntil } from 'rxjs/operators';
  * Data source: TrainerProfileService.getTrainerProfile(trainerId)
  *
  * Features:
- * - Full trainer profile with cover image and photo
- * - Trainer stats (experience, ratings, clients, specializations)
- * - Video introduction (if available)
- * - Verification badge and suspension status
+ * - Full trainer profile with cover image
+ * - Trainer stats (experience, ratings, clients)
+ * - Verification badge
  * - Contact/booking buttons
- * - Package offerings (if available)
+ * - Pricing information
  */
 @Component({
   selector: 'app-trainer-detail',
@@ -88,27 +87,19 @@ import { takeUntil } from 'rxjs/operators';
             <div class="bg-white rounded-lg shadow-lg p-6 md:p-8 -mt-16 relative z-10">
               <!-- Profile Info Row -->
               <div class="flex flex-col md:flex-row items-start md:items-center gap-6">
-                <!-- Profile Photo -->
+                <!-- Avatar -->
                 <div class="flex-shrink-0">
-                  @if (trainer()!.profilePhotoUrl) {
-                    <img
-                      [src]="trainer()!.profilePhotoUrl"
-                      [alt]="trainer()!.handle"
-                      class="w-32 h-32 rounded-full object-cover border-4 border-white shadow-lg"
-                    />
-                  } @else {
-                    <div
-                      class="w-32 h-32 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-bold text-4xl border-4 border-white shadow-lg"
-                    >
-                      {{ trainer()!.fullName.charAt(0).toUpperCase() }}
-                    </div>
-                  }
+                  <div
+                    class="w-32 h-32 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-bold text-4xl border-4 border-white shadow-lg"
+                  >
+                    {{ trainer()!.userName.charAt(0).toUpperCase() }}
+                  </div>
                 </div>
 
                 <!-- Name and Basic Info -->
                 <div class="flex-1">
                   <div class="flex items-center gap-3 mb-2">
-                    <h1 class="text-3xl font-bold text-gray-900">{{ trainer()!.fullName }}</h1>
+                    <h1 class="text-3xl font-bold text-gray-900">{{ trainer()!.userName }}</h1>
                     @if (trainer()!.isVerified) {
                       <div class="flex items-center gap-1 bg-blue-100 text-blue-800 px-3 py-1 rounded-full">
                         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -170,29 +161,16 @@ import { takeUntil } from 'rxjs/operators';
               </button>
             </div>
 
-            <!-- Specializations Section -->
-            @if (trainer()!.specializations.length > 0) {
-              <div class="bg-white rounded-lg shadow p-6">
-                <h2 class="text-xl font-bold text-gray-900 mb-4">Specializations</h2>
-                <div class="flex flex-wrap gap-2">
-                  @for (spec of trainer()!.specializations; track spec) {
-                    <span class="bg-blue-100 text-blue-800 px-4 py-2 rounded-full font-medium">
-                      {{ spec }}
-                    </span>
-                  }
-                </div>
-              </div>
-            }
-
             <!-- Pricing Information -->
             @if (trainer()!.startingPrice) {
               <div class="bg-white rounded-lg shadow p-6">
                 <h2 class="text-xl font-bold text-gray-900 mb-4">Pricing</h2>
                 <div class="flex items-baseline gap-2">
+                  <span class="text-4xl font-bold text-gray-900">$</span>
                   <span class="text-4xl font-bold text-gray-900">
                     {{ trainer()!.startingPrice }}
                   </span>
-                  <span class="text-gray-600">{{ trainer()!.currency }} / session</span>
+                  <span class="text-gray-600">/ session</span>
                 </div>
                 <p class="text-sm text-gray-600 mt-2">Starting price for sessions</p>
               </div>
@@ -203,20 +181,6 @@ import { takeUntil } from 'rxjs/operators';
               <div class="bg-white rounded-lg shadow p-6">
                 <h2 class="text-xl font-bold text-gray-900 mb-4">About</h2>
                 <p class="text-gray-700 leading-relaxed">{{ trainer()!.bio }}</p>
-              </div>
-            }
-
-            <!-- Specializations Section -->
-            @if (trainer()!.specializations.length > 0) {
-              <div class="bg-white rounded-lg shadow p-6">
-                <h2 class="text-xl font-bold text-gray-900 mb-4">Specializations</h2>
-                <div class="flex flex-wrap gap-2">
-                  @for (spec of trainer()!.specializations; track spec) {
-                    <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
-                      {{ spec }}
-                    </span>
-                  }
-                </div>
               </div>
             }
           </div>

@@ -1,7 +1,8 @@
 import { Component, OnInit, inject, signal, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
-import { ProgramService, Program } from '../services/program.service';
+import { HomeClientService } from '../../trainers/services/home-client.service';
+import { Program } from '../../../core/models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
@@ -54,16 +55,16 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
                       <p class="font-semibold text-gray-900">{{ program.type }}</p>
                     </div>
                     <div>
-                      <p class="text-xs text-gray-600 uppercase">Exercises</p>
-                      <p class="font-semibold text-gray-900">{{ program.totalExercises }}</p>
+                      <p class="text-xs text-gray-600 uppercase">Duration</p>
+                      <p class="font-semibold text-gray-900">{{ program.durationWeeks }} weeks</p>
                     </div>
                   </div>
 
                   <!-- Trainer Info -->
-                  @if (program.trainerUserName || program.trainerHandle) {
+                  @if (program.trainerName) {
                     <div class="mb-4 pb-4 border-b border-gray-200">
                       <p class="text-xs text-gray-600 uppercase">Trainer</p>
-                      <p class="font-semibold text-gray-900">{{ program.trainerUserName || program.trainerHandle }}</p>
+                      <p class="font-semibold text-gray-900">{{ program.trainerName || 'Unknown' }}</p>
                     </div>
                   }
 
@@ -71,7 +72,11 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
                   <div class="flex items-center justify-between">
                     <div>
                       <p class="text-xs text-gray-600 uppercase">Price</p>
-                      <p class="text-2xl font-bold text-sky-600"><span>$</span>{{ program.price.toFixed(2) }}</p>
+                      @if (program.price && program.price > 0) {
+                        <p class="text-2xl font-bold text-sky-600"><span>$</span>{{ program.price | number: '1.2-2' }}</p>
+                      } @else {
+                        <p class="text-2xl font-bold text-gray-400">Subscription</p>
+                      }
                     </div>
                     <button class="bg-sky-600 hover:bg-sky-700 text-white px-6 py-2 rounded-lg font-semibold transition">
                       View Details
@@ -99,7 +104,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
   styles: []
 })
 export class ProgramsComponent implements OnInit {
-  private programService = inject(ProgramService);
+  private homeClientService = inject(HomeClientService);
   private router = inject(Router);
   private destroyRef = inject(DestroyRef);
 
@@ -112,7 +117,7 @@ export class ProgramsComponent implements OnInit {
 
   private loadPrograms() {
     this.isLoading.set(true);
-    this.programService.getPrograms().pipe(
+    this.homeClientService.getAllPrograms().pipe(
       takeUntilDestroyed(this.destroyRef)
     ).subscribe({
       next: (programs: Program[]) => {

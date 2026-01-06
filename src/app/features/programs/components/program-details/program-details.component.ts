@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule, Router } from '@angular/router';
 import { ClientProgramsService } from '../../services/client-programs.service';
 import { TrainerDiscoveryService } from '../../../trainers/services/trainer-discovery.service';
-import { ProgramResponse, TrainerCard } from '../../../../core/models';
+import { ProgramResponse, TrainerProfile } from '../../../../core/models';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
@@ -119,69 +119,62 @@ import { takeUntil } from 'rxjs/operators';
                   <img
                     *ngIf="trainer()!.profilePhotoUrl"
                     [src]="trainer()!.profilePhotoUrl"
-                    [alt]="trainer()!.fullName"
+                    [alt]="trainer()!.userName || 'Trainer'"
                     class="w-20 h-20 rounded-full object-cover border-2 border-sky-200"
                   />
                   <div
                     *ngIf="!trainer()!.profilePhotoUrl"
                     class="w-20 h-20 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-bold text-2xl border-2 border-sky-200"
                   >
-                    {{ trainer()!.fullName.charAt(0).toUpperCase() }}
+                    {{ (trainer()!.userName || 'T').charAt(0).toUpperCase() }}
                   </div>
                 </div>
 
                 <!-- Trainer Info -->
                 <div class="flex-1">
                   <div class="flex items-center gap-2">
-                    <h4 class="text-xl font-bold text-gray-900">{{ trainer()!.fullName }}</h4>
-                    <svg *ngIf="trainer()!.isVerified" class="w-5 h-5 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                    </svg>
+                    <h4 class="text-xl font-bold text-gray-900">{{ trainer()!.userName || 'Unknown Trainer' }}</h4>
                   </div>
-                  <p class="text-sky-600 font-medium text-sm">@{{ trainer()!.handle }}</p>
+                  <p class="text-sky-600 font-medium text-sm mt-1">{{ trainer()!.specialization || 'Fitness Trainer' }}</p>
                   <p *ngIf="trainer()!.bio" class="text-gray-600 text-sm mt-2 max-w-md">{{ trainer()!.bio }}</p>
                 </div>
               </div>
 
               <!-- Stats -->
-              <div class="grid grid-cols-4 gap-3 mb-6 py-4 border-y border-sky-200">
+              <div class="grid grid-cols-3 gap-3 mb-6 py-4 border-y border-sky-200">
                 <div class="text-center">
-                  <p class="text-2xl font-bold text-gray-900">{{ trainer()!.yearsExperience }}</p>
+                  <p class="text-2xl font-bold text-gray-900">{{ trainer()!.yearsOfExperience || 0 }}</p>
                   <p class="text-xs text-gray-600">Years</p>
                 </div>
                 <div class="text-center">
                   <div class="flex items-center justify-center gap-1">
-                    <span class="text-lg font-bold text-gray-900">{{ trainer()!.ratingAverage.toFixed(1) }}</span>
+                    <span class="text-lg font-bold text-gray-900">{{ (trainer()!.rating || 0).toFixed(1) }}</span>
                     <svg class="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
                       <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.381-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                     </svg>
                   </div>
-                  <p class="text-xs text-gray-600">({{ trainer()!.totalReviews }})</p>
+                  <p class="text-xs text-gray-600">Rating</p>
                 </div>
                 <div class="text-center">
-                  <p class="text-2xl font-bold text-gray-900">{{ trainer()!.totalClients }}</p>
+                  <p class="text-2xl font-bold text-gray-900">{{ trainer()!.totalClients || 0 }}</p>
                   <p class="text-xs text-gray-600">Clients</p>
-                </div>
-                <div class="text-center">
-                  <p class="text-lg font-bold text-gray-900">{{ trainer()!.currency }} {{ trainer()!.startingPrice }}</p>
-                  <p class="text-xs text-gray-600">Starting</p>
                 </div>
               </div>
 
               <!-- Specializations -->
-              <div *ngIf="trainer()!.specializations && trainer()!.specializations.length > 0" class="mb-4">
+              <!-- <div *ngIf="trainer()!.specializations && trainer()!.specializations.length > 0" class="mb-4">
                 <p class="text-xs font-semibold text-gray-700 mb-2">Specializations</p>
                 <div class="flex flex-wrap gap-2">
                   <span *ngFor="let spec of trainer()!.specializations.slice(0, 4)" class="text-xs bg-sky-200 text-sky-800 px-2 py-1 rounded">
                     {{ spec }}
                   </span>
                 </div>
-              </div>
+              </div> -->
 
               <!-- Trainer Profile Link -->
               <div class="flex gap-3 pt-4 border-t border-sky-200">
                 <a
-                  [routerLink]="['/trainers', trainer()!.handle]"
+                  [routerLink]="['/trainers', trainer()!.userId]"
                   class="flex-1 bg-sky-600 hover:bg-sky-700 text-white font-semibold py-2 px-4 rounded-lg transition text-center text-sm"
                 >
                   View Full Profile
@@ -231,7 +224,7 @@ export class ProgramDetailsComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
 
   program = signal<ProgramResponse | null>(null);
-  trainer = signal<TrainerCard | null>(null);
+  trainer = signal<TrainerProfile | null>(null);
   loading = signal(false);
   trainerLoading = signal(false);
   error = signal<string | null>(null);
@@ -280,7 +273,8 @@ export class ProgramDetailsComponent implements OnInit, OnDestroy {
         next: (response) => {
           const trainer = response?.items?.[0];
           if (trainer) {
-            this.trainer.set(trainer);
+            // Cast TrainerCard to TrainerProfile (compatible types)
+            this.trainer.set(trainer as unknown as TrainerProfile);
             this.trainerLoading.set(false);
             console.log('[ProgramDetailsComponent] Trainer profile loaded:', trainer);
           } else {

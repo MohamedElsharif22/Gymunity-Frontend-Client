@@ -82,24 +82,17 @@ import { takeUntil, switchMap, map, catchError } from 'rxjs/operators';
                   <div class="flex items-center gap-2 flex-1 min-w-0">
                     <!-- Trainer Photo -->
                     <div class="flex-shrink-0">
-                      <img
-                        *ngIf="program.trainer && program.trainer.profilePhotoUrl"
-                        [src]="program.trainer.profilePhotoUrl"
-                        [alt]="program.trainer.fullName"
-                        class="w-8 h-8 rounded-full object-cover"
-                      />
                       <div
-                        *ngIf="!program.trainer || !program.trainer.profilePhotoUrl"
                         class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-bold text-xs"
                       >
-                        {{ (program.trainer?.fullName || program.trainerUserName || 'T').charAt(0).toUpperCase() }}
+                        {{ (program.trainer?.userName || program.trainerUserName || 'T').charAt(0).toUpperCase() }}
                       </div>
                     </div>
                     
                     <!-- Trainer Name & Handle -->
                     <div class="min-w-0">
                       <p class="text-sm font-semibold text-gray-900 truncate">
-                        {{ program.trainer?.fullName || program.trainerUserName || 'Unknown Trainer' }}
+                        {{ program.trainer?.userName || program.trainerUserName || 'Unknown Trainer' }}
                       </p>
                       <p *ngIf="program.trainer?.handle || program.trainerHandle" class="text-xs text-sky-600 font-medium truncate">
                         @{{ program.trainer?.handle || program.trainerHandle }}
@@ -178,7 +171,7 @@ export class ProgramsListComponent implements OnInit, OnDestroy {
               return this.trainerDiscoveryService.searchTrainers({ search: program.trainerHandle }).pipe(
                 map(response => {
                   const trainer = response?.items?.[0];
-                  console.log(`[ProgramsListComponent] Trainer found for handle "${program.trainerHandle}":`, trainer?.fullName);
+                  console.log(`[ProgramsListComponent] Trainer found for handle "${program.trainerHandle}":`, trainer?.userName);
                   return { ...program, trainer } as (ProgramResponse & { trainer?: TrainerCard });
                 }),
                 // On error, return program without trainer

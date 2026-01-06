@@ -7,11 +7,11 @@ import { TrainerCard, TrainerProfileDetailResponse } from '../../../core/models'
  * Trainer Profile Service
  * Handles API calls to retrieve detailed trainer profile information
  * 
- * Per backend TrainerDiscoveryController.GetTrainerProfile():
- * Endpoint: GET /api/client/TrainerDiscovery/{trainerId}
- * Response: TrainerProfileDetailResponse wrapper containing trainer data
+ * Per backend HomeClient endpoints:
+ * Endpoint: GET /api/client/homeclient/trainers/{id}
+ * Response: TrainerCard
  * 
- * Base endpoint: /api/client/TrainerDiscovery/{trainerId}
+ * Base endpoint: /api/client/homeclient/trainers/{id}
  * All endpoints require authentication (handled by AuthInterceptor)
  *
  * Follows Angular best practices with providedIn: 'root' and inject()
@@ -24,31 +24,26 @@ export class TrainerProfileService {
 
   /**
    * Get trainer profile by ID
-   * GET /api/client/TrainerDiscovery/{trainerId}
+   * GET /api/client/homeclient/trainers/{id}
    *
-   * Backend endpoint returns TrainerProfileDetailResponse:
-   * { data: TrainerCard, message?: string, statusCode?: number }
-   *
-   * This method unwraps the response and returns the TrainerCard directly
-   *
-   * @param trainerId - The user ID (string or number) of the trainer
-   * @returns Observable<TrainerCard> - Full trainer profile (unwrapped from response envelope)
+   * @param trainerId - The trainer ID (number or string)
+   * @returns Observable<TrainerCard> - Full trainer profile
    * @throws 404 Not Found if trainer profile doesn't exist
    * @throws 401 Unauthorized if not authenticated
    *
    * @example
-   * getTrainerProfile('trainer-123').subscribe(profile => {
-   *   console.log(profile.fullName, profile.specializations);
+   * getTrainerProfile('123').subscribe(profile => {
+   *   console.log(profile.userName, profile.bio);
    * })
    */
   getTrainerProfile(trainerId: number | string): Observable<TrainerCard> {
-    const id = typeof trainerId === 'number' ? trainerId.toString() : trainerId;
+    const id = typeof trainerId === 'number' ? trainerId : trainerId;
     console.log('[TrainerProfileService] Fetching trainer profile for trainerId:', id);
-    return this.apiService.get<TrainerProfileDetailResponse>(`/api/client/TrainerDiscovery/${id}`).pipe(
+    return this.apiService.get<TrainerCard>(`/api/homeclient/trainers/${id}`).pipe(
       map(response => {
-        if (response?.data) {
-          console.log('[TrainerProfileService] Profile loaded for:', response.data.fullName);
-          return response.data;
+        if (response) {
+          console.log('[TrainerProfileService] Profile loaded for:', response.userName);
+          return response;
         }
         throw new Error('Trainer profile data not found in response');
       })
@@ -57,18 +52,18 @@ export class TrainerProfileService {
 
   /**
    * Get trainer profile by User ID (alternative)
-   * GET /api/client/TrainerDiscovery/{userId}
+   * GET /api/client/homeclient/trainers/{id}
    *
-   * @param userId - The user ID (string) of the trainer
+   * @param userId - The user ID (can be numeric or string)
    * @returns Observable<TrainerCard> - Full trainer profile details
    * @throws 404 Not Found if trainer profile doesn't exist
    */
   getTrainerProfileByUserId(userId: string): Observable<TrainerCard> {
     console.log('[TrainerProfileService] Fetching trainer profile by userId:', userId);
-    return this.apiService.get<TrainerProfileDetailResponse>(`/api/client/TrainerDiscovery/${userId}`).pipe(
+    return this.apiService.get<TrainerCard>(`/api/homeclient/trainers/${userId}`).pipe(
       map(response => {
-        if (response?.data) {
-          return response.data;
+        if (response) {
+          return response;
         }
         throw new Error('Trainer profile data not found in response');
       })

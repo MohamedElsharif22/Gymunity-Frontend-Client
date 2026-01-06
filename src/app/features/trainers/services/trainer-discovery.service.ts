@@ -11,7 +11,7 @@ import { environment } from '../../../../environments/environment';
  * Handles API calls to search and discover trainers
  * Follows Angular best practices with providedIn: 'root' and inject()
  *
- * Base endpoint: /api/client/TrainerDiscovery
+ * Base endpoint: /api/client/homeclient/trainers
  * All endpoints require authentication (handled by AuthInterceptor)
  */
 @Injectable({
@@ -19,28 +19,29 @@ import { environment } from '../../../../environments/environment';
 })
 export class TrainerDiscoveryService {
   private readonly apiService = inject(ApiService);
-  private apiUrl = '';
 
-  constructor() {
-    // Get API URL from environment
-    this.apiUrl = (environment as any).apiUrl;
+  /**
+   * Get all trainers
+   * GET /api/client/homeclient/trainers
+   *
+   * @returns Observable<TrainerCard[]> - List of trainer cards
+   * @throws 401 Unauthorized if user not authenticated (handled by AuthInterceptor)
+   * @throws 400 Bad Request on server error
+   */
+  getAllTrainers(): Observable<TrainerCard[]> {
+    console.log('[TrainerDiscoveryService] Fetching all trainers');
+    
+    return this.apiService.get<TrainerCard[]>('/api/homeclient/trainers').pipe(
+      map(trainers => {
+        console.log('[TrainerDiscoveryService] Fetched trainers:', trainers);
+        return trainers || [];
+      })
+    );
   }
 
   /**
-   * Convert relative image URLs to absolute URLs
-   * If URL is already absolute or null, return as-is
-   */
-  private resolveImageUrl(relativeUrl: string | null): string | null {
-    if (!relativeUrl) return null;
-    if (relativeUrl.startsWith('http://') || relativeUrl.startsWith('https://')) {
-      return relativeUrl;
-    }
-    return `${this.apiUrl}/${relativeUrl}`;
-  }
-
-/**
    * Search trainers with optional filtering and sorting
-   * GET /api/client/TrainerDiscovery
+   * GET /api/client/homeclient/trainers
    *
    * Query parameters supported by API:
    * - search: free text search (trainer name/handle/bio)
@@ -75,31 +76,51 @@ export class TrainerDiscoveryService {
       if (options.pageSize) params = params.set('pageSize', options.pageSize.toString());
     }
     
-    return this.apiService.get<any>('/api/client/TrainerDiscovery', { params }).pipe(
+    return this.apiService.get<any>('/api/homeclient/trainers', { params }).pipe(
       map(response => {
         console.log('[TrainerDiscoveryService] Raw API response:', response);
         
-        // Handle both old (data/count) and new (items/totalCount) response formats
-        const trainers = (response?.items ?? response?.data ?? []) as TrainerCard[];
+        // Handle both array and paginated response formats
+        let trainers: TrainerCard[] = [];
+        let totalCount = 0;
         
-        // Transform trainer data: resolve image URLs and handle nulls
-        const transformedTrainers = trainers.map(trainer => ({
-          ...trainer,
-          profilePhotoUrl: this.resolveImageUrl(trainer.profilePhotoUrl),
-          coverImageUrl: this.resolveImageUrl(trainer.coverImageUrl),
-          specializations: trainer.specializations || [],
-          startingPrice: trainer.startingPrice ?? 0
-        }));
+        if (Array.isArray(response)) {
+          trainers = response;
+          totalCount = trainers.length;
+        } else {
+          trainers = (response?.items ?? response?.data ?? []) as TrainerCard[];
+          totalCount = response?.totalCount ?? response?.count ?? trainers.length;
+        }
         
         const result: TrainerDiscoveryResponse = {
           pageIndex: response?.pageIndex || 1,
-          pageSize: response?.pageSize || 20,
-          totalCount: response?.totalCount ?? response?.count ?? 0,
-          items: transformedTrainers
+          pageSize: response?.pageSize || trainers.length || 20,
+          totalCount: totalCount,
+          items: trainers
         };
         
         console.log('[TrainerDiscoveryService] Mapped response:', result);
         return result;
+      })
+    );
+  }
+
+  /**
+   * Get trainer by ID
+   * GET /api/client/homeclient/trainers/{id}
+   *
+   * @param id - Trainer ID
+   * @returns Observable<TrainerCard> - Single trainer card
+   * @throws 401 Unauthorized if user not authenticated
+   * @throws 404 Not Found if trainer doesn't exist
+   */
+  getTrainerById(id: number): Observable<TrainerCard> {
+    console.log('[TrainerDiscoveryService] Fetching trainer with ID:', id);
+    
+    return this.apiService.get<TrainerCard>(`/api/homeclient/trainers/${id}`).pipe(
+      map(trainer => {
+        console.log('[TrainerDiscoveryService] Fetched trainer:', trainer);
+        return trainer;
       })
     );
   }

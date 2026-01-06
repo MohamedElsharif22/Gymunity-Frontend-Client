@@ -169,7 +169,7 @@ import { TrainerCard, TrainerSearchOptions } from '../../../core/models';
                 <div class="h-32 bg-gradient-to-r from-blue-400 to-purple-500 overflow-hidden">
                   <img
                     [src]="trainer.coverImageUrl"
-                    [alt]="trainer.fullName"
+                    [alt]="trainer.userName"
                     class="w-full h-full object-cover"
                   />
                 </div>
@@ -180,27 +180,19 @@ import { TrainerCard, TrainerSearchOptions } from '../../../core/models';
               <div class="p-6">
                 <!-- Profile Section -->
                 <div class="flex items-start gap-4 mb-4">
-                  <!-- Profile Photo -->
+                  <!-- Avatar -->
                   <div class="flex-shrink-0">
-                    @if (trainer.profilePhotoUrl) {
-                      <img
-                        [src]="trainer.profilePhotoUrl"
-                        [alt]="trainer.fullName"
-                        class="w-16 h-16 rounded-full object-cover border-2 border-white -mt-12 relative z-10"
-                      />
-                    } @else {
-                      <div
-                        class="w-16 h-16 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-bold text-lg border-2 border-white -mt-12 relative z-10"
-                      >
-                        {{ trainer?.fullName?.charAt(0)?.toUpperCase() ?? 'T' }}
-                      </div>
-                    }
+                    <div
+                      class="w-16 h-16 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-bold text-lg border-2 border-white -mt-12 relative z-10"
+                    >
+                      {{ trainer?.userName?.charAt(0)?.toUpperCase() ?? 'T' }}
+                    </div>
                   </div>
 
                   <!-- Basic Info -->
                   <div class="flex-1 min-w-0">
                     <div class="flex items-center gap-2 mb-1">
-                      <h3 class="text-lg font-bold text-gray-900">{{ trainer.fullName }}</h3>
+                      <h3 class="text-lg font-bold text-gray-900">{{ trainer.userName }}</h3>
                       @if (trainer.isVerified) {
                         <svg
                           class="w-5 h-5 text-blue-500 flex-shrink-0"
@@ -248,33 +240,14 @@ import { TrainerCard, TrainerSearchOptions } from '../../../core/models';
                   </div>
                 </div>
 
-                <!-- Specializations -->
-                @if (trainer.specializations && trainer.specializations.length > 0) {
-                  <div class="mb-4">
-                    <p class="text-xs font-semibold text-gray-700 mb-2">Specializations</p>
-                    <div class="flex flex-wrap gap-2">
-                      @for (spec of trainer.specializations.slice(0, 3); track spec) {
-                        <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                          {{ spec }}
-                        </span>
-                      }
-                      @if (trainer.specializations.length > 3) {
-                        <span class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
-                          +{{ trainer.specializations.length - 3 }}
-                        </span>
-                      }
-                    </div>
+                <!-- Price -->
+                @if (trainer.startingPrice) {
+                  <div class="mb-4 p-3 bg-gray-50 rounded-lg">
+                    <p class="text-sm text-gray-700">
+                      Starting from <span class="font-bold text-gray-900">$ {{ trainer.startingPrice }}</span>
+                    </p>
                   </div>
                 }
-
-                <!-- Price -->
-                <div class="mb-4 p-3 bg-gray-50 rounded-lg">
-                  <p class="text-sm text-gray-700">
-                    Starting from <span class="font-bold text-gray-900"
-                      >{{ trainer.currency }} {{ trainer.startingPrice }}</span
-                    >
-                  </p>
-                </div>
 
                 <!-- Stats Row -->
                 <div class="flex items-center justify-between text-xs text-gray-600 mb-4 pb-4 border-b border-gray-200">
@@ -328,34 +301,23 @@ export class TrainersComponent implements OnInit {
 
   // Computed signals
   availableSpecialties = computed(() => {
-    const specialties = new Set<string>();
-    this.trainers().forEach(trainer => {
-      if (trainer?.specializations && Array.isArray(trainer.specializations)) {
-        trainer.specializations.forEach((spec: string) => specialties.add(spec));
-      }
-    });
-    return Array.from(specialties).sort();
+    // No specializations in the new API response
+    return [];
   });
 
   filteredTrainers = computed(() => {
     let filtered = this.trainers();
     const search = this.searchTerm().toLowerCase();
-    const specialty = this.selectedSpecialty();
     const minExp = this.minExperience() ? parseInt(this.minExperience()) : null;
 
     // Filter by search term
     if (search) {
       filtered = filtered.filter(
         trainer =>
-          trainer.fullName.toLowerCase().includes(search) ||
+          trainer.userName.toLowerCase().includes(search) ||
           trainer.handle.toLowerCase().includes(search) ||
           trainer.bio?.toLowerCase().includes(search)
       );
-    }
-
-    // Filter by specialization
-    if (specialty) {
-      filtered = filtered.filter(trainer => trainer.specializations.includes(specialty));
     }
 
     // Filter by experience
@@ -372,7 +334,7 @@ export class TrainersComponent implements OnInit {
     } else if (sort === 'reviews') {
       filtered.sort((a, b) => b.totalReviews - a.totalReviews);
     } else if (sort === 'price') {
-      filtered.sort((a, b) => a.startingPrice - b.startingPrice);
+      filtered.sort((a, b) => (a.startingPrice ?? 0) - (b.startingPrice ?? 0));
     }
 
     return filtered;
@@ -425,7 +387,7 @@ export class TrainersComponent implements OnInit {
   contactTrainer(trainer: TrainerCard): void {
     console.log('[TrainersComponent] Contacting trainer:', trainer);
     // TODO: Implement contact trainer functionality (chat, email, etc.)
-    alert(`Contact trainer: ${trainer.fullName}`);
+    alert(`Contact trainer: ${trainer.userName}`);
   }
 
   viewTrainerProfile(trainer: TrainerCard): void {
