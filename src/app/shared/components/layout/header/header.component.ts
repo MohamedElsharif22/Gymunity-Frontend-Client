@@ -78,7 +78,7 @@ import { AuthService } from '../../../../core/services/auth.service';
             <a routerLink="/programs" 
                routerLinkActive="bg-gradient-to-r from-sky-500 to-indigo-600 text-white shadow-lg"
                class="px-4 py-2.5 rounded-xl text-gray-700 font-semibold hover:bg-gray-100 transition-all duration-200">
-              Programs
+              My Active Programs
             </a>
             <a routerLink="/trainers" 
                routerLinkActive="bg-gradient-to-r from-sky-500 to-indigo-600 text-white shadow-lg"
