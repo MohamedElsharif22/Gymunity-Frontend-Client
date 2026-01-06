@@ -5,7 +5,7 @@ import { ClientProfileService } from '../../../core/services/client-profile.serv
 import { ClientLogsService } from '../../../core/services/client-logs.service';
 import { ClientProfileRequest, ClientProfileResponse, ClientGoal, ExperienceLevel, Gender } from '../../../core/models';
 import { Router } from '@angular/router';
-import { Subject, takeUntil, forkJoin, of } from 'rxjs';
+import { Subject, takeUntil, forkJoin, of, timeout } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
 /**
@@ -89,48 +89,64 @@ export class ProfileComponent implements OnInit, OnDestroy {
     this.loading.set(true);
     this.error.set(null);
 
-    // Fetch profile, body state log, and dashboard data in parallel
+    // Fetch profile with timeout (10 seconds), other requests have shorter timeout (5 seconds)
+    // If profile request hangs, we still allow editing mode
     forkJoin({
-      profile: this.profileService.getProfile(),
-      bodyStateLog: this.logsService.getLastBodyStateLog().pipe(
+      profile: this.profileService.getProfile().pipe(
+        timeout(10000), // 10 second timeout for profile
         catchError(err => {
-          console.warn('[ProfileComponent] Failed to load body state log:', err);
+          console.warn('[ProfileComponent] Failed to load profile:', err.message || err);
+          return of(null);
+        })
+      ),
+      bodyStateLog: this.logsService.getLastBodyStateLog().pipe(
+        timeout(5000), // 5 second timeout for body state log
+        catchError(err => {
+          console.warn('[ProfileComponent] Failed to load body state log:', err.message || err);
           return of(null);
         })
       ),
       dashboard: this.profileService.getDashboard().pipe(
+        timeout(5000), // 5 second timeout for dashboard
         catchError(err => {
-          console.warn('[ProfileComponent] Failed to load dashboard:', err);
+          console.warn('[ProfileComponent] Failed to load dashboard:', err.message || err);
           return of(null);
         })
       )
     })
-      .pipe(takeUntil(this.destroy$))
+      .pipe(
+        timeout(15000), // Overall 15 second timeout for entire forkJoin
+        takeUntil(this.destroy$)
+      )
       .subscribe({
         next: (data) => {
           console.log('[ProfileComponent] Profile response:', data.profile);
           console.log('[ProfileComponent] Dashboard response:', data.dashboard);
           
-          // Merge body state log and dashboard data into profile response
-          let profileData = { ...data.profile };
-          
-          // If dashboard has fitness metadata, merge it
-          if (data.dashboard?.summary) {
-            profileData.goal = profileData.goal || data.dashboard.summary.goal;
-            profileData.experienceLevel = profileData.experienceLevel || data.dashboard.summary.experienceLevel;
+          // Only process if we have at least a profile response
+          if (data.profile) {
+            // Merge body state log and dashboard data into profile response
+            let profileData = { ...data.profile };
+            
+            // If dashboard has fitness metadata, merge it
+            if (data.dashboard?.summary) {
+              profileData.goal = profileData.goal || data.dashboard.summary.goal;
+              profileData.experienceLevel = profileData.experienceLevel || data.dashboard.summary.experienceLevel;
+            }
+            
+            const profileWithBodyState: ClientProfileResponse = {
+              ...profileData,
+              bodyStateLog: data.bodyStateLog || undefined
+            };
+            this.profile.set(profileWithBodyState);
+            this.populateForm(profileWithBodyState);
           }
           
-          const profileWithBodyState: ClientProfileResponse = {
-            ...profileData,
-            bodyStateLog: data.bodyStateLog || undefined
-          };
-          this.profile.set(profileWithBodyState);
-          this.populateForm(profileWithBodyState);
           this.loading.set(false);
         },
         error: (error) => {
-          console.error('[ProfileComponent] Error loading profile:', error);
-          // Profile doesn't exist yet - allow creation
+          console.error('[ProfileComponent] Error loading profile:', error.message || error);
+          // Profile doesn't exist yet or API timeout - allow creation
           this.loading.set(false);
           this.isEditing.set(true);
         }
@@ -185,7 +201,10 @@ export class ProfileComponent implements OnInit, OnDestroy {
       ? this.profileService.updateProfile(request)
       : this.profileService.createProfile(request);
 
-    service$.pipe(takeUntil(this.destroy$)).subscribe({
+    service$.pipe(
+      timeout(10000), // 10 second timeout for profile operations
+      takeUntil(this.destroy$)
+    ).subscribe({
       next: (updatedProfile) => {
         // Merge the submitted form values into the response (in case backend doesn't return them)
         const enrichedProfile: ClientProfileResponse = {
@@ -220,7 +239,10 @@ export class ProfileComponent implements OnInit, OnDestroy {
     this.error.set(null);
 
     this.profileService.deleteProfile()
-      .pipe(takeUntil(this.destroy$))
+      .pipe(
+        timeout(10000), // 10 second timeout for delete operation
+        takeUntil(this.destroy$)
+      )
       .subscribe({
         next: () => {
           this.loading.set(false);

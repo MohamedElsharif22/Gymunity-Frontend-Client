@@ -1,7 +1,6 @@
 import { Component, OnInit, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
-import { TrainerDiscoveryService } from '../trainers/services/trainer-discovery.service';
 import { HomeClientService } from '../trainers/services/home-client.service';
 import { AuthService } from '../../core/services/auth.service';
 import { TrainerProfile, Program } from '../../core/models';
@@ -114,17 +113,17 @@ import { TrainerProfile, Program } from '../../core/models';
             @for (trainer of featuredTrainers(); track trainer.id) {
               <div class="bg-white rounded-xl shadow-md hover:shadow-xl transition-all transform hover:scale-105 overflow-hidden">
                 <!-- Trainer Image -->
-                <!-- <div class="relative h-64 bg-gradient-to-br from-sky-400 to-sky-600 flex items-center justify-center overflow-hidden">
-                  @if (trainer.profilePhotoUrl || (trainer as any).coverImageUrl) {
+                <div class="relative h-64 bg-gradient-to-br from-sky-400 to-sky-600 flex items-center justify-center overflow-hidden">
+                  @if (getTrainerPhotoUrl(trainer)) {
                     <img 
-                      [src]="trainer.profilePhotoUrl || (trainer as any).coverImageUrl" 
+                      [src]="getTrainerPhotoUrl(trainer)" 
                       [alt]="trainer.userName || 'Trainer'"
                       class="w-full h-full object-cover"
                     />
                   } @else {
                     <div class="text-6xl">💪</div>
                   }
-                </div> -->
+                </div>
 
                 <!-- Content -->
                 <div class="p-6">
@@ -452,7 +451,6 @@ import { TrainerProfile, Program } from '../../core/models';
   `]
 })
 export class LandingComponent implements OnInit {
-  private trainerDiscoveryService = inject(TrainerDiscoveryService);
   private homeClientService = inject(HomeClientService);
   private authService = inject(AuthService);
   private router = inject(Router);
@@ -496,24 +494,22 @@ export class LandingComponent implements OnInit {
 
   loadFeaturedTrainers() {
     this.isLoadingTrainers.set(true);
-    this.trainerDiscoveryService.searchTrainers({ 
-      pageSize: 6,
-      isVerified: true,
-      sortBy: 'rating'
-    })
+    this.homeClientService.getAllTrainers()
       .subscribe({
         next: (response) => {
-          // Take top 6 trainers and cast TrainerCard to TrainerProfile
-          const trainers = (response.items || []) as unknown as TrainerProfile[];
-          this.featuredTrainers.set(trainers.slice(0, 6));
+          // Cast trainers to TrainerProfile and get top 6
+          const trainers = (response || []) as unknown as TrainerProfile[];
+          if (trainers.length > 0) {
+            this.featuredTrainers.set(trainers.slice(0, 6));
+          } else {
+            this.loadDemoTrainers();
+          }
           this.isLoadingTrainers.set(false);
         },
         error: (error) => {
-          console.log('Trainers not available at the moment. If unauthenticated, please sign in to see trainers.');
-          // For unauthenticated users or when API fails, show demo trainers
-          if (!this.isAuthenticated()) {
-            this.loadDemoTrainers();
-          }
+          console.log('[LandingComponent] Error loading trainers:', error);
+          // Show demo trainers on any error (API not available, 403, etc.)
+          this.loadDemoTrainers();
           this.isLoadingTrainers.set(false);
         }
       });
@@ -608,15 +604,23 @@ export class LandingComponent implements OnInit {
     this.isLoadingPrograms.set(true);
     this.homeClientService.getAllPrograms().subscribe({
       next: (programs: Program[]) => {
-        // Take top 6 programs and sort by title for consistency
-        const sortedPrograms = (programs || [])
-          .sort((a, b) => (a.title || '').localeCompare(b.title || ''))
-          .slice(0, 6);
-        this.popularPrograms.set(sortedPrograms);
+        if (programs && programs.length > 0) {
+          // Take top 6 programs and sort by title for consistency
+          const sortedPrograms = programs
+            .sort((a, b) => (a.title || '').localeCompare(b.title || ''))
+            .slice(0, 6);
+          this.popularPrograms.set(sortedPrograms);
+        } else {
+          // No programs returned, show empty state
+          this.popularPrograms.set([]);
+        }
         this.isLoadingPrograms.set(false);
       },
       error: (error) => {
-        console.log('Programs not available at the moment.');
+        console.log('[LandingComponent] Error loading programs:', error);
+        // On any error (API not available, 403, etc.), show empty state
+        // This will trigger the category fallback cards
+        this.popularPrograms.set([]);
         this.isLoadingPrograms.set(false);
       }
     });
@@ -638,5 +642,12 @@ export class LandingComponent implements OnInit {
     if (element) {
       element.scrollIntoView({ behavior: 'smooth' });
     }
+  }
+
+  getTrainerPhotoUrl(trainer: TrainerProfile): string {
+    // Try to get coverImageUrl from TrainerCard (from HomeClientService)
+    // Otherwise fall back to profilePhotoUrl from TrainerProfile (for demo trainers)
+    const trainerCard = trainer as any;
+    return trainerCard.coverImageUrl || trainer.profilePhotoUrl || '';
   }
 }

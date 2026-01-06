@@ -9,7 +9,7 @@ import {
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink, Router } from '@angular/router';
-import { TrainerDiscoveryService } from '../services/trainer-discovery.service';
+import { HomeClientService } from '../services/home-client.service';
 import { TrainerCard, TrainerSearchOptions } from '../../../core/models';
 
 @Component({
@@ -286,7 +286,7 @@ import { TrainerCard, TrainerSearchOptions } from '../../../core/models';
   styles: []
 })
 export class TrainersComponent implements OnInit {
-  private readonly trainerDiscoveryService = inject(TrainerDiscoveryService);
+  private readonly homeClientService = inject(HomeClientService);
   private readonly router = inject(Router);
 
   // State signals
@@ -348,13 +348,13 @@ export class TrainersComponent implements OnInit {
     this.isLoading.set(true);
     this.error.set(null);
 
-    this.trainerDiscoveryService.searchTrainers().subscribe({
+    this.homeClientService.getAllTrainers().subscribe({
       next: response => {
-        const trainers = response?.items || [];
+        const trainers = (response || []) as unknown as TrainerCard[];
         this.trainers.set(trainers);
-        this.totalCount.set(response?.totalCount || 0);
+        this.totalCount.set(trainers.length);
         this.isLoading.set(false);
-        console.log('[TrainersComponent] Loaded trainers:', trainers.length, 'of', response?.totalCount);
+        console.log('[TrainersComponent] Loaded trainers:', trainers.length);
       },
       error: err => {
         console.error('[TrainersComponent] Error loading trainers:', err);
