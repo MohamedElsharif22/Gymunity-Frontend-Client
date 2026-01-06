@@ -10,6 +10,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule, Router } from '@angular/router';
 import { Location } from '@angular/common';
 import { TrainerProfileService } from '../../services/trainer-profile.service';
+import { TrainerCacheService } from '../../services/trainer-cache.service';
 import { TrainerCard } from '../../../../core/models';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
@@ -192,6 +193,7 @@ import { takeUntil } from 'rxjs/operators';
 })
 export class TrainerDetailComponent implements OnInit, OnDestroy {
   private readonly trainerProfileService = inject(TrainerProfileService);
+  private readonly trainerCacheService = inject(TrainerCacheService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly location = inject(Location);
@@ -210,12 +212,21 @@ export class TrainerDetailComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Fall back to loading from API if not in state
-    const trainerHandle = this.route.snapshot.paramMap.get('id');
-    if (trainerHandle) {
-      this.loadTrainerProfile(trainerHandle);
+    // Second try: check if trainer is cached (from auth redirect)
+    const cachedTrainer = this.trainerCacheService.getCachedTrainer();
+    if (cachedTrainer) {
+      this.trainer.set(cachedTrainer);
+      console.log('[TrainerDetailComponent] Trainer loaded from cache:', cachedTrainer);
+      return;
+    }
+
+    // Fall back to loading from API if not in state or cache
+    const trainerId = this.route.snapshot.paramMap.get('id');
+    if (trainerId) {
+      console.log('[TrainerDetailComponent] Trainer not in state or cache, attempting to load from API with ID:', trainerId);
+      this.loadTrainerProfile(trainerId);
     } else {
-      this.error.set('No trainer handle provided');
+      this.error.set('No trainer information provided. Please navigate from the trainers list.');
     }
   }
 
@@ -240,15 +251,22 @@ export class TrainerDetailComponent implements OnInit, OnDestroy {
         },
         error: (err: any) => {
           this.isLoading.set(false);
-          const errorMessage =
-            err?.error?.message ||
-            err?.error?.errors?.[0] ||
-            'Failed to load trainer profile. The detail endpoint may not be available.';
-          this.error.set(errorMessage);
           console.error('[TrainerDetailComponent] Error loading trainer profile:', err);
           console.log('[TrainerDetailComponent] Error details - URL:', err?.url);
           console.log('[TrainerDetailComponent] Error details - Status:', err?.status);
           console.log('[TrainerDetailComponent] Error details - Message:', err?.error?.message);
+          
+          // If API fails (404, 403, etc.), show user-friendly error message
+          let errorMessage = 'Failed to load trainer profile.';
+          if (err?.status === 404) {
+            errorMessage = 'Trainer profile not found. Please go back and try again.';
+          } else if (err?.status === 403) {
+            errorMessage = 'You do not have permission to view this trainer profile.';
+          } else if (err?.status === 0) {
+            errorMessage = 'Unable to connect to the server. Please check your internet connection.';
+          }
+          
+          this.error.set(errorMessage);
         }
       });
   }

@@ -10,6 +10,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink, Router } from '@angular/router';
 import { HomeClientService } from '../services/home-client.service';
+import { TrainerCacheService } from '../services/trainer-cache.service';
 import { TrainerCard, TrainerSearchOptions } from '../../../core/models';
 
 @Component({
@@ -287,6 +288,7 @@ import { TrainerCard, TrainerSearchOptions } from '../../../core/models';
 })
 export class TrainersComponent implements OnInit {
   private readonly homeClientService = inject(HomeClientService);
+  private readonly trainerCacheService = inject(TrainerCacheService);
   private readonly router = inject(Router);
 
   // State signals
@@ -392,6 +394,8 @@ export class TrainersComponent implements OnInit {
 
   viewTrainerProfile(trainer: TrainerCard): void {
     console.log('[TrainersComponent] Viewing trainer profile:', trainer.id);
+    // Cache trainer before navigating (survives auth redirects)
+    this.trainerCacheService.cacheTrainer(trainer);
     this.router.navigate(['/trainers', trainer.id], { state: { trainer } });
   }
 }
