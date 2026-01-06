@@ -34,6 +34,28 @@ export const routes: Routes = [
       }
     ]
   },
+  // Guest-accessible discovery routes (NO AUTHENTICATION REQUIRED)
+  {
+    path: 'discover',
+    children: [
+      {
+        path: 'trainers',
+        loadComponent: () => import('./features/trainers/components/trainers.component').then(m => m.TrainersComponent)
+      },
+      {
+        path: 'trainers/:id',
+        loadComponent: () => import('./features/trainers/components/trainer-detail/trainer-detail.component').then(m => m.TrainerDetailComponent)
+      },
+      {
+        path: 'programs',
+        loadComponent: () => import('./features/programs/components/discover-programs/discover-programs.component').then(m => m.DiscoverProgramsComponent)
+      },
+      {
+        path: 'programs/:id',
+        loadComponent: () => import('./features/programs/components/program-detail/program-detail.component').then(m => m.ProgramDetailComponent)
+      }
+    ]
+  },
   // Protected routes requiring authentication
   {
     path: '',
@@ -56,17 +78,14 @@ export const routes: Routes = [
       },
       {
         path: 'trainers',
-        canActivate: [profileCompletionGuard],
         loadComponent: () => import('./features/trainers/components/trainers.component').then(m => m.TrainersComponent)
       },
       {
         path: 'trainers/:id',
-        canActivate: [profileCompletionGuard],
         loadComponent: () => import('./features/trainers/components/trainer-detail/trainer-detail.component').then(m => m.TrainerDetailComponent)
       },
       {
         path: 'discover-programs',
-        canActivate: [profileCompletionGuard],
         loadComponent: () => import('./features/programs/components/discover-programs/discover-programs.component').then(m => m.DiscoverProgramsComponent)
       },
       {
@@ -76,12 +95,10 @@ export const routes: Routes = [
       },
       {
         path: 'programs/:id',
-        canActivate: [profileCompletionGuard],
         loadComponent: () => import('./features/programs/components/program-detail/program-detail.component').then(m => m.ProgramDetailComponent)
       },
       {
         path: 'programs/:programId/days/:dayId',
-        canActivate: [profileCompletionGuard],
         loadComponent: () => import('./features/programs/components/program-day-detail/program-day-detail.component').then(m => m.ProgramDayDetailComponent)
       },
       {

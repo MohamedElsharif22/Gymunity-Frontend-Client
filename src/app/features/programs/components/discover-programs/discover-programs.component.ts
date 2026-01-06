@@ -174,6 +174,6 @@ export class DiscoverProgramsComponent implements OnInit {
   }
 
   viewProgram(programId: number) {
-    this.router.navigate(['/programs', programId]);
+    this.router.navigate(['/discover/programs', programId]);
   }
 }

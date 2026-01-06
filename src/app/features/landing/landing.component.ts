@@ -35,12 +35,12 @@ import { TrainerProfile, Program } from '../../core/models';
             <div class="flex flex-col sm:flex-row gap-4 pt-6">
               @if (isAuthenticated()) {
                 <button
-                  [routerLink]="['/trainers']"
+                  [routerLink]="['/discover/trainers']"
                   class="bg-white text-sky-600 font-bold py-3 px-8 rounded-lg hover:bg-sky-50 transition transform hover:scale-105 shadow-lg">
                   Explore Trainers
                 </button>
                 <button
-                  [routerLink]="['/programs']"
+                  [routerLink]="['/discover/programs']"
                   class="bg-sky-500/30 border-2 border-white text-white font-bold py-3 px-8 rounded-lg hover:bg-sky-500/50 transition">
                   Browse Programs
                 </button>
@@ -301,12 +301,6 @@ import { TrainerProfile, Program } from '../../core/models';
                       <span>🎯 {{ program.type }}</span>
                     }
                   </div>
-                  
-                  <button
-                    (click)="viewProgram(program.id); $event.stopPropagation()"
-                    class="text-sky-600 font-semibold hover:text-sky-700 transition inline-flex items-center gap-2">
-                    View Details <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                  </button>
                 </div>
               </div>
             }
@@ -322,7 +316,7 @@ import { TrainerProfile, Program } from '../../core/models';
                 <h3 class="text-xl font-bold text-gray-900 mb-2">Strength Training</h3>
                 <p class="text-gray-600 mb-4">Build muscle and increase your overall strength with our comprehensive programs</p>
                 <button
-                  [routerLink]="['/discover-programs']"
+                  [routerLink]="['/discover/programs']"
                   class="text-orange-600 font-semibold hover:text-orange-700 transition inline-flex items-center gap-2">
                   Explore <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                 </button>
@@ -338,7 +332,7 @@ import { TrainerProfile, Program } from '../../core/models';
                 <h3 class="text-xl font-bold text-gray-900 mb-2">Cardio & Endurance</h3>
                 <p class="text-gray-600 mb-4">Improve your cardiovascular health and stamina with dynamic cardio workouts</p>
                 <button
-                  [routerLink]="['/discover-programs']"
+                  [routerLink]="['/discover/programs']"
                   class="text-blue-600 font-semibold hover:text-blue-700 transition inline-flex items-center gap-2">
                   Explore <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                 </button>
@@ -354,7 +348,7 @@ import { TrainerProfile, Program } from '../../core/models';
                 <h3 class="text-xl font-bold text-gray-900 mb-2">Flexibility & Yoga</h3>
                 <p class="text-gray-600 mb-4">Enhance flexibility, balance, and mental wellness through yoga and stretching</p>
                 <button
-                  [routerLink]="['/discover-programs']"
+                  [routerLink]="['/discover/programs']"
                   class="text-purple-600 font-semibold hover:text-purple-700 transition inline-flex items-center gap-2">
                   Explore <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                 </button>
@@ -366,7 +360,7 @@ import { TrainerProfile, Program } from '../../core/models';
         <!-- CTA -->
         <div class="text-center">
           <button
-            [routerLink]="['/discover-programs']"
+            [routerLink]="['/discover/programs']"
             class="inline-flex items-center gap-2 text-sky-600 font-semibold hover:text-sky-700 transition">
             View All Programs
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -425,7 +419,7 @@ import { TrainerProfile, Program } from '../../core/models';
             Get Started
           </button>
           <button
-            [routerLink]="['/trainers']"
+            [routerLink]="['/discover/trainers']"
             class="bg-sky-500/30 border-2 border-white text-white font-bold py-3 px-10 rounded-lg hover:bg-sky-500/50 transition">
             Browse Trainers
           </button>
@@ -476,8 +470,8 @@ import { TrainerProfile, Program } from '../../core/models';
             <h4 class="font-bold text-gray-900 mb-4">Quick Links</h4>
             <ul class="space-y-3">
               <li><a routerLink="/auth/register" class="text-gray-600 hover:text-sky-600 transition text-sm font-medium">Get Started</a></li>
-              <li><a routerLink="/discover-programs" class="text-gray-600 hover:text-sky-600 transition text-sm font-medium">Programs</a></li>
-              <li><a routerLink="/trainers" class="text-gray-600 hover:text-sky-600 transition text-sm font-medium">Trainers</a></li>
+              <li><a routerLink="/discover/programs" class="text-gray-600 hover:text-sky-600 transition text-sm font-medium">Programs</a></li>
+              <li><a routerLink="/discover/trainers" class="text-gray-600 hover:text-sky-600 transition text-sm font-medium">Trainers</a></li>
               <li><a href="#" class="text-gray-600 hover:text-sky-600 transition text-sm font-medium">Classes</a></li>
             </ul>
           </div>
@@ -702,11 +696,11 @@ export class LandingComponent implements OnInit {
   }
 
   viewProgram(programId: number) {
-    this.router.navigate(['/programs', programId]);
+    this.router.navigate(['/discover/programs', programId]);
   }
 
   viewTrainerProfile(trainer: TrainerProfile) {
-    this.router.navigate(['/trainers', trainer.userId], { 
+    this.router.navigate(['/discover/trainers', trainer.userId], { 
       state: { trainer } 
     });
   }

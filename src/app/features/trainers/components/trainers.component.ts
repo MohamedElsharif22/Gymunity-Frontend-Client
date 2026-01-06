@@ -392,6 +392,6 @@ export class TrainersComponent implements OnInit {
 
   viewTrainerProfile(trainer: TrainerCard): void {
     console.log('[TrainersComponent] Viewing trainer profile:', trainer.id);
-    this.router.navigate(['/trainers', trainer.id], { state: { trainer } });
+    this.router.navigate(['/discover/trainers', trainer.id], { state: { trainer } });
   }
 }
