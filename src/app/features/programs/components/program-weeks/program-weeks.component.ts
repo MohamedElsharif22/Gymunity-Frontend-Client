@@ -1,10 +1,8 @@
-import { Component, inject, signal, ChangeDetectionStrategy, OnInit, OnDestroy } from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy, OnInit, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule, Router } from '@angular/router';
-import { ClientProgramsService } from '../../services/client-programs.service';
-import { ProgramWeekResponse } from '../../../../core/models';
-import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { ProgramService, ProgramWeek } from '../../services/program.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 /**
  * Program Weeks Component
@@ -16,7 +14,7 @@ import { takeUntil } from 'rxjs/operators';
  * - Show week progression
  *
  * Route parameters: programId
- * Service method: ClientProgramsService.getProgramWeeks(programId)
+ * Service method: ProgramService.getProgramWeeks(programId)
  */
 @Component({
   selector: 'app-program-weeks',
@@ -88,13 +86,13 @@ import { takeUntil } from 'rxjs/operators';
   `,
   styles: []
 })
-export class ProgramWeeksComponent implements OnInit, OnDestroy {
-  private programsService = inject(ClientProgramsService);
+export class ProgramWeeksComponent implements OnInit {
+  private programsService = inject(ProgramService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
-  private destroy$ = new Subject<void>();
+  private destroyRef = inject(DestroyRef);
 
-  weeks = signal<ProgramWeekResponse[]>([]);
+  weeks = signal<ProgramWeek[]>([]);
   loading = signal(false);
   error = signal<string | null>(null);
 
@@ -110,8 +108,8 @@ export class ProgramWeeksComponent implements OnInit, OnDestroy {
     this.error.set(null);
 
     this.programsService
-      .getProgramWeeks(programId)
-      .pipe(takeUntil(this.destroy$))
+      .getProgramWeeks(+programId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (weeks) => {
           this.weeks.set(weeks);
@@ -129,10 +127,5 @@ export class ProgramWeeksComponent implements OnInit, OnDestroy {
 
   goBack() {
     this.router.navigate(['/programs']);
-  }
-
-  ngOnDestroy() {
-    this.destroy$.next();
-    this.destroy$.complete();
   }
 }

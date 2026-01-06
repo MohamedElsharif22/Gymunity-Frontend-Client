@@ -2,7 +2,6 @@ import { Component, OnInit, inject, signal, computed, ChangeDetectionStrategy } 
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { HomeClientService } from '../trainers/services/home-client.service';
-import { TrainerCacheService } from '../trainers/services/trainer-cache.service';
 import { AuthService } from '../../core/services/auth.service';
 import { TrainerProfile, Program } from '../../core/models';
 
@@ -454,7 +453,6 @@ import { TrainerProfile, Program } from '../../core/models';
 export class LandingComponent implements OnInit {
   private homeClientService = inject(HomeClientService);
   private authService = inject(AuthService);
-  private trainerCacheService = inject(TrainerCacheService);
   private router = inject(Router);
 
   isAuthenticated = signal(false);
@@ -633,8 +631,6 @@ export class LandingComponent implements OnInit {
   }
 
   viewTrainerProfile(trainer: TrainerProfile) {
-    // Cache trainer before navigating (survives auth redirects)
-    this.trainerCacheService.cacheTrainer(trainer);
     this.router.navigate(['/trainers', trainer.userId], { 
       state: { trainer } 
     });

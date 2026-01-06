@@ -1,10 +1,8 @@
-import { Component, inject, signal, ChangeDetectionStrategy, OnInit, OnDestroy } from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy, OnInit, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule, Router } from '@angular/router';
-import { ClientProgramsService } from '../../services/client-programs.service';
-import { ProgramDayResponse } from '../../../../core/models';
-import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { ProgramService, ProgramDay } from '../../services/program.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 /**
  * Program Days Component
@@ -16,7 +14,7 @@ import { takeUntil } from 'rxjs/operators';
  * - Show day sequence within week
  *
  * Route parameters: weekId (passed from program-weeks component)
- * Service method: ClientProgramsService.getDaysByWeekId(weekId)
+ * Service method: ProgramService.getProgramDaysByWeek(weekId)
  */
 @Component({
   selector: 'app-program-days',
@@ -97,13 +95,13 @@ import { takeUntil } from 'rxjs/operators';
   `,
   styles: []
 })
-export class ProgramDaysComponent implements OnInit, OnDestroy {
-  private programsService = inject(ClientProgramsService);
+export class ProgramDaysComponent implements OnInit {
+  private programsService = inject(ProgramService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
-  private destroy$ = new Subject<void>();
+  private destroyRef = inject(DestroyRef);
 
-  days = signal<ProgramDayResponse[]>([]);
+  days = signal<ProgramDay[]>([]);
   loading = signal(false);
   error = signal<string | null>(null);
 
@@ -120,11 +118,11 @@ export class ProgramDaysComponent implements OnInit, OnDestroy {
 
     console.log('[ProgramDaysComponent] Loading days for week:', weekId);
 
-    // Call backend endpoint: GET /api/client/clientprograms/{weekId}/days
+    // Call backend endpoint: GET /api/client/ClientPrograms/{weekId}/days
     // Returns all days for this week (exercises may be null)
     this.programsService
-      .getDaysByWeekId(weekId)
-      .pipe(takeUntil(this.destroy$))
+      .getProgramDaysByWeek(+weekId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (days) => {
           console.log('[ProgramDaysComponent] Days loaded from backend:', days);
@@ -157,10 +155,5 @@ export class ProgramDaysComponent implements OnInit, OnDestroy {
 
   goBack() {
     this.router.navigate(['/programs']);
-  }
-
-  ngOnDestroy() {
-    this.destroy$.next();
-    this.destroy$.complete();
   }
 }

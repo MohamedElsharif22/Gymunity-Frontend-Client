@@ -1,10 +1,8 @@
-import { Component, inject, signal, ChangeDetectionStrategy, OnInit, OnDestroy } from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy, OnInit, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule, Router } from '@angular/router';
-import { ClientProgramsService } from '../../services/client-programs.service';
-import { ProgramDayResponse, ProgramDayExerciseResponse } from '../../../../core/models';
-import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { ProgramService, ProgramDay } from '../../services/program.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 /**
  * Day Details Component
@@ -17,7 +15,7 @@ import { takeUntil } from 'rxjs/operators';
  * - Show muscle groups and equipment
  *
  * Route parameters: dayId
- * Service method: ClientProgramsService.getDayById(dayId)
+ * Service method: ProgramService.getExercisesByDayId(dayId)
  */
 @Component({
   selector: 'app-day-details',
@@ -57,9 +55,9 @@ import { takeUntil } from 'rxjs/operators';
         <!-- Day Exercises -->
         <div *ngIf="!loading() && day()" class="space-y-6">
           <!-- Exercise List -->
-          <div *ngIf="day()!.exercises.length > 0" class="space-y-4">
+          <div *ngIf="(day()?.exercises || []).length > 0" class="space-y-4">
             <div
-              *ngFor="let exercise of day()!.exercises"
+              *ngFor="let exercise of (day()?.exercises || [])"
               class="bg-white rounded-lg shadow p-6"
             >
               <!-- Exercise Header -->
@@ -133,7 +131,7 @@ import { takeUntil } from 'rxjs/operators';
           </div>
 
           <!-- No Exercises State -->
-          <div *ngIf="day()!.exercises.length === 0" class="bg-white rounded-lg shadow p-12 text-center">
+          <div *ngIf="!day()?.exercises || (day()?.exercises || []).length === 0" class="bg-white rounded-lg shadow p-12 text-center">
             <p class="text-gray-600">No exercises scheduled for this day.</p>
           </div>
         </div>
@@ -142,13 +140,13 @@ import { takeUntil } from 'rxjs/operators';
   `,
   styles: []
 })
-export class DayDetailsComponent implements OnInit, OnDestroy {
-  private programsService = inject(ClientProgramsService);
+export class DayDetailsComponent implements OnInit {
+  private programsService = inject(ProgramService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
-  private destroy$ = new Subject<void>();
+  private destroyRef = inject(DestroyRef);
 
-  day = signal<ProgramDayResponse | null>(null);
+  day = signal<ProgramDay | null>(null);
   loading = signal(false);
   error = signal<string | null>(null);
 
@@ -164,8 +162,8 @@ export class DayDetailsComponent implements OnInit, OnDestroy {
     this.error.set(null);
 
     this.programsService
-      .getDayById(dayId)
-      .pipe(takeUntil(this.destroy$))
+      .getExercisesByDayId(+dayId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (day) => {
           console.log('[DayDetailsComponent] Day loaded from API:', day);
@@ -186,10 +184,5 @@ export class DayDetailsComponent implements OnInit, OnDestroy {
 
   goBack() {
     this.router.navigate(['/programs']);
-  }
-
-  ngOnDestroy() {
-    this.destroy$.next();
-    this.destroy$.complete();
   }
 }

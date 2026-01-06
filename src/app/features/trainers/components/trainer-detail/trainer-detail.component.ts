@@ -10,7 +10,6 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule, Router } from '@angular/router';
 import { Location } from '@angular/common';
 import { TrainerProfileService } from '../../services/trainer-profile.service';
-import { TrainerCacheService } from '../../services/trainer-cache.service';
 import { TrainerCard } from '../../../../core/models';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
@@ -193,7 +192,6 @@ import { takeUntil } from 'rxjs/operators';
 })
 export class TrainerDetailComponent implements OnInit, OnDestroy {
   private readonly trainerProfileService = inject(TrainerProfileService);
-  private readonly trainerCacheService = inject(TrainerCacheService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly location = inject(Location);
@@ -212,18 +210,10 @@ export class TrainerDetailComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Second try: check if trainer is cached (from auth redirect)
-    const cachedTrainer = this.trainerCacheService.getCachedTrainer();
-    if (cachedTrainer) {
-      this.trainer.set(cachedTrainer);
-      console.log('[TrainerDetailComponent] Trainer loaded from cache:', cachedTrainer);
-      return;
-    }
-
-    // Fall back to loading from API if not in state or cache
+    // Fall back to loading from API if not in state
     const trainerId = this.route.snapshot.paramMap.get('id');
     if (trainerId) {
-      console.log('[TrainerDetailComponent] Trainer not in state or cache, attempting to load from API with ID:', trainerId);
+      console.log('[TrainerDetailComponent] Trainer not in navigation state, attempting to load from API with ID:', trainerId);
       this.loadTrainerProfile(trainerId);
     } else {
       this.error.set('No trainer information provided. Please navigate from the trainers list.');

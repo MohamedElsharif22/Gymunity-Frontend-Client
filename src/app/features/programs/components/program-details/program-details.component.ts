@@ -1,11 +1,10 @@
-import { Component, inject, signal, ChangeDetectionStrategy, OnInit, OnDestroy } from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy, OnInit, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule, Router } from '@angular/router';
-import { ClientProgramsService } from '../../services/client-programs.service';
+import { ProgramService, Program } from '../../services/program.service';
 import { TrainerDiscoveryService } from '../../../trainers/services/trainer-discovery.service';
-import { ProgramResponse, TrainerProfile } from '../../../../core/models';
-import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { TrainerProfile } from '../../../../core/models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 /**
  * Program Details Component
@@ -17,7 +16,7 @@ import { takeUntil } from 'rxjs/operators';
  * - Navigate to weeks list
  *
  * Route parameter: programId
- * Service method: ClientProgramsService.getProgramById(programId)
+ * Service method: ProgramService.getProgramById(programId)
  */
 @Component({
   selector: 'app-program-details',
@@ -216,14 +215,14 @@ import { takeUntil } from 'rxjs/operators';
   `,
   styles: []
 })
-export class ProgramDetailsComponent implements OnInit, OnDestroy {
-  private programsService = inject(ClientProgramsService);
+export class ProgramDetailsComponent implements OnInit {
+  private programsService = inject(ProgramService);
   private trainerDiscoveryService = inject(TrainerDiscoveryService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
-  private destroy$ = new Subject<void>();
+  private destroyRef = inject(DestroyRef);
 
-  program = signal<ProgramResponse | null>(null);
+  program = signal<Program | null>(null);
   trainer = signal<TrainerProfile | null>(null);
   loading = signal(false);
   trainerLoading = signal(false);
@@ -241,8 +240,8 @@ export class ProgramDetailsComponent implements OnInit, OnDestroy {
     this.error.set(null);
 
     this.programsService
-      .getProgramById(programId)
-      .pipe(takeUntil(this.destroy$))
+      .getProgramById(+programId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (program) => {
           this.program.set(program);
@@ -268,7 +267,7 @@ export class ProgramDetailsComponent implements OnInit, OnDestroy {
 
     this.trainerDiscoveryService
       .searchTrainers({ search: trainerHandle })
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (response) => {
           const trainer = response?.items?.[0];
@@ -292,10 +291,5 @@ export class ProgramDetailsComponent implements OnInit, OnDestroy {
 
   goBack() {
     this.router.navigate(['/programs']);
-  }
-
-  ngOnDestroy() {
-    this.destroy$.next();
-    this.destroy$.complete();
   }
 }
