@@ -74,15 +74,13 @@ import { of } from 'rxjs';
                class="px-4 py-2.5 rounded-xl text-gray-700 font-semibold hover:bg-gray-100 transition-all duration-200">
               Dashboard
             </a>
-            <a routerLink="/packages" 
+            <a routerLink="/my-active-programs" 
                routerLinkActive="bg-gradient-to-r from-sky-500 to-indigo-600 text-white shadow-lg"
-               class="px-4 py-2.5 rounded-xl text-gray-700 font-semibold hover:bg-gray-100 transition-all duration-200">
-              Packages
-            </a>
-            <a routerLink="/trainers" 
-               routerLinkActive="bg-gradient-to-r from-sky-500 to-indigo-600 text-white shadow-lg"
-               class="px-4 py-2.5 rounded-xl text-gray-700 font-semibold hover:bg-gray-100 transition-all duration-200">
-              Trainers
+               class="flex items-center gap-2 px-4 py-2.5 rounded-xl text-gray-700 font-semibold hover:bg-gray-100 transition-all duration-200">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+              </svg>
+              My Programs
             </a>
           </nav>
 
@@ -114,24 +112,6 @@ import { of } from 'rxjs';
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
               </svg>
             </button>
-
-            <!-- My Active Programs Icon -->
-            <div class="relative group">
-              <button (click)="navigateToActivePrograms()" class="relative p-2 hover:bg-gray-100 rounded-xl transition group cursor-pointer">
-                <svg class="w-6 h-6 text-gray-600 group-hover:text-sky-600 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
-                </svg>
-                @if (activePrograms().length > 0) {
-                  <span class="absolute top-1 right-1 w-5 h-5 bg-sky-500 text-white text-xs rounded-full flex items-center justify-center font-bold">
-                    {{ activePrograms().length }}
-                  </span>
-                }
-              </button>
-              <!-- Tooltip -->
-              <div class="absolute right-0 mt-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 -bottom-12 z-50">
-                My Active Programs ({{ activePrograms().length }})
-              </div>
-            </div>
 
             <!-- Notifications -->
             <button class="relative p-2 hover:bg-gray-100 rounded-xl transition group">
@@ -215,35 +195,21 @@ import { of } from 'rxjs';
                     </div>
                   </a>
                   
-                  <a routerLink="/memberships" 
-                     class="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-indigo-50 transition group">
-                    <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center group-hover:bg-indigo-200 transition">
-                      <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                      </svg>
-                    </div>
-                    <div>
-                      <p class="font-semibold text-sm">Subscriptions</p>
-                      <p class="text-xs text-gray-500">Manage memberships</p>
-                    </div>
-                  </a>
-                </div>
-
-                <!-- Logout Button -->
-                <div class="p-2 border-t border-gray-100">
-                  <button 
-                    (click)="logout()" 
-                    class="flex items-center gap-3 w-full px-4 py-3 text-red-600 hover:bg-red-50 rounded-xl transition font-semibold group">
-                    <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center group-hover:bg-red-200 transition">
-                      <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
-                      </svg>
-                    </div>
-                    <span>Logout</span>
-                  </button>
+                  <!-- Logout Button -->
+                  <div class="p-2 border-t border-gray-100">
+                    <button 
+                      (click)="logout()" 
+                      class="flex items-center gap-3 w-full px-4 py-3 text-red-600 hover:bg-red-50 rounded-xl transition font-semibold group">
+                      <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center group-hover:bg-red-200 transition">
+                        <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                        </svg>
+                      </div>
+                      <span>Logout</span>
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
 
             <!-- Mobile Menu Button -->
             <button 
@@ -255,6 +221,7 @@ import { of } from 'rxjs';
             </button>
           </div>
         </div>
+      </div>
 
         <!-- Mobile Search Bar -->
         @if (showMobileSearch()) {
@@ -275,8 +242,6 @@ import { of } from 'rxjs';
             </div>
           </div>
         }
-      </div>
-
       <!-- Mobile Navigation Menu -->
       @if (showMobileMenu()) {
         <div class="lg:hidden border-t border-gray-200 bg-white">
@@ -287,28 +252,16 @@ import { of } from 'rxjs';
                class="block px-4 py-3 rounded-xl text-gray-700 font-semibold hover:bg-gray-100 transition">
               Dashboard
             </a>
-            <a routerLink="/packages" 
+            <a routerLink="/my-active-programs" 
                (click)="toggleMobileMenu()"
                routerLinkActive="bg-gradient-to-r from-sky-500 to-indigo-600 text-white"
                class="block px-4 py-3 rounded-xl text-gray-700 font-semibold hover:bg-gray-100 transition">
-              Packages
-            </a>
-            <a routerLink="/programs" 
-               (click)="toggleMobileMenu()"
-               routerLinkActive="bg-gradient-to-r from-sky-500 to-indigo-600 text-white"
-               class="block px-4 py-3 rounded-xl text-gray-700 font-semibold hover:bg-gray-100 transition">
-              Programs
-            </a>
-            <a routerLink="/trainers" 
-               (click)="toggleMobileMenu()"
-               routerLinkActive="bg-gradient-to-r from-sky-500 to-indigo-600 text-white"
-               class="block px-4 py-3 rounded-xl text-gray-700 font-semibold hover:bg-gray-100 transition">
-              Trainers
+              My Programs
             </a>
           </nav>
         </div>
       }
-    </header>
+    
   `,
   styles: [`
     :host {
@@ -367,10 +320,6 @@ export class HeaderComponent implements OnInit {
 
   toggleMobileMenu() {
     this.showMobileMenu.update(val => !val);
-  }
-
-  navigateToActivePrograms() {
-    this.router.navigate(['/my-active-programs']);
   }
 
   logout() {
