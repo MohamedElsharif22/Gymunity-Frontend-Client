@@ -46,8 +46,7 @@ export class HomeClientService {
    * Get packages by trainer ID
    */
   getPackagesByTrainer(trainerId: string): Observable<Package[]> {
-    const params = new HttpParams().set('trainerId', trainerId);
-    return this.apiService.get<Package[]>('/api/homeclient/packages/by-trainer', params);
+    return this.apiService.get<Package[]>(`/api/homeclient/packages/trainer/${trainerId}`);
   }
 
   // ==================== Trainers ====================
@@ -72,6 +71,7 @@ export class HomeClientService {
 
   /**
    * Get all available programs
+   * GET /api/homeclient/programs
    */
   getAllPrograms(): Observable<Program[]> {
     return this.apiService.get<Program[]>('/api/homeclient/programs');
@@ -79,6 +79,7 @@ export class HomeClientService {
 
   /**
    * Get program by ID
+   * GET /api/homeclient/programs/{id}
    */
   getProgramById(programId: number): Observable<Program> {
     return this.apiService.get<Program>(`/api/homeclient/programs/${programId}`);

@@ -161,129 +161,175 @@ import { TrainerCard, TrainerSearchOptions } from '../../../core/models';
       @if (!isLoading() && !error() && filteredTrainers().length > 0) {
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           @for (trainer of filteredTrainers(); track trainer.id) {
-            <div
-              class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
+            <article 
+              class="group bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-xl hover:border-sky-300 transition-all duration-300 cursor-pointer"
+              (click)="viewTrainerProfile(trainer)"
             >
-              <!-- Cover Image -->
-              @if (trainer.coverImageUrl) {
-                <div class="h-32 bg-gradient-to-r from-blue-400 to-purple-500 overflow-hidden">
-                  <img
-                    [src]="trainer.coverImageUrl"
+              <!-- Cover Image with Overlay -->
+              <div class="relative h-48 bg-gradient-to-br from-sky-400 to-sky-600 overflow-hidden">
+                @if (trainer.coverImageUrl) {
+                  <img 
+                    [src]="trainer.coverImageUrl" 
                     [alt]="trainer.userName"
-                    class="w-full h-full object-cover"
+                    class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                   />
-                </div>
-              } @else {
-                <div class="h-32 bg-gradient-to-r from-blue-400 to-purple-500"></div>
-              }
-
-              <div class="p-6">
-                <!-- Profile Section -->
-                <div class="flex items-start gap-4 mb-4">
-                  <!-- Avatar -->
-                  <div class="flex-shrink-0">
-                    <div
-                      class="w-16 h-16 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-bold text-lg border-2 border-white -mt-12 relative z-10"
-                    >
-                      {{ trainer?.userName?.charAt(0)?.toUpperCase() ?? 'T' }}
-                    </div>
+                  <!-- Dark overlay for better text contrast -->
+                  <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
+                } @else {
+                  <div class="w-full h-full flex items-center justify-center text-5xl">💪</div>
+                }
+                
+                <!-- Verified Badge (Top Right) -->
+                @if (trainer.isVerified) {
+                  <div class="absolute top-3 right-3 bg-white/95 backdrop-blur-sm px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-lg">
+                    <svg class="w-4 h-4 text-sky-600" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                    </svg>
+                    <span class="text-xs font-semibold text-gray-900">Verified</span>
                   </div>
+                }
 
-                  <!-- Basic Info -->
-                  <div class="flex-1 min-w-0">
-                    <div class="flex items-center gap-2 mb-1">
-                      <h3 class="text-lg font-bold text-gray-900">{{ trainer.userName }}</h3>
-                      @if (trainer.isVerified) {
-                        <svg
-                          class="w-5 h-5 text-blue-500 flex-shrink-0"
-                          fill="currentColor"
+                <!-- Active Badge (Top Left) -->
+                @if (trainer.hasActiveSubscription) {
+                  <div class="absolute top-3 left-3 bg-green-500 text-white px-3 py-1.5 rounded-full text-xs font-semibold shadow-lg">
+                    Active
+                  </div>
+                }
+              </div>
+
+              <!-- Content -->
+              <div class="p-6">
+                <!-- Avatar & Name (Overlapping cover) -->
+                <div class="flex items-start gap-4 -mt-14 mb-4">
+                  <div class="relative">
+                    <div class="w-20 h-20 rounded-2xl bg-white border-4 border-white shadow-xl overflow-hidden flex-shrink-0">
+                      @if (trainer.coverImageUrl) {
+                        <img 
+                          [src]="trainer.coverImageUrl" 
+                          [alt]="trainer.userName"
+                          class="w-full h-full object-cover"
+                        />
+                      } @else {
+                        <div class="w-full h-full bg-gradient-to-br from-sky-400 to-indigo-600 flex items-center justify-center text-white font-bold text-2xl">
+                          {{ trainer.userName.charAt(0).toUpperCase() || 'T' }}
+                        </div>
+                      }
+                    </div>
+                    <!-- Online Status Indicator -->
+                    @if (trainer.hasActiveSubscription) {
+                      <div class="absolute -bottom-1 -right-1 w-5 h-5 bg-green-400 border-2 border-white rounded-full"></div>
+                    }
+                  </div>
+                  <!-- Name & Handle -->
+                  <div class="flex-1 pt-10">
+                    <h3 class="text-xl font-bold text-gray-900 mb-0.5 group-hover:text-sky-600 transition-colors">
+                      {{ trainer.userName || 'Trainer' }}
+                    </h3>
+                    @if (trainer.handle) {
+                      <p class="text-sm text-sky-600 font-medium">{{ '@' + trainer.handle }}</p>
+                    }
+                  </div>
+                </div>
+
+                <!-- Rating & Reviews -->
+                @if (trainer.ratingAverage || trainer.totalReviews) {
+                  <div class="flex items-center gap-2 mb-3">
+                    <div class="flex items-center gap-1">
+                      @for (i of [1, 2, 3, 4, 5]; track i) {
+                        <svg 
+                          [class]="i <= Math.round(trainer.ratingAverage || 0) ? 'text-yellow-400' : 'text-gray-300'"
+                          class="w-4 h-4" 
+                          fill="currentColor" 
                           viewBox="0 0 20 20"
                         >
-                          <path
-                            fill-rule="evenodd"
-                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                            clip-rule="evenodd"
-                          />
+                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
                         </svg>
                       }
                     </div>
-                    <p class="text-sm text-gray-600 truncate">@{{ trainer.handle }}</p>
+                    <span class="text-sm font-semibold text-gray-900">{{ (trainer.ratingAverage || 0).toFixed(1) }}</span>
+                    @if (trainer.totalReviews) {
+                      <span class="text-sm text-gray-500">({{ trainer.totalReviews }} reviews)</span>
+                    }
                   </div>
-                </div>
+                }
 
                 <!-- Bio -->
                 @if (trainer.bio) {
-                  <p class="text-sm text-gray-700 mb-4 line-clamp-2">{{ trainer.bio }}</p>
+                  <p class="text-sm text-gray-600 mb-4 line-clamp-2 leading-relaxed">
+                    {{ trainer.bio }}
+                  </p>
                 }
 
-                <!-- Stats -->
-                <div class="grid grid-cols-2 gap-3 mb-4 pb-4 border-b border-gray-200">
+                <!-- Stats Grid -->
+                <div class="grid grid-cols-3 gap-3 py-4 border-y border-gray-200 mb-4">
                   <!-- Experience -->
                   <div class="text-center">
-                    <p class="text-2xl font-bold text-gray-900">{{ trainer.yearsExperience }}</p>
-                    <p class="text-xs text-gray-600">Years Exp.</p>
-                  </div>
-
-                  <!-- Rating -->
-                  <div class="text-center">
-                    <div class="flex items-center justify-center mb-1">
-                      <span class="text-2xl font-bold text-gray-900">{{
-                        trainer.ratingAverage.toFixed(1)
-                      }}</span>
-                      <svg class="w-5 h-5 text-yellow-400 ml-1" fill="currentColor" viewBox="0 0 20 20">
-                        <path
-                          d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.381-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"
-                        />
-                      </svg>
-                    </div>
-                    <p class="text-xs text-gray-600">({{ trainer.totalReviews }} reviews)</p>
-                  </div>
-                </div>
-
-                <!-- Price -->
-                @if (trainer.startingPrice) {
-                  <div class="mb-4 p-3 bg-gray-50 rounded-lg">
-                    <p class="text-sm text-gray-700">
-                      Starting from <span class="font-bold text-gray-900">$ {{ trainer.startingPrice }}</span>
+                    <p class="text-lg font-bold text-gray-900">
+                      {{ trainer.yearsExperience || 0 }}
                     </p>
+                    <p class="text-xs text-gray-600">Years</p>
                   </div>
-                }
-
-                <!-- Stats Row -->
-                <div class="flex items-center justify-between text-xs text-gray-600 mb-4 pb-4 border-b border-gray-200">
-                  <span>{{ trainer.totalClients }} clients</span>
-                  @if (trainer.hasActiveSubscription) {
-                    <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full font-medium"
-                      >Available</span
-                    >
-                  } @else {
-                    <span class="px-2 py-1 bg-gray-100 text-gray-600 rounded-full">Not Available</span>
+                  
+                  <!-- Clients -->
+                  @if (trainer.totalClients) {
+                    <div class="text-center">
+                      <p class="text-lg font-bold text-gray-900">{{ trainer.totalClients }}</p>
+                      <p class="text-xs text-gray-600">Clients</p>
+                    </div>
                   }
+                  
+                  <!-- Rating (simplified) -->
+                  <div class="text-center">
+                    <p class="text-lg font-bold text-gray-900">{{ (trainer.ratingAverage || 0).toFixed(1) }}</p>
+                    <p class="text-xs text-gray-600">Rating</p>
+                  </div>
                 </div>
 
-                <!-- Action Buttons -->
-                <div class="flex gap-2">
-                  <button
-                    (click)="viewTrainerProfile(trainer)"
-                    class="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium"
-                  >
-                    View Profile
-                  </button>
-                  <button
-                    (click)="contactTrainer(trainer)"
-                    class="flex-1 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg transition-colors font-medium"
-                  >
-                    Contact
-                  </button>
+                <!-- Price & CTA -->
+                <div class="flex items-center justify-between gap-3">
+                  @if (trainer.startingPrice) {
+                    <div class="flex flex-col">
+                      <span class="text-xs text-gray-500">Starting at</span>
+                      <div class="flex items-baseline gap-1">
+                        <span class="text-2xl font-bold text-gray-900">\${{ trainer.startingPrice }}</span>
+                        <span class="text-sm text-gray-600">/session</span>
+                      </div>
+                    </div>
+                  }
+                  
+                  <div class="flex gap-2 flex-1">
+                    <button
+                      (click)="viewTrainerProfile(trainer); $event.stopPropagation()"
+                      class="flex-1 bg-sky-600 hover:bg-sky-700 text-white font-semibold py-2.5 px-4 rounded-lg transition-colors shadow-sm hover:shadow-md flex items-center justify-center gap-2 group"
+                    >
+                      <span>Profile</span>
+                      <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                      </svg>
+                    </button>
+                    <button
+                      (click)="contactTrainer(trainer); $event.stopPropagation()"
+                      class="bg-white hover:bg-gray-50 text-sky-600 border-2 border-sky-200 hover:border-sky-300 font-semibold py-2.5 px-4 rounded-lg transition-colors"
+                    >
+                      Contact
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
+            </article>
           }
         </div>
       }
     </div>
   `,
-  styles: []
+  styles: [`
+    .line-clamp-2 {
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+  `]
 })
 export class TrainersComponent implements OnInit {
   private readonly homeClientService = inject(HomeClientService);
@@ -298,6 +344,7 @@ export class TrainersComponent implements OnInit {
   minExperience = signal('');
   sortBy = signal('');
   totalCount = signal(0);
+  Math = Math;
 
   // Computed signals
   availableSpecialties = computed(() => {

@@ -24,8 +24,11 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
   // Get token from AuthService
   const token = authService.getToken();
 
-  // Clone request and add Authorization header if token exists
-  if (token) {
+  // Check if this is a public endpoint that doesn't require auth
+  const isPublicEndpoint = request.url.includes('/api/homeclient/');
+
+  // Clone request and add Authorization header if token exists (but not for public endpoints)
+  if (token && !isPublicEndpoint) {
     // For FormData requests, only add Authorization header (don't override Content-Type)
     // Browser will set Content-Type: multipart/form-data automatically
     if (request.body instanceof FormData) {
@@ -51,6 +54,11 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
       method: request.method,
       url: request.url,
       hasAuth: !!token
+    });
+  } else if (isPublicEndpoint) {
+    console.log(`[AuthInterceptor] Public endpoint (no auth required):`, {
+      method: request.method,
+      url: request.url
     });
   }
 

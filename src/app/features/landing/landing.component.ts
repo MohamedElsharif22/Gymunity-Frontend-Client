@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { HomeClientService } from '../trainers/services/home-client.service';
 import { AuthService } from '../../core/services/auth.service';
-import { TrainerProfile, Program } from '../../core/models';
+import { TrainerCard, Program } from '../../core/models';
 
 @Component({
   selector: 'app-landing',
@@ -108,71 +108,166 @@ import { TrainerProfile, Program } from '../../core/models';
             <div class="animate-spin rounded-full h-16 w-16 border-4 border-sky-600 border-t-transparent"></div>
           </div>
         } @else if (featuredTrainers().length > 0) {
-          <!-- Trainers Grid -->
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
-            @for (trainer of featuredTrainers(); track trainer.id) {
-              <div class="bg-white rounded-xl shadow-md hover:shadow-xl transition-all transform hover:scale-105 overflow-hidden">
-                <!-- Trainer Image -->
-                <div class="relative h-64 bg-gradient-to-br from-sky-400 to-sky-600 flex items-center justify-center overflow-hidden">
-                  @if (getTrainerPhotoUrl(trainer)) {
-                    <img 
-                      [src]="getTrainerPhotoUrl(trainer)" 
-                      [alt]="trainer.userName || 'Trainer'"
-                      class="w-full h-full object-cover"
-                    />
-                  } @else {
-                    <div class="text-6xl">💪</div>
-                  }
+          <!-- Professional Trainers Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+  @for (trainer of featuredTrainers(); track trainer.id) {
+    <article 
+      class="group bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-xl hover:border-blue-300 transition-all duration-300 cursor-pointer"
+      (click)="viewTrainerProfile(trainer)"
+    >
+      <!-- Cover Image with Overlay -->
+      <div class="relative h-48 bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 overflow-hidden">
+        @if (getTrainerPhotoUrl(trainer)) {
+          <img 
+            [src]="getTrainerPhotoUrl(trainer)" 
+            [alt]="trainer.userName || 'Trainer'"
+            class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+          />
+          <!-- Dark overlay for better text contrast -->
+          <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
+        }
+        
+        <!-- Verified Badge (Top Right) -->
+        @if (trainer.isVerified) {
+          <div class="absolute top-3 right-3 bg-white/95 backdrop-blur-sm px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-lg">
+            <svg class="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+            </svg>
+            <span class="text-xs font-semibold text-gray-900">Verified</span>
+          </div>
+        }
+
+        <!-- Active Badge (Top Left) -->
+        @if (trainer.hasActiveSubscription) {
+          <div class="absolute top-3 left-3 bg-green-500 text-white px-3 py-1.5 rounded-full text-xs font-semibold shadow-lg">
+            Active
+          </div>
+        }
+      </div>
+
+      <!-- Content -->
+      <div class="p-6">
+        <!-- Avatar & Name (Overlapping cover) -->
+        <div class="flex items-start gap-4 -mt-14 mb-4">
+          <div class="relative">
+            <div class="w-20 h-20 rounded-2xl bg-white border-4 border-white shadow-xl overflow-hidden flex-shrink-0">
+              @if (getTrainerPhotoUrl(trainer)) {
+                <img 
+                  [src]="getTrainerPhotoUrl(trainer)" 
+                  [alt]="trainer.userName"
+                  class="w-full h-full object-cover"
+                />
+              } @else {
+                <div class="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-2xl">
+                  {{ trainer.userName.charAt(0).toUpperCase() || 'T' }}
                 </div>
-
-                <!-- Content -->
-                <div class="p-6">
-                  <h3 class="text-xl font-bold text-gray-900 mb-1">{{ trainer.userName || 'Trainer' }}</h3>
-
-                  <!-- Rating -->
-                  @if (trainer.rating) {
-                    <div class="flex items-center gap-2 mb-4">
-                      <div class="flex gap-1">
-                        @for (i of [1, 2, 3, 4, 5]; track i) {
-                          <svg 
-                            [class]="i <= Math.round(trainer.rating || 0) ? 'text-yellow-400' : 'text-gray-300'"
-                            class="w-4 h-4" 
-                            fill="currentColor" 
-                            viewBox="0 0 20 20">
-                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                          </svg>
-                        }
-                      </div>
-                      <span class="text-sm text-gray-600">({{ (trainer.rating || 0).toFixed(1) }})</span>
-                    </div>
-                  }
-
-                  <!-- Bio -->
-                  @if (trainer.bio) {
-                    <p class="text-gray-600 text-sm mb-4 line-clamp-2">{{ trainer.bio }}</p>
-                  }
-
-                  <!-- Experience -->
-                  <div class="flex items-center gap-2 text-sm text-gray-500 mb-6">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                    @if (trainer.yearsOfExperience) {
-                      <span>{{ trainer.yearsOfExperience }} years experience</span>
-                    }
-                  </div>
-
-                  <!-- View Profile Button -->
-                  <button
-                    (click)="viewTrainerProfile(trainer)"
-                    class="w-full bg-gradient-to-r from-sky-600 to-sky-700 hover:from-sky-700 hover:to-sky-800 text-white font-semibold py-2 px-4 rounded-lg transition">
-                    View Profile
-                  </button>
-                </div>
-              </div>
+              }
+            </div>
+            <!-- Online Status Indicator -->
+            <div class="absolute -bottom-1 -right-1 w-5 h-5 bg-green-400 border-2 border-white rounded-full"></div>
+          </div>
+          <!-- trainer card -->
+          <div class="flex-1 pt-10">
+            <h3 class="text-xl font-bold text-gray-900 mb-0.5 group-hover:text-blue-600 transition-colors">
+              {{ trainer.userName || 'Trainer' }}
+            </h3>
+            @if (trainer.handle) {
+              <p class="text-sm text-blue-600 font-medium">{{ '@' + trainer.handle }}</p>
             }
           </div>
+        </div>
 
+        <!-- Rating & Reviews -->
+        @if (trainer.ratingAverage || trainer.totalReviews) {
+          <div class="flex items-center gap-2 mb-3">
+            <div class="flex items-center gap-1">
+              @for (i of [1, 2, 3, 4, 5]; track i) {
+                <svg 
+                  [class]="i <= Math.round(trainer.ratingAverage || 0) ? 'text-yellow-400' : 'text-gray-300'"
+                  class="w-4 h-4" 
+                  fill="currentColor" 
+                  viewBox="0 0 20 20"
+                >
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                </svg>
+              }
+            </div>
+            <span class="text-sm font-semibold text-gray-900">{{ (trainer.ratingAverage || 0).toFixed(1) }}</span>
+            @if (trainer.totalReviews) {
+              <span class="text-sm text-gray-500">({{ trainer.totalReviews }} reviews)</span>
+            }
+          </div>
+        }
+
+        <!-- Bio -->
+        @if (trainer.bio) {
+          <p class="text-sm text-gray-600 mb-4 line-clamp-2 leading-relaxed">
+            {{ trainer.bio }}
+          </p>
+        }
+
+        <!-- Specializations -->
+        @if (trainer.bio) {
+          <!-- Specializations info displayed in bio section above -->
+        }
+
+        <!-- Stats Grid -->
+        <div class="grid grid-cols-3 gap-3 py-4 border-y border-gray-200 mb-4">
+          <!-- Experience -->
+          <div class="text-center">
+            <p class="text-lg font-bold text-gray-900">
+              {{ trainer.yearsExperience || 0 }}
+            </p>
+            <p class="text-xs text-gray-600">Years</p>
+          </div>
+          
+          <!-- Clients -->
+          @if (trainer.totalClients) {
+            <div class="text-center">
+              <p class="text-lg font-bold text-gray-900">{{ trainer.totalClients }}</p>
+              <p class="text-xs text-gray-600">Clients</p>
+            </div>
+          }
+          
+          <!-- Programs -->
+          <!-- Programs count not available in current data model -->
+        </div>
+
+        <!-- Price & CTA -->
+        <div class="flex items-center justify-between gap-3">
+          @if (trainer.startingPrice) {
+            <div class="flex flex-col">
+              <span class="text-xs text-gray-500">Starting at</span>
+              <div class="flex items-baseline gap-1">
+                <span class="text-2xl font-bold text-gray-900">\${{ trainer.startingPrice }}</span>
+                <span class="text-sm text-gray-600">/session</span>
+              </div>
+            </div>
+          }
+          
+          <button
+            (click)="viewTrainerProfile(trainer); $event.stopPropagation()"
+            class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-4 rounded-lg transition-colors shadow-sm hover:shadow-md flex items-center justify-center gap-2 group"
+          >
+            <span>View Profile</span>
+            <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </article>
+  }
+</div>
+
+<style>
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+</style>
           <!-- View All Trainers Link -->
           <div class="text-center">
             @if (isAuthenticated()) {
@@ -525,7 +620,7 @@ export class LandingComponent implements OnInit {
   private router = inject(Router);
 
   isAuthenticated = signal(false);
-  featuredTrainers = signal<TrainerProfile[]>([]);
+  featuredTrainers = signal<TrainerCard[]>([]);
   isLoadingTrainers = signal(true);
   popularPrograms = signal<Program[]>([]);
   isLoadingPrograms = signal(true);
@@ -567,7 +662,7 @@ export class LandingComponent implements OnInit {
       .subscribe({
         next: (response) => {
           // Cast trainers to TrainerProfile and get top 6
-          const trainers = (response || []) as unknown as TrainerProfile[];
+          const trainers = (response || []) as unknown as TrainerCard[];
           if (trainers.length > 0) {
             this.featuredTrainers.set(trainers.slice(0, 6));
           } else {
@@ -586,84 +681,96 @@ export class LandingComponent implements OnInit {
 
   loadDemoTrainers() {
     // Demo trainers for unauthenticated users
-    const demoTrainers: TrainerProfile[] = [
+    const demoTrainers: TrainerCard[] = [
       {
         id: 1,
         userId: '1',
         userName: 'Alex Johnson',
-        profilePhotoUrl: 'https://images.unsplash.com/photo-1567721913486-5f3c4dd8357f?w=400&h=400&fit=crop',
+        handle: 'alexjohnson',
+        coverImageUrl: 'https://images.unsplash.com/photo-1567721913486-5f3c4dd8357f?w=400&h=400&fit=crop',
         bio: 'Certified fitness coach with 8 years of experience in strength training',
-        specialization: 'Strength Training',
-        yearsOfExperience: 8,
-        certification: 'NASM, ACE',
-        rating: 4.8,
+        isVerified: true,
+        ratingAverage: 4.8,
         totalClients: 95,
-        isActive: true
+        yearsExperience: 8,
+        totalReviews: 45,
+        startingPrice: 50,
+        hasActiveSubscription: true
       },
       {
         id: 2,
         userId: '2',
         userName: 'Maria Garcia',
-        profilePhotoUrl: 'https://images.unsplash.com/photo-1535083783855-76ae62b2914e?w=400&h=400&fit=crop',
+        handle: 'mariagarcia',
+        coverImageUrl: 'https://images.unsplash.com/photo-1535083783855-76ae62b2914e?w=400&h=400&fit=crop',
         bio: 'Yoga and flexibility specialist helping clients achieve balance and wellness',
-        specialization: 'Yoga',
-        yearsOfExperience: 10,
-        certification: 'RYT-500',
-        rating: 4.9,
+        isVerified: true,
+        ratingAverage: 4.9,
         totalClients: 120,
-        isActive: true
+        yearsExperience: 10,
+        totalReviews: 67,
+        startingPrice: 45,
+        hasActiveSubscription: true
       },
       {
         id: 3,
         userId: '3',
         userName: 'David Chen',
-        profilePhotoUrl: 'https://images.unsplash.com/photo-1574156519202-18a6cacfe814?w=400&h=400&fit=crop',
+        handle: 'davidchen',
+        coverImageUrl: 'https://images.unsplash.com/photo-1574156519202-18a6cacfe814?w=400&h=400&fit=crop',
         bio: 'Marathon coach and cardio expert with proven track record',
-        specialization: 'Cardio',
-        yearsOfExperience: 9,
-        certification: 'RRCA',
-        rating: 4.7,
+        isVerified: true,
+        ratingAverage: 4.7,
         totalClients: 110,
-        isActive: true
+        yearsExperience: 9,
+        totalReviews: 52,
+        startingPrice: 55,
+        hasActiveSubscription: true
       },
       {
         id: 4,
         userId: '4',
         userName: 'Sarah Williams',
-        profilePhotoUrl: 'https://images.unsplash.com/photo-1517836357463-d25ddfcb3ef7?w=400&h=400&fit=crop',
+        handle: 'sarahwilliams',
+        coverImageUrl: 'https://images.unsplash.com/photo-1517836357463-d25ddfcb3ef7?w=400&h=400&fit=crop',
         bio: 'Personal trainer specializing in functional fitness and HIIT training',
-        specialization: 'HIIT',
-        yearsOfExperience: 7,
-        certification: 'NASM',
-        rating: 4.8,
+        isVerified: true,
+        ratingAverage: 4.8,
         totalClients: 85,
-        isActive: true
+        yearsExperience: 7,
+        totalReviews: 41,
+        startingPrice: 60,
+        hasActiveSubscription: true
       },
       {
         id: 5,
         userId: '5',
         userName: 'James Wilson',
-        profilePhotoUrl: 'https://images.unsplash.com/photo-1570829034853-aae4b8ff8f13?w=400&h=400&fit=crop',
+        handle: 'jameswilson',
+        coverImageUrl: 'https://images.unsplash.com/photo-1570829034853-aae4b8ff8f13?w=400&h=400&fit=crop',
         bio: 'Nutritionist and fitness coach combining diet and exercise for optimal results',
-        specialization: 'Nutrition',
-        yearsOfExperience: 12,
-        certification: 'ISSN, NASM',
-        rating: 4.9,
+        isVerified: true,
+        ratingAverage: 4.9,
         totalClients: 150,
-        isActive: true
+        yearsExperience: 12,
+        totalReviews: 78,
+        startingPrice: 65,
+        hasActiveSubscription: true
       },
       {
         id: 6,
         userId: '6',
         userName: 'Emma Thompson',
-        profilePhotoUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&h=400&fit=crop',
+        handle: 'emmathompson',
+        coverImageUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&h=400&fit=crop',
         bio: 'Pilates and core strength specialist for all fitness levels',
-        specialization: 'Pilates',
-        yearsOfExperience: 6,
-        certification: 'PMA',
-        rating: 4.6,
+        isVerified: false,
+        ratingAverage: 4.6,
         totalClients: 92,
-        isActive: true
+        yearsExperience: 6,
+        totalReviews: 39,
+        startingPrice: 48,
+        hasActiveSubscription: true
       }
     ];
     this.featuredTrainers.set(demoTrainers);
@@ -699,7 +806,7 @@ export class LandingComponent implements OnInit {
     this.router.navigate(['/discover/programs', programId]);
   }
 
-  viewTrainerProfile(trainer: TrainerProfile) {
+  viewTrainerProfile(trainer: TrainerCard) {
     this.router.navigate(['/discover/trainers', trainer.userId], { 
       state: { trainer } 
     });
@@ -713,10 +820,7 @@ export class LandingComponent implements OnInit {
     }
   }
 
-  getTrainerPhotoUrl(trainer: TrainerProfile): string {
-    // Try to get coverImageUrl from TrainerCard (from HomeClientService)
-    // Otherwise fall back to profilePhotoUrl from TrainerProfile (for demo trainers)
-    const trainerCard = trainer as any;
-    return trainerCard.coverImageUrl || trainer.profilePhotoUrl || '';
+  getTrainerPhotoUrl(trainer: TrainerCard): string {
+    return trainer.coverImageUrl || '';
   }
 }

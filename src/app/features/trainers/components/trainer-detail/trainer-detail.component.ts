@@ -4,15 +4,18 @@ import {
   OnDestroy,
   inject,
   signal,
-  ChangeDetectionStrategy
+  ChangeDetectionStrategy,
+  DestroyRef
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule, Router } from '@angular/router';
 import { Location } from '@angular/common';
 import { TrainerProfileService } from '../../services/trainer-profile.service';
+import { HomeClientService } from '../../services/home-client.service';
 import { TrainerCard } from '../../../../core/models';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 /**
  * Trainer Detail Component
@@ -183,6 +186,66 @@ import { takeUntil } from 'rxjs/operators';
                 <p class="text-gray-700 leading-relaxed">{{ trainer()!.bio }}</p>
               </div>
             }
+
+            <!-- Packages Section -->
+            @if (!loadingPackages() && packages().length > 0) {
+              <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-xl font-bold text-gray-900 mb-6">Packages</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  @for (pkg of packages(); track pkg.id) {
+                    <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
+                      <h3 class="text-lg font-semibold text-gray-900 mb-2">{{ pkg.name }}</h3>
+                      @if (pkg.description) {
+                        <p class="text-sm text-gray-600 mb-4 line-clamp-2">{{ pkg.description }}</p>
+                      }
+                      <div class="space-y-2 mb-4 text-sm text-gray-700">
+                        <p><span class="font-medium">Monthly:</span> \${{ pkg.priceMonthly }}</p>
+                        <p><span class="font-medium">Yearly:</span> \${{ pkg.priceYearly }}</p>
+                      </div>
+                      <button
+                        (click)="viewPackage(pkg.id)"
+                        class="w-full bg-sky-500 hover:bg-sky-600 text-white font-medium py-2 px-4 rounded transition-colors">
+                        View Details
+                      </button>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+
+            <!-- Programs Section -->
+            @if (!loadingPrograms() && trainerPrograms().length > 0) {
+              <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-xl font-bold text-gray-900 mb-6">Programs</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  @for (program of trainerPrograms(); track program.id) {
+                    <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
+                      <!-- Program Header -->
+                      <h3 class="text-lg font-semibold text-gray-900 mb-2">{{ program.title }}</h3>
+                      @if (program.description) {
+                        <p class="text-sm text-gray-600 mb-4 line-clamp-2">{{ program.description }}</p>
+                      }
+                      
+                      <!-- Program Stats -->
+                      <div class="grid grid-cols-2 gap-2 mb-4 text-sm">
+                        <div class="bg-gray-50 p-2 rounded">
+                          <p class="text-gray-700"><span class="font-medium">{{ program.durationWeeks }}</span> weeks</p>
+                        </div>
+                        <div class="bg-gray-50 p-2 rounded">
+                          <p class="text-gray-700 capitalize"><span class="font-medium">{{ program.type }}</span></p>
+                        </div>
+                      </div>
+
+                      <button
+                        (click)="viewProgramPackage(program.id); $event.stopPropagation()"
+                        class="w-full bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-600 hover:to-sky-700 text-white font-semibold py-3 px-4 rounded-lg transition-all shadow-md hover:shadow-lg">
+                        View Package
+                      </button>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
           </div>
         }
       </div>
@@ -192,13 +255,19 @@ import { takeUntil } from 'rxjs/operators';
 })
 export class TrainerDetailComponent implements OnInit, OnDestroy {
   private readonly trainerProfileService = inject(TrainerProfileService);
+  private readonly homeClientService = inject(HomeClientService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly location = inject(Location);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly destroy$ = new Subject<void>();
 
   trainer = signal<TrainerCard | null>(null);
+  packages = signal<any[]>([]);
+  trainerPrograms = signal<any[]>([]);
   isLoading = signal(false);
+  loadingPackages = signal(false);
+  loadingPrograms = signal(false);
   error = signal<string | null>(null);
 
   ngOnInit(): void {
@@ -207,6 +276,8 @@ export class TrainerDetailComponent implements OnInit, OnDestroy {
     if (state?.trainer) {
       this.trainer.set(state.trainer);
       console.log('[TrainerDetailComponent] Trainer loaded from navigation state:', state.trainer);
+      this.loadTrainerPackages(state.trainer.id);
+      this.loadTrainerPrograms(state.trainer.id);
       return;
     }
 
@@ -238,6 +309,10 @@ export class TrainerDetailComponent implements OnInit, OnDestroy {
           this.trainer.set(profile);
           this.isLoading.set(false);
           console.log('[TrainerDetailComponent] Trainer profile loaded:', profile);
+          
+          // Load trainer's packages and programs
+          this.loadTrainerPackages(profile.id);
+          this.loadTrainerPrograms(profile.id);
         },
         error: (err: any) => {
           this.isLoading.set(false);
@@ -261,8 +336,67 @@ export class TrainerDetailComponent implements OnInit, OnDestroy {
       });
   }
 
+  loadTrainerPackages(trainerId: number): void {
+    this.loadingPackages.set(true);
+    this.homeClientService
+      .getPackagesByTrainer(trainerId.toString())
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (packages: any[]) => {
+          this.packages.set(packages);
+          this.loadingPackages.set(false);
+          console.log('[TrainerDetailComponent] Trainer packages loaded:', packages);
+        },
+        error: (err: any) => {
+          this.loadingPackages.set(false);
+          console.error('[TrainerDetailComponent] Error loading trainer packages:', err);
+        }
+      });
+  }
+
+  loadTrainerPrograms(trainerId: number): void {
+    this.loadingPrograms.set(true);
+    this.homeClientService
+      .getAllPrograms()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (allPrograms: any[]) => {
+          // Filter programs for this trainer
+          const filtered = allPrograms.filter(p => p.trainerProfileId === trainerId);
+          this.trainerPrograms.set(filtered);
+          this.loadingPrograms.set(false);
+          console.log('[TrainerDetailComponent] Trainer programs loaded:', filtered);
+        },
+        error: (err: any) => {
+          this.loadingPrograms.set(false);
+          console.error('[TrainerDetailComponent] Error loading trainer programs:', err);
+        }
+      });
+  }
+
+  viewPackage(packageId: number): void {
+    this.router.navigate(['/packages', packageId]);
+  }
+
+  viewProgram(programId: number): void {
+    this.router.navigate(['/discover/programs', programId]);
+  }
+
+  viewProgramPackage(programId: number): void {
+    // Find the program and navigate to packages page with trainer ID
+    const program = this.trainerPrograms().find(p => p.id === programId);
+    if (program && program.trainerProfileId) {
+      this.router.navigate(['/packages'], { 
+        queryParams: { trainerId: program.trainerProfileId } 
+      });
+    } else {
+      // Fallback to program details if trainer ID not available
+      this.viewProgram(programId);
+    }
+  }
+
   goBack(): void {
-    this.router.navigate(['/trainers']);
+    this.router.navigate(['/discover/trainers']);
   }
 
   ngOnDestroy(): void {
