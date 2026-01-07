@@ -246,7 +246,18 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
             <!-- Programs Section -->
             @if (!loadingPrograms() && trainerPrograms().length > 0) {
               <div class="bg-white rounded-lg shadow p-6">
-                <h2 class="text-xl font-bold text-gray-900 mb-6">Programs</h2>
+                <div class="flex items-center justify-between mb-6">
+                  <h2 class="text-xl font-bold text-gray-900">Programs</h2>
+                  <button
+                    (click)="viewAllPrograms(); $event.preventDefault(); $event.stopPropagation()"
+                    type="button"
+                    class="inline-flex items-center gap-2 px-4 py-2 bg-sky-50 hover:bg-sky-100 text-sky-600 hover:text-sky-700 font-semibold rounded-lg transition-colors border border-sky-200">
+                    View All
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                    </svg>
+                  </button>
+                </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                   @for (program of trainerPrograms(); track program.id) {
                     <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
@@ -266,11 +277,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
                         </div>
                       </div>
 
-                      <button
-                        (click)="viewProgramPackage(program.id); $event.stopPropagation()"
-                        class="w-full bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-600 hover:to-sky-700 text-white font-semibold py-3 px-4 rounded-lg transition-all shadow-md hover:shadow-lg">
-                        View Package
-                      </button>
+
                     </div>
                   }
                 </div>
@@ -412,6 +419,13 @@ export class TrainerDetailComponent implements OnInit, OnDestroy {
     const trainerId = this.trainer()?.id;
     if (trainerId) {
       this.router.navigate(['/discover/trainers', trainerId, 'packages']);
+    }
+  }
+
+  viewAllPrograms(): void {
+    const trainerId = this.trainer()?.id;
+    if (trainerId) {
+      this.router.navigate(['/discover/trainers', trainerId, 'programs']);
     }
   }
 

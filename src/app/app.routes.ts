@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { authGuard, noAuthGuard } from './core/guards/auth.guard';
 import { profileCompletionGuard } from './core/guards/profile-completion.guard';
 import { LayoutComponent } from './shared/components/layout/layout.component';
+import { GuestLayoutComponent } from './shared/components/layout/guest-layout.component';
 
 export const routes: Routes = [
   // Landing page - accessible to everyone (NO GUARDS)
@@ -37,6 +38,7 @@ export const routes: Routes = [
   // Guest-accessible discovery routes (NO AUTHENTICATION REQUIRED)
   {
     path: 'discover',
+    component: GuestLayoutComponent,
     children: [
       {
         path: 'trainers',
@@ -49,6 +51,10 @@ export const routes: Routes = [
       {
         path: 'trainers/:id/packages',
         loadComponent: () => import('./features/trainers/components/trainer-packages/trainer-packages.component').then(m => m.TrainerPackagesComponent)
+      },
+      {
+        path: 'trainers/:id/programs',
+        loadComponent: () => import('./features/trainers/components/trainer-programs/trainer-programs.component').then(m => m.TrainerProgramsComponent)
       },
       {
         path: 'programs',

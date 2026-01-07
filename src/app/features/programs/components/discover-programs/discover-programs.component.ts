@@ -133,12 +133,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
                     </div>
                   }
 
-                  <!-- CTA Button -->
-                  <button
-                    (click)="viewProgram(program.id); $event.stopPropagation()"
-                    class="w-full bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-600 hover:to-sky-700 text-white font-semibold py-3 px-4 rounded-lg transition-all shadow-md hover:shadow-lg">
-                    View Package
-                  </button>
+
                 </div>
               </div>
             }

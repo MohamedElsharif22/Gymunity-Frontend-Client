@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule, Router } from '@angular/router';
 import { ProgramService, Program } from '../../services/program.service';
 import { TrainerDiscoveryService } from '../../../trainers/services/trainer-discovery.service';
+import { HomeClientService, PackageClientResponse } from '../../../trainers/services/home-client.service';
 import { TrainerProfile } from '../../../../core/models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
@@ -209,6 +210,43 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
           >
             View Program Weeks →
           </button>
+
+          <!-- Packages Containing This Program Section -->
+          <div class="bg-white rounded-lg shadow p-8 mt-6">
+            <h3 class="text-2xl font-bold text-gray-900 mb-6">Available Packages</h3>
+            
+            <!-- Loading State -->
+            <div *ngIf="packagesLoading()" class="bg-gray-50 rounded-lg p-6 text-center">
+              <div class="flex items-center justify-center space-x-2">
+                <div class="w-2 h-2 bg-sky-600 rounded-full animate-bounce" style="animation-delay: 0s;"></div>
+                <div class="w-2 h-2 bg-sky-600 rounded-full animate-bounce" style="animation-delay: 0.2s;"></div>
+                <div class="w-2 h-2 bg-sky-600 rounded-full animate-bounce" style="animation-delay: 0.4s;"></div>
+              </div>
+              <p class="text-gray-600 mt-2">Loading packages...</p>
+            </div>
+
+            <!-- Packages List -->
+            <div *ngIf="!packagesLoading() && packages().length > 0" class="space-y-4">
+              <div *ngFor="let pkg of packages()" class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
+                <div class="flex justify-between items-start">
+                  <div class="flex-1">
+                    <h4 class="text-lg font-semibold text-gray-900">{{ pkg.name }}</h4>
+                    <p class="text-gray-600 text-sm mt-1">{{ pkg.description }}</p>
+                    <div class="mt-3 flex items-center gap-4">
+                      <span class="text-lg font-bold text-sky-600">\${{ pkg.priceMonthly | number: '1.2-2' }}/month</span>
+                      <span *ngIf="pkg.priceYearly" class="text-sm text-gray-500">\${{ pkg.priceYearly | number: '1.2-2' }}/year</span>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+            </div>
+
+            <!-- Empty State -->
+            <div *ngIf="!packagesLoading() && packages().length === 0" class="bg-gray-50 rounded-lg p-8 text-center">
+              <p class="text-gray-600">No packages available with this program.</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -218,14 +256,17 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 export class ProgramDetailsComponent implements OnInit {
   private programsService = inject(ProgramService);
   private trainerDiscoveryService = inject(TrainerDiscoveryService);
+  private homeClientService = inject(HomeClientService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private destroyRef = inject(DestroyRef);
 
   program = signal<Program | null>(null);
   trainer = signal<TrainerProfile | null>(null);
+  packages = signal<PackageClientResponse[]>([]);
   loading = signal(false);
   trainerLoading = signal(false);
+  packagesLoading = signal(false);
   error = signal<string | null>(null);
 
   ngOnInit() {
@@ -252,6 +293,9 @@ export class ProgramDetailsComponent implements OnInit {
           if (program.trainerHandle) {
             this.loadTrainerDetails(program.trainerHandle);
           }
+          
+          // Load packages containing this program
+          this.loadPackagesWithProgram(program.id);
         },
         error: (err) => {
           this.loading.set(false);
@@ -285,6 +329,31 @@ export class ProgramDetailsComponent implements OnInit {
           this.trainerLoading.set(false);
           console.error('[ProgramDetailsComponent] Error loading trainer profile:', err);
           // Don't show error for trainer loading, it's not critical
+        }
+      });
+  }
+
+  private loadPackagesWithProgram(programId: number) {
+    this.packagesLoading.set(true);
+
+    this.homeClientService
+      .getAllPackages()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (allPackages) => {
+          // Filter packages that contain this program
+          const packagesWithProgram = allPackages.filter(pkg => {
+            return pkg.programs && Array.isArray(pkg.programs) && 
+                   pkg.programs.some((prog: any) => prog.id === programId);
+          });
+          
+          this.packages.set(packagesWithProgram);
+          this.packagesLoading.set(false);
+          console.log('[ProgramDetailsComponent] Packages with program loaded:', packagesWithProgram);
+        },
+        error: (err) => {
+          this.packagesLoading.set(false);
+          console.error('[ProgramDetailsComponent] Error loading packages:', err);
         }
       });
   }
