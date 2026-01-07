@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
-import { HomeClientService } from '../trainers/services/home-client.service';
+import { HomeClientService, ProgramClientResponse } from '../trainers/services/home-client.service';
 import { AuthService } from '../../core/services/auth.service';
 import { TrainerCard, Program } from '../../core/models';
 
@@ -11,6 +11,128 @@ import { TrainerCard, Program } from '../../core/models';
   imports: [CommonModule, RouterModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
+    <!-- Professional Navigation Bar -->
+    <nav class="fixed top-0 left-0 right-0 bg-white shadow-lg z-50">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16">
+          <!-- Logo/Brand -->
+          <div class="flex items-center gap-3 flex-shrink-0">
+            <div class="w-10 h-10 bg-gradient-to-br from-sky-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
+              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+              </svg>
+            </div>
+            <span class="text-xl font-bold bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">Gymunity</span>
+          </div>
+
+          <!-- Desktop Navigation Links -->
+          <div class="hidden md:flex items-center gap-8">
+            <a href="#featured-trainers" class="text-gray-700 hover:text-sky-600 font-medium transition">Trainers</a>
+            <a href="#" class="text-gray-700 hover:text-sky-600 font-medium transition">Programs</a>
+            <a href="#" class="text-gray-700 hover:text-sky-600 font-medium transition">About</a>
+            <a href="#" class="text-gray-700 hover:text-sky-600 font-medium transition">Contact</a>
+          </div>
+
+          <!-- Desktop Auth Buttons -->
+          <div class="hidden md:flex items-center gap-4">
+            @if (isAuthenticated()) {
+              <button
+                [routerLink]="['/dashboard']"
+                class="text-sky-600 hover:text-sky-700 font-medium transition">
+                Dashboard
+              </button>
+              <button
+                [routerLink]="['/profile']"
+                class="text-gray-700 hover:text-sky-600 font-medium transition">
+                Profile
+              </button>
+              <button
+                (click)="logout()"
+                class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-6 rounded-lg transition">
+                Logout
+              </button>
+            } @else {
+              <button
+                [routerLink]="['/auth/login']"
+                class="text-sky-600 hover:text-sky-700 font-medium transition">
+                Sign In
+              </button>
+              <button
+                [routerLink]="['/auth/register']"
+                class="bg-sky-600 hover:bg-sky-700 text-white font-semibold py-2 px-6 rounded-lg transition">
+                Get Started
+              </button>
+            }
+          </div>
+
+          <!-- Mobile Menu Button -->
+          <button
+            (click)="toggleMobileMenu()"
+            class="md:hidden p-2 rounded-lg hover:bg-gray-100 transition"
+            [attr.aria-label]="mobileMenuOpen() ? 'Close menu' : 'Open menu'">
+            @if (!mobileMenuOpen()) {
+              <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+              </svg>
+            } @else {
+              <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            }
+          </button>
+        </div>
+
+        <!-- Mobile Menu -->
+        @if (mobileMenuOpen()) {
+          <div class="md:hidden bg-white border-t border-gray-200">
+            <div class="px-2 pt-2 pb-4 space-y-1">
+              <a href="#featured-trainers" (click)="closeMobileMenu()" class="block px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition font-medium">Trainers</a>
+              <a href="#" (click)="closeMobileMenu()" class="block px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition font-medium">Programs</a>
+              <a href="#" (click)="closeMobileMenu()" class="block px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition font-medium">About</a>
+              <a href="#" (click)="closeMobileMenu()" class="block px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition font-medium">Contact</a>
+              <div class="border-t border-gray-200 pt-4 mt-4 space-y-2">
+                @if (isAuthenticated()) {
+                  <button
+                    [routerLink]="['/dashboard']"
+                    (click)="closeMobileMenu()"
+                    class="block w-full text-left px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition font-medium">
+                    Dashboard
+                  </button>
+                  <button
+                    [routerLink]="['/profile']"
+                    (click)="closeMobileMenu()"
+                    class="block w-full text-left px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition font-medium">
+                    Profile
+                  </button>
+                  <button
+                    (click)="logout()"
+                    class="block w-full text-left px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition font-medium">
+                    Logout
+                  </button>
+                } @else {
+                  <button
+                    [routerLink]="['/auth/login']"
+                    (click)="closeMobileMenu()"
+                    class="block w-full text-left px-3 py-2 text-sky-600 hover:bg-sky-50 rounded-lg transition font-medium">
+                    Sign In
+                  </button>
+                  <button
+                    [routerLink]="['/auth/register']"
+                    (click)="closeMobileMenu()"
+                    class="block w-full text-left px-3 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg transition font-medium">
+                    Get Started
+                  </button>
+                }
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    </nav>
+
+    <!-- Add padding-top to account for fixed navbar -->
+    <div class="pt-16"></div>
+
     <!-- Hero Section -->
     <section class="bg-gradient-to-br from-sky-600 to-sky-800 text-white py-20 px-4">
       <div class="max-w-7xl mx-auto">
@@ -212,14 +334,16 @@ import { TrainerCard, Program } from '../../core/models';
         }
 
         <!-- Stats Grid -->
-        <div class="grid grid-cols-3 gap-3 py-4 border-y border-gray-200 mb-4">
+        <div class="grid gap-3 py-4 border-y border-gray-200 mb-4" [ngClass]="'grid-cols-' + getVisibleStatsCount(trainer)">
           <!-- Experience -->
-          <div class="text-center">
-            <p class="text-lg font-bold text-gray-900">
-              {{ trainer.yearsExperience || 0 }}
-            </p>
-            <p class="text-xs text-gray-600">Years</p>
-          </div>
+          @if (trainer.yearsExperience) {
+            <div class="text-center">
+              <p class="text-lg font-bold text-gray-900">
+                {{ trainer.yearsExperience }}
+              </p>
+              <p class="text-xs text-gray-600">Years</p>
+            </div>
+          }
           
           <!-- Clients -->
           @if (trainer.totalClients) {
@@ -229,8 +353,13 @@ import { TrainerCard, Program } from '../../core/models';
             </div>
           }
           
-          <!-- Programs -->
-          <!-- Programs count not available in current data model -->
+          <!-- Rating -->
+          @if (trainer.ratingAverage) {
+            <div class="text-center">
+              <p class="text-lg font-bold text-gray-900">{{ (trainer.ratingAverage || 0).toFixed(1) }}</p>
+              <p class="text-xs text-gray-600">Rating</p>
+            </div>
+          }
         </div>
 
         <!-- Price & CTA -->
@@ -620,9 +749,10 @@ export class LandingComponent implements OnInit {
   private router = inject(Router);
 
   isAuthenticated = signal(false);
+  mobileMenuOpen = signal(false);
   featuredTrainers = signal<TrainerCard[]>([]);
   isLoadingTrainers = signal(true);
-  popularPrograms = signal<Program[]>([]);
+  popularPrograms = signal<ProgramClientResponse[]>([]);
   isLoadingPrograms = signal(true);
   Math = Math;
 
@@ -779,7 +909,7 @@ export class LandingComponent implements OnInit {
   loadPopularPrograms() {
     this.isLoadingPrograms.set(true);
     this.homeClientService.getAllPrograms().subscribe({
-      next: (programs: Program[]) => {
+      next: (programs) => {
         if (programs && programs.length > 0) {
           // Take top 6 programs and sort by title for consistency
           const sortedPrograms = programs
@@ -822,5 +952,27 @@ export class LandingComponent implements OnInit {
 
   getTrainerPhotoUrl(trainer: TrainerCard): string {
     return trainer.coverImageUrl || '';
+  }
+
+  getVisibleStatsCount(trainer: TrainerCard): number {
+    let count = 0;
+    if (trainer.yearsExperience) count++;
+    if (trainer.totalClients) count++;
+    if (trainer.ratingAverage) count++;
+    return Math.max(count, 1); // At least 1 to avoid grid errors
+  }
+
+  toggleMobileMenu(): void {
+    this.mobileMenuOpen.update(value => !value);
+  }
+
+  closeMobileMenu(): void {
+    this.mobileMenuOpen.set(false);
+  }
+
+  logout(): void {
+    this.authService.logout();
+    this.closeMobileMenu();
+    this.router.navigate(['/auth/login']);
   }
 }

@@ -1,6 +1,7 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 interface NavItem {
   label: string;
@@ -9,6 +10,7 @@ interface NavItem {
   badge?: number;
   isNew?: boolean;
   color?: string;
+  safeIcon?: SafeHtml;
 }
 
 @Component({
@@ -46,7 +48,7 @@ interface NavItem {
           class="group flex items-center justify-between px-4 py-4 rounded-xl hover:bg-gradient-to-r hover:from-sky-50 hover:to-indigo-50 transition-all duration-200 text-gray-700 font-semibold cursor-pointer relative overflow-hidden"
         >
           <span class="flex items-center gap-3 relative z-10">
-            <span [innerHTML]="item.icon" 
+            <span [innerHTML]="getSafeIcon(item.icon)" 
                   class="w-6 h-6 group-hover:scale-110 group-hover:rotate-3 transition-all duration-200"
                   [class]="getIconColorClass(item)"></span>
             <span class="group-hover:translate-x-1 transition-transform duration-200">{{ item.label }}</span>
@@ -88,7 +90,7 @@ interface NavItem {
           [routerLinkActiveOptions]="{exact: false}"
           class="group flex items-center gap-3 px-4 py-4 rounded-xl hover:bg-white/80 transition-all duration-200 text-gray-700 font-semibold cursor-pointer relative overflow-hidden"
         >
-          <span [innerHTML]="item.icon" 
+          <span [innerHTML]="getSafeIcon(item.icon)" 
                 class="w-6 h-6 relative z-10 group-hover:scale-110 group-hover:rotate-3 transition-all duration-200"></span>
           <span class="relative z-10 group-hover:translate-x-1 transition-transform duration-200">{{ item.label }}</span>
         </a>
@@ -138,6 +140,8 @@ interface NavItem {
   `]
 })
 export class SidebarComponent {
+  private sanitizer = inject(DomSanitizer);
+
   mainNavItems: NavItem[] = [
     {
       label: 'Home',
@@ -198,5 +202,9 @@ export class SidebarComponent {
   getIconColorClass(item: NavItem): string {
     // Return empty for active state (will be white)
     return '';
+  }
+
+  getSafeIcon(iconHtml: string): SafeHtml {
+    return this.sanitizer.bypassSecurityTrustHtml(iconHtml);
   }
 }

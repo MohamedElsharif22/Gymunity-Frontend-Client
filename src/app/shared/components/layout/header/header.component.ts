@@ -4,10 +4,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../../../core/services/auth.service';
-import { ProgramService } from '../../../../features/programs/services/program.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { catchError } from 'rxjs/operators';
-import { of } from 'rxjs';
 
 @Component({
   selector: 'app-header',
@@ -271,37 +268,15 @@ import { of } from 'rxjs';
 })
 export class HeaderComponent implements OnInit {
   private authService = inject(AuthService);
-  private programService = inject(ProgramService);
   private router = inject(Router);
-  private destroyRef = inject(DestroyRef);
   
   currentUser = this.authService.currentUser;
   searchQuery = signal('');
   showMobileSearch = signal(false);
   showMobileMenu = signal(false);
-  activePrograms = signal<any[]>([]);
 
   ngOnInit() {
-    this.loadActivePrograms();
-  }
-
-  private loadActivePrograms() {
-    this.programService.getActivePrograms()
-      .pipe(
-        catchError((err: any) => {
-          console.warn('Error loading active programs, falling back to all programs:', err);
-          return this.programService.getPrograms();
-        }),
-        takeUntilDestroyed(this.destroyRef)
-      )
-      .subscribe({
-        next: (programs: any[]) => {
-          this.activePrograms.set(programs);
-        },
-        error: (err: any) => {
-          console.error('Error loading programs:', err);
-        }
-      });
+    // Initialize any needed data here
   }
 
   getUserInitial(): string {

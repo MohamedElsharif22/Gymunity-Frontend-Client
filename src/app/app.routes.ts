@@ -47,6 +47,10 @@ export const routes: Routes = [
         loadComponent: () => import('./features/trainers/components/trainer-detail/trainer-detail.component').then(m => m.TrainerDetailComponent)
       },
       {
+        path: 'trainers/:id/packages',
+        loadComponent: () => import('./features/trainers/components/trainer-packages/trainer-packages.component').then(m => m.TrainerPackagesComponent)
+      },
+      {
         path: 'programs',
         loadComponent: () => import('./features/programs/components/discover-programs/discover-programs.component').then(m => m.DiscoverProgramsComponent)
       },

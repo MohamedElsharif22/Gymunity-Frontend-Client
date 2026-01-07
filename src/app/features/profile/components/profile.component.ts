@@ -154,14 +154,20 @@ export class ProfileComponent implements OnInit, OnDestroy {
   }
 
   private populateForm(profile: ClientProfileResponse): void {
+    console.log('[ProfileComponent] Populating form with profile data:', profile);
+    
     this.profileForm.patchValue({
       userName: profile.userName || '',
-      heightCm: profile.heightCm || null,
-      startingWeightKg: profile.startingWeightKg || null,
-      gender: profile.gender || null,
-      goal: profile.goal || null,
-      experienceLevel: profile.experienceLevel || null
-    });
+      heightCm: profile.heightCm ?? null,
+      startingWeightKg: profile.startingWeightKg ?? null,
+      gender: profile.gender ?? null,
+      goal: profile.goal ?? null,
+      experienceLevel: profile.experienceLevel ?? null
+    }, { emitEvent: false });
+    
+    console.log('[ProfileComponent] Form values after population:', this.profileForm.value);
+    console.log('[ProfileComponent] Goal field value:', this.profileForm.get('goal')?.value);
+    console.log('[ProfileComponent] Experience level field value:', this.profileForm.get('experienceLevel')?.value);
   }
 
   onEdit(): void {
@@ -176,7 +182,13 @@ export class ProfileComponent implements OnInit, OnDestroy {
   }
 
   onSubmit(): void {
+    console.log('[ProfileComponent] Form submission attempted');
+    console.log('[ProfileComponent] Form valid:', this.profileForm.valid);
+    console.log('[ProfileComponent] Form value:', this.profileForm.value);
+    console.log('[ProfileComponent] Form errors:', this.profileForm.errors);
+    
     if (this.profileForm.invalid) {
+      console.warn('[ProfileComponent] Form is invalid. Errors:', this.getFormErrors());
       this.error.set('Please fill in all required fields correctly');
       return;
     }
@@ -188,14 +200,15 @@ export class ProfileComponent implements OnInit, OnDestroy {
     const formValue = this.profileForm.value;
     const request: ClientProfileRequest = {
       userName: formValue.userName || '',
-      heightCm: formValue.heightCm || undefined,
-      startingWeightKg: formValue.startingWeightKg || undefined,
-      gender: formValue.gender || undefined,
-      goal: formValue.goal || undefined,
-      experienceLevel: formValue.experienceLevel || undefined
+      heightCm: formValue.heightCm ?? undefined,
+      startingWeightKg: formValue.startingWeightKg ?? undefined,
+      gender: formValue.gender ?? undefined,
+      goal: formValue.goal ?? undefined,
+      experienceLevel: formValue.experienceLevel ?? undefined
     };
 
     const operation = this.profile() ? 'update' : 'create';
+    console.log(`[ProfileComponent] ${operation === 'update' ? 'Updating' : 'Creating'} profile:`, request);
 
     const service$ = operation === 'update'
       ? this.profileService.updateProfile(request)
@@ -206,17 +219,31 @@ export class ProfileComponent implements OnInit, OnDestroy {
       takeUntil(this.destroy$)
     ).subscribe({
       next: (updatedProfile) => {
+        // Ensure all fields are properly updated from the response
+        console.log('[ProfileComponent] Profile response:', updatedProfile);
+        console.log('[ProfileComponent] Response goal:', updatedProfile.goal, 'Type:', typeof updatedProfile.goal);
+        console.log('[ProfileComponent] Response experienceLevel:', updatedProfile.experienceLevel, 'Type:', typeof updatedProfile.experienceLevel);
+        
         // Merge the submitted form values into the response (in case backend doesn't return them)
         const enrichedProfile: ClientProfileResponse = {
-          ...updatedProfile,
-          goal: updatedProfile.goal || request.goal,
-          experienceLevel: updatedProfile.experienceLevel || request.experienceLevel,
-          gender: updatedProfile.gender || request.gender,
-          heightCm: updatedProfile.heightCm || request.heightCm,
-          startingWeightKg: updatedProfile.startingWeightKg || request.startingWeightKg
+          id: updatedProfile.id,
+          userName: updatedProfile.userName || request.userName,
+          heightCm: updatedProfile.heightCm !== undefined ? updatedProfile.heightCm : request.heightCm,
+          startingWeightKg: updatedProfile.startingWeightKg !== undefined ? updatedProfile.startingWeightKg : request.startingWeightKg,
+          gender: updatedProfile.gender !== undefined ? updatedProfile.gender : request.gender,
+          goal: updatedProfile.goal !== undefined ? updatedProfile.goal : request.goal,
+          experienceLevel: updatedProfile.experienceLevel !== undefined ? updatedProfile.experienceLevel : request.experienceLevel,
+          createdAt: updatedProfile.createdAt,
+          updatedAt: updatedProfile.updatedAt,
+          bodyStateLog: updatedProfile.bodyStateLog
         };
         
+        console.log('[ProfileComponent] Enriched profile:', enrichedProfile);
+        console.log('[ProfileComponent] Enriched goal:', enrichedProfile.goal);
+        console.log('[ProfileComponent] Enriched experienceLevel:', enrichedProfile.experienceLevel);
+        
         this.profile.set(enrichedProfile);
+        this.populateForm(enrichedProfile); // Refresh form with updated data
         this.isEditing.set(false);
         this.loading.set(false);
         this.success.set(`Profile ${operation === 'update' ? 'updated' : 'created'} successfully!`);
@@ -224,6 +251,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
       },
       error: (error) => {
         this.loading.set(false);
+        console.error('[ProfileComponent] Profile operation error:', error);
         const errorMessage = error?.error?.message || `Failed to ${operation} profile. Please try again.`;
         this.error.set(errorMessage);
       }
@@ -273,5 +301,16 @@ export class ProfileComponent implements OnInit, OnDestroy {
     if (!gender) return '';
     const option = this.genderOptions.find(o => o.value === gender);
     return option?.label || '';
+  }
+
+  private getFormErrors(): any {
+    const errors: any = {};
+    Object.keys(this.profileForm.controls).forEach(key => {
+      const control = this.profileForm.get(key);
+      if (control && control.errors) {
+        errors[key] = control.errors;
+      }
+    });
+    return errors;
   }
 }
