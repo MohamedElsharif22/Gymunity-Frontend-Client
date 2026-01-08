@@ -184,14 +184,15 @@ export const routes: Routes = [
           },
           {
             path: 'days/:dayId',
-            loadComponent: () => import('./features/programs/components/day-details/day-details.component').then(m => m.DayDetailsComponent)
+            loadComponent: () => import('./features/programs/components/day-details/day-details.component').then(m => m.ProgramDayDetailComponent)
           }
         ]
       },
       {
         path: 'exercise/:exerciseId/execute',
         canActivate: [profileCompletionGuard],
-        loadComponent: () => import('./features/workout/components/exercise-execution/exercise-execution.component').then(m => m.ExerciseExecutionComponent)
+        loadComponent: () => import('./features/workout/components/exercise-execution/exercise-execution.component').then(m => m.ExerciseExecutionComponent),
+        data: { fullscreen: true }
       },
       {
         path: 'my-workouts',

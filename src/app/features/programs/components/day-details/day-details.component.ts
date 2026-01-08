@@ -1,195 +1,484 @@
-import { Component, inject, signal, ChangeDetectionStrategy, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, inject, signal, computed, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, RouterModule, Router } from '@angular/router';
-import { ClientProgramsService } from '../../services/client-programs.service';
-import { ProgramDayResponse, ProgramDayExerciseResponse } from '../../../../core/models';
-import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { ProgramService, ProgramDay, Exercise } from '../../services/program.service';
+import { WorkoutStateService } from '../../../workout/services/workout-state.service';
+import { WorkoutHistoryService } from '../../../workout/services/workout-history.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
-/**
- * Day Details Component
- * Displays a single program day with all exercises and their details
- *
- * Responsibility:
- * - Fetch and display day details with exercises
- * - Show exercise-specific information (sets, reps, rest, tempo)
- * - Display video links and exercise videos
- * - Show muscle groups and equipment
- *
- * Route parameters: dayId
- * Service method: ClientProgramsService.getDayById(dayId)
- */
 @Component({
-  selector: 'app-day-details',
+  selector: 'app-program-day-detail',
   standalone: true,
   imports: [CommonModule, RouterModule],
-  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="min-h-screen bg-gray-50 py-12 px-4">
-      <div class="max-w-4xl mx-auto">
-        <!-- Header -->
+    <div class="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 py-8 px-4">
+      <div class="max-w-6xl mx-auto">
+        <!-- Back Button & Header -->
         <div class="mb-8">
           <button
-            (click)="goBack()"
-            class="inline-flex items-center text-sky-600 hover:text-sky-700 font-medium mb-4"
+            (click)="goToDetail()"
+            class="flex items-center gap-2 text-sky-600 hover:text-sky-700 font-semibold mb-6 group transition"
           >
-            ← Back
+            <svg class="w-5 h-5 group-hover:-translate-x-1 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+            </svg>
+            Back to Days
           </button>
-          <h1 class="text-4xl font-bold text-gray-900">{{ day()?.title || 'Day Details' }}</h1>
-          <p *ngIf="day()?.notes" class="text-gray-600 mt-2">{{ day()!.notes }}</p>
-        </div>
-
-        <!-- Loading State -->
-        <div *ngIf="loading()" class="bg-white rounded-lg shadow p-8">
-          <div class="flex items-center justify-center space-x-3">
-            <div class="w-3 h-3 bg-sky-600 rounded-full animate-bounce" style="animation-delay: 0s;"></div>
-            <div class="w-3 h-3 bg-sky-600 rounded-full animate-bounce" style="animation-delay: 0.2s;"></div>
-            <div class="w-3 h-3 bg-sky-600 rounded-full animate-bounce" style="animation-delay: 0.4s;"></div>
-            <span class="text-gray-600 ml-4">Loading day details...</span>
+          <div>
+            <h1 class="text-4xl md:text-5xl font-bold bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent mb-2">
+              {{ day()?.title }}
+            </h1>
+            <p class="text-gray-600 text-lg">Day {{ day()?.dayNumber }} • {{ exercises().length }} Exercises</p>
           </div>
         </div>
 
-        <!-- Error State -->
-        <div *ngIf="error()" class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
-          {{ error() }}
+        <!-- Resume Workout Modal -->
+        @if (showResumeModal()) {
+          <div class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 animate-fadeIn">
+            <div class="bg-white rounded-2xl p-8 max-w-md mx-4 shadow-2xl animate-slideUp">
+              <div class="text-center mb-6">
+                <div class="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg class="w-10 h-10 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
+                  </svg>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-900 mb-3">Resume Workout?</h2>
+                <p class="text-gray-600 text-lg mb-2">
+                  You've completed <span class="font-bold text-green-600">{{ completedCount() }}</span> of {{ exercises().length }} exercises
+                </p>
+                <p class="text-gray-500 mb-4">
+                  Next: <span class="font-semibold text-sky-600">{{ getNextExerciseName() }}</span>
+                </p>
+                <div class="bg-sky-50 rounded-lg p-4 mb-6">
+                  <p class="text-sky-800 font-semibold">Starting in {{ resumeCountdown() }} seconds...</p>
+                </div>
+              </div>
+              <div class="flex gap-3">
+                <button
+                  (click)="cancelResume()"
+                  class="flex-1 border-2 border-gray-300 text-gray-700 font-semibold py-3 px-6 rounded-xl hover:bg-gray-50 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  (click)="continueWorkout()"
+                  class="flex-1 bg-gradient-to-r from-green-600 to-green-700 text-white font-semibold py-3 px-6 rounded-xl hover:from-green-700 hover:to-green-800 transition shadow-lg"
+                >
+                  Continue Now
+                </button>
+              </div>
+            </div>
+          </div>
+        }
+
+        <!-- Loading State -->
+        <div *ngIf="isLoading()" class="flex items-center justify-center py-20">
+          <div class="relative">
+            <div class="w-20 h-20 border-4 border-sky-200 rounded-full"></div>
+            <div class="w-20 h-20 border-4 border-sky-600 rounded-full animate-spin border-t-transparent absolute top-0 left-0"></div>
+          </div>
         </div>
 
-        <!-- Day Exercises -->
-        <div *ngIf="!loading() && day()" class="space-y-6">
-          <!-- Exercise List -->
-          <div *ngIf="day()!.exercises.length > 0" class="space-y-4">
-            <div
-              *ngFor="let exercise of day()!.exercises"
-              class="bg-white rounded-lg shadow p-6"
-            >
-              <!-- Exercise Header -->
-              <div class="flex items-start justify-between mb-4">
+        <!-- Content -->
+        <div *ngIf="!isLoading() && day()">
+          <!-- Day Overview Cards -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <!-- Completion Status -->
+            <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
+              <div class="flex items-center justify-between">
                 <div>
-                  <h3 class="text-2xl font-bold text-gray-900">
-                    {{ exercise.orderIndex }}. {{ exercise.excersiceName }}
-                  </h3>
-                  <div class="flex flex-wrap gap-2 mt-2">
-                    <span class="inline-block px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded">
-                      {{ exercise.category }}
-                    </span>
-                    <span class="inline-block px-3 py-1 bg-sky-100 text-sky-700 text-sm rounded">
-                      {{ exercise.muscleGroup }}
-                    </span>
-                    <span class="inline-block px-3 py-1 bg-amber-100 text-amber-700 text-sm rounded">
-                      {{ exercise.equipment }}
-                    </span>
-                  </div>
+                  <p class="text-gray-600 text-sm font-semibold uppercase tracking-wider mb-2">Status</p>
+                  <p class="text-3xl font-bold" [class.text-green-600]="isDayCompleted()" [class.text-sky-600]="!isDayCompleted()">
+                    {{ isDayCompleted() ? '✓ Completed' : 'Ready' }}
+                  </p>
                 </div>
-              </div>
-
-              <!-- Exercise Video -->
-              <div *ngIf="exercise.videoDemoUrl" class="mb-6">
-                <a
-                  [href]="exercise.videoDemoUrl"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="inline-flex items-center text-sky-600 hover:text-sky-700 font-medium"
-                >
-                  <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"></path>
+                <div [class]="isDayCompleted() ? 'bg-green-100' : 'bg-sky-100'" class="rounded-full p-4">
+                  <svg [class]="isDayCompleted() ? 'text-green-600' : 'text-sky-600'" class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
                   </svg>
-                  Watch Demo Video
-                </a>
-              </div>
-
-              <!-- Exercise Specs Grid -->
-              <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 p-4 bg-gray-50 rounded">
-                <div>
-                  <span class="text-gray-600 text-sm">Sets</span>
-                  <p class="font-bold text-lg text-gray-900">{{ exercise.sets }}</p>
-                </div>
-                <div>
-                  <span class="text-gray-600 text-sm">Reps</span>
-                  <p class="font-bold text-lg text-gray-900">{{ exercise.reps }}</p>
-                </div>
-                <div>
-                  <span class="text-gray-600 text-sm">Rest</span>
-                  <p class="font-bold text-lg text-gray-900">{{ exercise.restSeconds }}s</p>
-                </div>
-                <div>
-                  <span class="text-gray-600 text-sm">Tempo</span>
-                  <p class="font-bold text-lg text-gray-900">{{ exercise.tempo || '—' }}</p>
                 </div>
               </div>
+            </div>
 
-              <!-- Additional Info -->
-              <div class="space-y-2 text-sm">
-                <div *ngIf="exercise.rpe" class="text-gray-700">
-                  <span class="font-semibold">RPE:</span> {{ exercise.rpe }}
-                </div>
-                <div *ngIf="exercise.percent1RM" class="text-gray-700">
-                  <span class="font-semibold">% 1RM:</span> {{ exercise.percent1RM }}
-                </div>
-                <div *ngIf="exercise.notes" class="text-gray-700 bg-blue-50 p-3 rounded">
-                  <span class="font-semibold">Notes:</span> {{ exercise.notes }}
-                </div>
+            <!-- Exercise Count -->
+            <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
+              <p class="text-gray-600 text-sm font-semibold uppercase tracking-wider mb-2">Total Exercises</p>
+              <p class="text-4xl font-bold text-purple-600 mb-2">{{ exercises().length }}</p>
+              <p class="text-gray-500 text-sm">{{ completedCount() }} completed</p>
+            </div>
+
+            <!-- Completion Rate -->
+            <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
+              <p class="text-gray-600 text-sm font-semibold uppercase tracking-wider mb-2">Progress</p>
+              <p class="text-4xl font-bold text-orange-600 mb-2">{{ (completedCount() / exercises().length * 100 | number:'1.0-0') || 0 }}%</p>
+              <div class="w-full bg-gray-200 rounded-full h-2">
+                <div class="bg-gradient-to-r from-orange-500 to-red-500 h-2 rounded-full transition-all" [style.width.%]="(completedCount() / exercises().length * 100 || 0)"></div>
               </div>
             </div>
           </div>
 
-          <!-- No Exercises State -->
-          <div *ngIf="day()!.exercises.length === 0" class="bg-white rounded-lg shadow p-12 text-center">
-            <p class="text-gray-600">No exercises scheduled for this day.</p>
+          <!-- Start Workout Button -->
+          <div class="flex justify-center my-8">
+            <button
+              (click)="startWorkout()"
+              [disabled]="isDayCompleted()"
+              class="bg-gradient-to-r from-green-600 to-green-700
+                     hover:from-green-700 hover:to-green-800
+                     text-white font-bold text-lg
+                     py-5 px-12 rounded-2xl
+                     shadow-xl hover:scale-105 transition-all
+                     disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              🚀 {{ isDayCompleted() ? 'Workout Completed' : (completedCount() > 0 ? 'Resume Workout' : 'Start Workout') }}
+            </button>
+          </div>
+
+          <!-- Exercises Grid -->
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            @for (exercise of exercises(); track exercise.exerciseId; let i = $index) {
+              <div
+                (click)="startExerciseExecution(exercise.exerciseId)"
+                [class.ring-4]="isExerciseCompleted(exercise.exerciseId) || isNextExercise(exercise.exerciseId)"
+                [class.ring-green-500]="isExerciseCompleted(exercise.exerciseId)"
+                [class.ring-orange-500]="isNextExercise(exercise.exerciseId)"
+                [class.animate-pulse]="isNextExercise(exercise.exerciseId)"
+                [class.opacity-50]="isDayCompleted()"
+                [class.cursor-not-allowed]="isDayCompleted()"
+                [class.pointer-events-none]="isDayCompleted()"
+                class="group bg-white rounded-lg shadow hover:shadow-md transition-all cursor-pointer overflow-hidden border border-gray-100 flex flex-col relative"
+                [style.backgroundImage]="exercise.thumbnailUrl ? 'url(' + exercise.thumbnailUrl + ')' : 'none'"
+                [style.backgroundSize]="'cover'"
+                [style.backgroundPosition]="'center'"
+              >
+                <!-- Dark Overlay -->
+                @if (exercise.thumbnailUrl) {
+                  <div class="absolute inset-0 bg-black/50"></div>
+                }
+
+                <!-- Content -->
+                <div class="relative z-10 flex flex-col h-full">
+                  <div class="bg-gradient-to-r from-red-500 to-red-600 px-3 py-3 text-white flex flex-col">
+                    <div class="flex items-start justify-between mb-2">
+                      <h3 class="text-lg font-bold leading-tight flex-1">{{ exercise.excersiceName }}</h3>
+                      @if (isExerciseCompleted(exercise.exerciseId)) {
+                        <div class="bg-green-500 text-white rounded-full p-2 flex-shrink-0 ml-2">
+                          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                          </svg>
+                        </div>
+                      }
+                      @if (isNextExercise(exercise.exerciseId)) {
+                        <div class="bg-orange-500 text-white rounded-full p-2 flex-shrink-0 ml-2 animate-bounce">
+                          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v3.586L7.707 9.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 10.586V7z" clip-rule="evenodd" />
+                          </svg>
+                        </div>
+                      }
+                    </div>
+
+                    <p class="text-red-100 text-lg italic mb-3 font-semibold">{{ getMotivationalMessage(exercise.exerciseId) }}</p>
+
+                    <div class="flex gap-2">
+                      <div class="bg-blue-500/40 rounded p-1 border border-blue-300 text-center flex-1">
+                        <p class="text-blue-200 text-xs font-bold">Sets</p>
+                        <p class="text-xs font-bold text-blue-100">{{ exercise.sets }}</p>
+                      </div>
+                      <div class="bg-blue-500/40 rounded p-1 border border-blue-300 text-center flex-1">
+                        <p class="text-green-200 text-xs font-bold">Reps</p>
+                        <p class="text-xs font-bold text-green-100">{{ exercise.reps }}</p>
+                      </div>
+                      <div class="bg-blue-500/40 rounded p-1 border border-blue-300 text-center flex-1">
+                        <p class="text-orange-200 text-xs font-bold">Rest</p>
+                        <p class="text-xs font-bold text-orange-100">{{ exercise.restSeconds }}s</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="px-4 py-6 flex-1">
+                    @if (exercise.equipment) {
+                      <span class="inline-block bg-purple-100 text-purple-800 px-3 py-2 rounded-full text-xs font-semibold">
+                        {{ exercise.equipment }}
+                      </span>
+                    }
+                  </div>
+
+                  <div class="bg-gray-50 px-4 py-2 border-t border-gray-200 flex items-center justify-between text-xs font-semibold text-gray-700 group-hover:bg-sky-50 group-hover:text-sky-600 transition">
+                    <span class="truncate">{{ i + 1 }}. {{ exercise.excersiceName }}</span>
+                    <svg class="w-4 h-4 group-hover:translate-x-1 transition flex-shrink-0 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="mt-8 flex gap-4">
+            <button
+              (click)="goToDetail()"
+              class="flex-1 border-2 border-sky-600 text-sky-600 font-semibold py-4 px-6 rounded-xl hover:bg-sky-50 transition-all flex items-center justify-center gap-2"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+              </svg>
+              Back to Days
+            </button>
           </div>
         </div>
       </div>
     </div>
+
+    <style>
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+
+      @keyframes slideUp {
+        from {
+          opacity: 0;
+          transform: translateY(30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .animate-fadeIn {
+        animation: fadeIn 0.3s ease;
+      }
+
+      .animate-slideUp {
+        animation: slideUp 0.4s ease;
+      }
+    </style>
   `,
   styles: []
 })
-export class DayDetailsComponent implements OnInit, OnDestroy {
-  private programsService = inject(ClientProgramsService);
+export class ProgramDayDetailComponent implements OnInit {
+  private programService = inject(ProgramService);
+  private workoutStateService = inject(WorkoutStateService);
+  private workoutHistoryService = inject(WorkoutHistoryService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
-  private destroy$ = new Subject<void>();
+  private destroyRef = inject(DestroyRef);
 
-  day = signal<ProgramDayResponse | null>(null);
-  loading = signal(false);
-  error = signal<string | null>(null);
+  day = signal<ProgramDay | null>(null);
+  exercises = signal<Exercise[]>([]);
+  isLoading = signal(false);
+  programId!: number;
+  dayId!: number;
+
+  // Resume workout modal
+  showResumeModal = signal(false);
+  resumeCountdown = signal(10);
+  private resumeTimerInterval: any;
+
+  private motivationalMessages = [
+    'One more rep = one step stronger 💪',
+    'Focus. Breathe. Lift 🔥',
+    'Your future body is built here 🚀',
+    'Strength is earned, not given 💪',
+    'Small effort today, big results tomorrow',
+    'Every rep counts 💯',
+    'Push harder, you\'ve got this 🔥',
+    'Consistency creates champions 🏆',
+    'Feel the burn, embrace the gain 💪',
+    'One day at a time, one rep at a time 🚀'
+  ];
+
+  completedExerciseIds = computed(() => {
+    const session = this.workoutStateService.session();
+    if (!session || !session.completedExerciseIds) {
+      return [];
+    }
+    return session.completedExerciseIds;
+  });
+
+  completedCount = computed(() => {
+    return this.completedExerciseIds().length;
+  });
+
+  isDayCompleted = computed(() => {
+    return this.workoutHistoryService.isDayCompleted(this.dayId);
+  });
+
+  isWorkoutLocked = computed(() => {
+    const dayCompleted = this.isDayCompleted();
+    const sessionStarted = !!this.workoutStateService.session();
+    return !dayCompleted && !sessionStarted;
+  });
+
+  isExerciseCompleted = (exerciseId: number) => {
+    const inSession = this.completedExerciseIds().includes(exerciseId);
+    const dayCompleted = this.isDayCompleted();
+    return inSession || dayCompleted;
+  };
+
+  // Check if this is the next exercise to do
+  isNextExercise = (exerciseId: number) => {
+    const completedIds = this.completedExerciseIds();
+    if (completedIds.includes(exerciseId)) return false;
+    const nextExercise = this.exercises().find(ex => !completedIds.includes(ex.exerciseId));
+    return nextExercise?.exerciseId === exerciseId;
+  };
+
+  getMotivationalMessage = (exerciseId: number): string => {
+    const index = exerciseId % this.motivationalMessages.length;
+    return this.motivationalMessages[index];
+  };
+
+  getNextExerciseName(): string {
+    const completed = this.completedExerciseIds();
+    const nextExercise = this.exercises().find(ex => !completed.includes(ex.exerciseId));
+    return nextExercise?.excersiceName || 'Next Exercise';
+  }
 
   ngOnInit() {
-    const dayId = this.route.snapshot.paramMap.get('dayId');
-    if (dayId) {
-      this.loadDayDetails(dayId);
+    const navigation = this.router.getCurrentNavigation();
+    const dayFromState = (navigation?.extras?.state as any)?.day;
+
+    this.route.params.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(params => {
+      this.programId = parseInt(params['programId'], 10);
+      this.dayId = parseInt(params['dayId'], 10);
+
+      if (dayFromState) {
+        this.day.set(dayFromState);
+        this.exercises.set(dayFromState.exercises || []);
+        this.isLoading.set(false);
+
+        // Check for autoStart query param
+        this.checkAutoStart();
+        return;
+      }
+
+      this.isLoading.set(true);
+      this.programService.getExercisesByDayId(this.dayId)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: (dayData: ProgramDay) => {
+            this.day.set(dayData);
+            this.exercises.set(dayData.exercises || []);
+            this.isLoading.set(false);
+
+            // Check for autoStart query param
+            this.checkAutoStart();
+          },
+          error: (err: unknown) => {
+            console.error('Error loading day:', err);
+            this.day.set(null);
+            this.exercises.set([]);
+            this.isLoading.set(false);
+          }
+        });
+    });
+  }
+
+  private checkAutoStart() {
+    this.route.queryParams.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(queryParams => {
+      if (queryParams['autoStart'] === 'true') {
+        const completedIds = this.completedExerciseIds();
+        if (completedIds.length > 0 && completedIds.length < this.exercises().length) {
+          // Auto-start next exercise after 10 seconds
+          this.showResumeModal.set(true);
+          this.startResumeCountdown();
+        }
+      }
+    });
+  }
+
+  startWorkout() {
+    const exercisesData = this.exercises().map((ex: any) => ({
+      id: ex.exerciseId ?? ex.id,
+      sets: Number(ex.sets),
+      reps: ex.reps
+    }));
+
+    const completedIds = this.completedExerciseIds();
+
+    // إذا كان هناك تمارين مكتملة → عرض modal Resume
+    if (completedIds.length > 0 && completedIds.length < exercisesData.length) {
+      this.showResumeModal.set(true);
+      this.startResumeCountdown();
+      return;
+    }
+
+    // Initialize workout
+    this.workoutStateService.initializeWorkout(this.dayId, exercisesData);
+
+    // Navigate to first exercise
+    if (exercisesData.length > 0) {
+      const firstExerciseId = exercisesData[0].id;
+      this.router.navigate(['/exercise', firstExerciseId, 'execute'], {
+        queryParams: { dayId: this.dayId, programId: this.programId }
+      });
     }
   }
 
-  private loadDayDetails(dayId: string) {
-    this.loading.set(true);
-    this.error.set(null);
-
-    this.programsService
-      .getDayById(dayId)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (day) => {
-          console.log('[DayDetailsComponent] Day loaded from API:', day);
-          console.log('[DayDetailsComponent] Exercises count:', day.exercises?.length ?? 0);
-          console.log('[DayDetailsComponent] Exercises data:', day.exercises);
-          
-          this.day.set(day);
-          this.loading.set(false);
-        },
-        error: (err) => {
-          this.loading.set(false);
-          const errorMessage = err.error?.message || err.error?.errors?.[0] || 'Failed to load day details.';
-          this.error.set(errorMessage);
-          console.error('[DayDetailsComponent] Error loading day:', err);
-        }
-      });
+  private startResumeCountdown() {
+    this.resumeCountdown.set(10);
+    this.resumeTimerInterval = setInterval(() => {
+      const current = this.resumeCountdown();
+      if (current <= 1) {
+        this.clearResumeTimer();
+        this.continueWorkout();
+      } else {
+        this.resumeCountdown.set(current - 1);
+      }
+    }, 1000);
   }
 
-  goBack() {
+  private clearResumeTimer() {
+    if (this.resumeTimerInterval) {
+      clearInterval(this.resumeTimerInterval);
+      this.resumeTimerInterval = null;
+    }
+  }
+
+  continueWorkout() {
+    this.clearResumeTimer();
+    this.showResumeModal.set(false);
+
+    const completedIds = this.completedExerciseIds();
+    const nextExercise = this.exercises().find(ex => !completedIds.includes(ex.exerciseId));
+
+    if (nextExercise) {
+      this.router.navigate(['/exercise', nextExercise.exerciseId, 'execute'], {
+        queryParams: { dayId: this.dayId, programId: this.programId }
+      });
+    }
+  }
+
+  cancelResume() {
+    this.clearResumeTimer();
+    this.showResumeModal.set(false);
+  }
+
+  startExerciseExecution(exerciseId: number) {
+    if (this.isWorkoutLocked()) {
+      console.warn('⛔ Workout locked: Start workout first');
+      return;
+    }
+    this.router.navigate(['/exercise', exerciseId, 'execute'], {
+      queryParams: { dayId: this.dayId, programId: this.programId }
+    });
+  }
+
+  goToDetail() {
+    this.router.navigate(['/programs', this.programId]);
+  }
+
+  goToPrograms() {
     this.router.navigate(['/programs']);
   }
 
   ngOnDestroy() {
-    this.destroy$.next();
-    this.destroy$.complete();
+    this.clearResumeTimer();
   }
 }

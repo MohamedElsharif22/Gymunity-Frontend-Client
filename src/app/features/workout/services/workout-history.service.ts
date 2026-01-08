@@ -98,6 +98,24 @@ export class WorkoutHistoryService {
   }
 
   /**
+   * NEW: Get completed exercises for a specific day from workout log
+   * Returns array of exerciseIds that were completed
+   */
+  getCompletedExercisesForDay(programDayId: number): number[] {
+    const workout = this.workoutHistory().find(w => w.programDayId === programDayId);
+    if (!workout) return [];
+
+    try {
+      // Parse the exercises log stored in localStorage/backend
+      const exerciseLog = JSON.parse(localStorage.getItem(`workout_exercises_${programDayId}`) || '[]');
+      return exerciseLog.map((ex: any) => ex.exerciseId);
+    } catch (error) {
+      console.error('Error parsing exercise log:', error);
+      return [];
+    }
+  }
+
+  /**
    * Calculate and update the workout streak
    * Streak = consecutive calendar days with at least one completed workout
    */

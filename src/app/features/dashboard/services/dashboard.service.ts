@@ -1,10 +1,11 @@
-import { Injectable, inject } from '@angular/core';
-import { Observable, forkJoin, of } from 'rxjs';
-import { map, catchError, retry, shareReplay } from 'rxjs/operators';
+import { Injectable, inject, effect } from '@angular/core';
+import { Observable, forkJoin, of, merge, Subject } from 'rxjs';
+import { map, catchError, retry, shareReplay, switchMap, startWith, tap } from 'rxjs/operators';
 import { ClientProfileService } from '../../../core/services/client-profile.service';
 import { ClientLogsService } from '../../../core/services/client-logs.service';
 import { ClientProgramsService } from '../../programs/services/client-programs.service';
 import { SubscriptionService } from '../../memberships/services/subscription.service';
+import { WorkoutHistoryService } from '../../workout/services/workout-history.service';
 import {
   ClientProfileDashboardResponse,
   BodyStateLogResponse,
@@ -33,11 +34,33 @@ export class DashboardService {
   private readonly clientLogsService = inject(ClientLogsService);
   private readonly clientProgramsService = inject(ClientProgramsService);
   private readonly subscriptionService = inject(SubscriptionService);
+  private readonly workoutHistoryService = inject(WorkoutHistoryService);
 
   // Cache for dashboard data
   private dashboardCache$?: Observable<DashboardData>;
   private cacheTimestamp?: number;
   private readonly CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+  // Subject to trigger metric updates when workout history changes
+  private workoutHistoryUpdate$ = new Subject<void>();
+  // Subject to trigger subscription count updates
+  private subscriptionUpdate$ = new Subject<void>();
+
+  constructor() {
+    // Monitor WorkoutHistoryService for changes and emit updates
+    effect(() => {
+      // Access the history signal to create a dependency
+      this.workoutHistoryService.history();
+      // Trigger metric update whenever history changes
+      this.workoutHistoryUpdate$.next();
+    });
+
+    // Periodically check for subscription changes every 5 seconds
+    // This polls while user is on dashboard
+    setInterval(() => {
+      this.subscriptionUpdate$.next();
+    }, 5000);
+  }
 
   /**
    * Load complete dashboard data with intelligent caching
@@ -45,7 +68,7 @@ export class DashboardService {
    */
   loadDashboardData(): Observable<DashboardData> {
     const now = Date.now();
-    
+
     // Return cached data if valid
     if (this.dashboardCache$ && this.cacheTimestamp && (now - this.cacheTimestamp) < this.CACHE_DURATION) {
       console.log('[DashboardService] Returning cached data');
@@ -105,14 +128,72 @@ export class DashboardService {
 
   /**
    * Load dashboard with comprehensive fallback strategy
-   * Attempts multiple approaches to ensure data is loaded
+   * REAL-TIME: Subscribes to WorkoutHistoryService changes for instant metric updates
+   * REAL-TIME: Periodically fetches subscription updates every 5 seconds
+   * Whenever a workout is completed or subscription changes, updates display immediately
    */
   loadDashboardDataWithFallback(): Observable<DashboardData> {
     return this.loadDashboardData().pipe(
-      catchError(err => {
+      switchMap((initialData: DashboardData) => {
+        // Combine multiple update sources
+        return merge(
+          of(null), // Emit immediately for initial data (null signals use initialData)
+          this.workoutHistoryUpdate$, // Emit whenever workout history changes
+          this.subscriptionUpdate$ // Emit every 5 seconds to check subscriptions
+        ).pipe(
+          switchMap((trigger) => {
+            // If trigger is null, use initial subscriptions; otherwise fetch fresh
+            if (trigger === null) {
+              console.log('[DashboardService] Using initial subscriptions from load');
+              return of(initialData.dashboard?.summary?.activeSubscriptionCount || 0);
+            }
+
+            // Otherwise fetch fresh subscriptions
+            console.log('[DashboardService] Fetching fresh subscriptions...');
+            return this.subscriptionService.getClientSubscriptions().pipe(
+              catchError(() => of([])),
+              map(subs => subs?.length || 0)
+            );
+          }),
+          map((subscriptionCount) => {
+            // Recompute frontend metrics with current history
+            const frontendMetrics = this.computeFrontendMetrics(initialData.activePrograms || []);
+
+            // Create updated dashboard data with new metrics and subscription count
+            const updatedDashboard = {
+              ...initialData.dashboard,
+              summary: {
+                ...initialData.dashboard.summary,
+                totalWorkouts: frontendMetrics.workoutsLogged,
+                activeSubscriptionCount: subscriptionCount
+              },
+              metrics: {
+                ...initialData.dashboard.metrics,
+                workoutCompletionRate: frontendMetrics.completionRate,
+                currentStreak: frontendMetrics.currentStreak
+              }
+            };
+
+            console.log('[DashboardService] 🔄 Real-time metrics updated:', {
+              workoutsLogged: frontendMetrics.workoutsLogged,
+              completionRate: frontendMetrics.completionRate,
+              streak: frontendMetrics.currentStreak,
+              activeSubscriptions: subscriptionCount
+            });
+
+            return {
+              ...initialData,
+              dashboard: updatedDashboard
+            } as DashboardData;
+          }),
+          startWith(initialData) // Emit initial data first
+        );
+      }),
+      catchError((err: any) => {
         console.error('[DashboardService] Primary load failed, attempting fallback:', err);
         return this.loadIndividualServices();
-      })
+      }),
+      shareReplay(1) // Share result with all subscribers
     );
   }
 
@@ -122,7 +203,7 @@ export class DashboardService {
    */
   private loadIndividualServices(): Observable<DashboardData> {
     console.log('[DashboardService] Loading from individual services');
-    
+
     return forkJoin({
       dashboard: of(this.getEmptyDashboard()),
       lastBodyLog: this.clientLogsService.getLastBodyStateLog().pipe(
@@ -144,16 +225,39 @@ export class DashboardService {
 
   /**
    * Process and normalize dashboard data
+   * Merges frontend workout history metrics with backend dashboard data
    */
   private processDashboardData(data: any): DashboardData {
     // Calculate actual subscription count from fetched subscriptions
     const activeSubscriptionCount = data.subscriptions?.length || 0;
-    
+
     // Update dashboard summary with real subscription count
     if (data.dashboard?.summary) {
       data.dashboard.summary.activeSubscriptionCount = activeSubscriptionCount;
     }
-    
+
+    // Compute frontend metrics from WorkoutHistoryService
+    const frontendMetrics = this.computeFrontendMetrics(data.activePrograms || []);
+
+    // Update dashboard with frontend metrics (primary source of truth)
+    if (data.dashboard?.summary) {
+      data.dashboard.summary.totalWorkouts = frontendMetrics.workoutsLogged;
+    }
+
+    if (data.dashboard?.metrics) {
+      data.dashboard.metrics.workoutCompletionRate = frontendMetrics.completionRate;
+      // Store streak in metrics
+      (data.dashboard.metrics as any).currentStreak = frontendMetrics.currentStreak;
+    }
+
+    console.log('[DashboardService] Frontend metrics computed:', {
+      workoutsLogged: frontendMetrics.workoutsLogged,
+      totalAvailableDays: frontendMetrics.totalAvailableDays,
+      completionRate: frontendMetrics.completionRate,
+      currentStreak: frontendMetrics.currentStreak,
+      timestamp: new Date().toISOString()
+    });
+
     return {
       dashboard: data.dashboard,
       lastBodyLog: data.lastBodyLog,
@@ -161,6 +265,52 @@ export class DashboardService {
       activePrograms: data.activePrograms || [],
       isOnboardingComplete: data.isOnboardingComplete ?? true
     };
+  }
+
+  /**
+   * Compute metrics from frontend workout history cache
+   * This is the primary source of truth for workout metrics
+   */
+  private computeFrontendMetrics(activePrograms: ProgramResponse[]): {
+    workoutsLogged: number;
+    totalAvailableDays: number;
+    completionRate: number;
+    currentStreak: number;
+  } {
+    // Get completed workouts from frontend cache
+    const completedWorkouts = this.workoutHistoryService.history();
+    const workoutsLogged = completedWorkouts.length;
+    const currentStreak = this.workoutHistoryService.streak();
+
+    // Calculate total available days from active programs
+    const totalAvailableDays = this.calculateTotalProgramDays(activePrograms);
+
+    // Calculate completion rate
+    let completionRate = 0;
+    if (totalAvailableDays > 0) {
+      completionRate = Math.round((workoutsLogged / totalAvailableDays) * 100);
+      // Clamp between 0 and 100
+      completionRate = Math.max(0, Math.min(100, completionRate));
+    }
+
+    return {
+      workoutsLogged,
+      totalAvailableDays,
+      completionRate,
+      currentStreak
+    };
+  }
+
+  /**
+   * Calculate total available days from active programs
+   * Assumes 4 workout days per week
+   */
+  private calculateTotalProgramDays(programs: ProgramResponse[]): number {
+    return programs.reduce((total, program) => {
+      const daysPerWeek = 4; // Standard assumption: 4 days/week
+      const totalDays = (program.durationWeeks || 0) * daysPerWeek;
+      return total + totalDays;
+    }, 0);
   }
 
   /**

@@ -1,0 +1,29 @@
+/* Fullscreen mode for exercise execution */
+router-outlet {
+  display: block;
+}
+
+.fullscreen-mode {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  z-index: 9999;
+}
+
+/* Ensure router-outlet takes full space when in fullscreen */
+app-root[fullscreen] router-outlet ~ div {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  z-index: 9999;
+}

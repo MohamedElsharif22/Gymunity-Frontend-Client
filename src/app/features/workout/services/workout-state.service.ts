@@ -32,7 +32,8 @@ export class WorkoutStateService {
 
   initializeWorkout(
     programDayId: number,
-    exercises: Array<{ id: number; sets: number; reps: string }>
+    exercises: Array<{ id: number; sets: number; reps: string }>,
+    completedExerciseIds?: number[]
   ): void {
     const exerciseLogs = exercises.map((ex) => ({
       exerciseId: ex.id,
@@ -48,7 +49,7 @@ export class WorkoutStateService {
       programDayId,
       startedAt: new Date(),
       exercises: exerciseLogs,
-      completedExerciseIds: []
+      completedExerciseIds: completedExerciseIds || []
     });
   }
 

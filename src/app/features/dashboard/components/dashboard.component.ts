@@ -20,7 +20,7 @@ import { DashboardService, DashboardData } from '../services/dashboard.service';
               </h1>
               <p class="text-gray-600 mt-2 text-lg">Track your fitness journey and celebrate your progress</p>
             </div>
-            <button 
+            <button
               (click)="loadDashboard()"
               [disabled]="isLoading()"
               class="flex items-center gap-2 px-6 py-3 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl shadow-sm transition disabled:opacity-50">
@@ -55,7 +55,7 @@ import { DashboardService, DashboardData } from '../services/dashboard.service';
               <div class="flex-1">
                 <h3 class="text-lg font-bold text-red-900">Unable to Load Dashboard</h3>
                 <p class="text-red-700 mt-1">{{ error() }}</p>
-                <button 
+                <button
                   (click)="loadDashboard()"
                   class="mt-4 px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition shadow-sm">
                   Try Again
@@ -79,7 +79,7 @@ import { DashboardService, DashboardData } from '../services/dashboard.service';
                 <div class="flex-1">
                   <h3 class="text-xl font-bold mb-1">Complete Your Profile Setup</h3>
                   <p class="text-white/90 mb-4">Unlock personalized recommendations and track your progress more effectively.</p>
-                  <a routerLink="/onboarding" 
+                  <a routerLink="/onboarding"
                      class="inline-flex items-center gap-2 bg-white text-orange-600 px-6 py-3 rounded-lg font-semibold hover:bg-orange-50 transition shadow-lg">
                     Continue Setup
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -92,7 +92,7 @@ import { DashboardService, DashboardData } from '../services/dashboard.service';
           }
 
           <!-- Stats Overview Grid -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
             <!-- Active Subscriptions Card -->
             <div class="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all transform hover:-translate-y-1">
               <div class="flex items-start justify-between mb-4">
@@ -156,6 +156,20 @@ import { DashboardService, DashboardData } from '../services/dashboard.service';
               <h3 class="text-gray-500 text-sm font-medium mb-1">Completion Rate</h3>
               <p class="text-4xl font-bold text-gray-900">{{ completionRate() }}<span class="text-2xl text-gray-600">%</span></p>
             </div>
+
+            <!-- Current Streak Card -->
+            <div class="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all transform hover:-translate-y-1">
+              <div class="flex items-start justify-between mb-4">
+                <div class="bg-gradient-to-br from-red-500 to-rose-600 rounded-xl p-3 shadow-lg">
+                  <svg class="w-7 h-7 text-white" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2c-5.33 4.55-8 8.48-8 11.8 0 4.98 3.8 8.2 8 8.2s8-3.22 8-8.2c0-3.32-2.67-7.25-8-11.8zm0 18c-3.35 0-6-2.57-6-6.1 0-2.2 1.2-4.6 6-9.1 4.8 4.5 6 6.9 6 9.1 0 3.53-2.65 6.1-6 6.1z"></path>
+                  </svg>
+                </div>
+                <span class="bg-red-100 text-red-700 text-xs font-bold px-3 py-1 rounded-full">Streak</span>
+              </div>
+              <h3 class="text-gray-500 text-sm font-medium mb-1">Streak Days</h3>
+              <p class="text-4xl font-bold text-gray-900">{{ currentStreak() }}<span class="text-2xl text-gray-600"> 🔥</span></p>
+            </div>
           </div>
 
           <!-- Main Content: Two Column Layout -->
@@ -173,7 +187,7 @@ import { DashboardService, DashboardData } from '../services/dashboard.service';
                     </div>
                     <h2 class="text-2xl font-bold text-gray-900">Start Exercise</h2>
                   </div>
-                  <a routerLink="/programs" 
+                  <a routerLink="/programs"
                      class="flex items-center gap-2 text-sky-600 hover:text-sky-700 font-medium transition group">
                     View Programs
                     <svg class="w-5 h-5 group-hover:translate-x-1 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -188,7 +202,7 @@ import { DashboardService, DashboardData } from '../services/dashboard.service';
                       Ready to start your workout? Select a program and begin your exercise session.
                     </p>
                     <div class="flex gap-3 justify-center">
-                      <a routerLink="/programs" 
+                      <a routerLink="/programs"
                          class="inline-flex items-center gap-2 bg-sky-600 hover:bg-sky-700 text-white px-8 py-4 rounded-lg font-semibold transition shadow-lg">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
@@ -202,7 +216,7 @@ import { DashboardService, DashboardData } from '../services/dashboard.service';
                     <div class="space-y-3">
                       <p class="text-sm font-semibold text-gray-700 px-2">Your Active Programs:</p>
                       @for (program of activePrograms().slice(0, 3); track program.id) {
-                        <a [routerLink]="['/programs', program.id]" 
+                        <a [routerLink]="['/programs', program.id]"
                            class="group block border-2 border-gray-100 hover:border-sky-300 rounded-lg p-4 hover:bg-sky-50/50 transition">
                           <div class="flex justify-between items-start">
                             <div class="flex-1">
@@ -233,7 +247,7 @@ import { DashboardService, DashboardData } from '../services/dashboard.service';
                   Quick Actions
                 </h2>
                 <div class="space-y-3">
-                  <a routerLink="/programs" 
+                  <a routerLink="/programs"
                      class="w-full bg-white hover:bg-gray-50 text-sky-600 font-semibold py-4 rounded-xl flex items-center justify-center gap-3 transition shadow-lg group">
                     <span class="text-2xl">🎯</span>
                     <span>Start Exercise</span>
@@ -241,7 +255,7 @@ import { DashboardService, DashboardData } from '../services/dashboard.service';
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
                     </svg>
                   </a>
-                  <a routerLink="/body-state/add" 
+                  <a routerLink="/body-state/add"
                      class="w-full bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white font-semibold py-4 rounded-xl flex items-center justify-center gap-3 transition group">
                     <span class="text-2xl">⚖️</span>
                     <span>Update My Bodystate</span>
@@ -249,7 +263,7 @@ import { DashboardService, DashboardData } from '../services/dashboard.service';
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
                     </svg>
                   </a>
-                  <a routerLink="/memberships" 
+                  <a routerLink="/memberships"
                      class="w-full bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white font-semibold py-4 rounded-xl flex items-center justify-center gap-3 transition group">
                     <span class="text-2xl">🎫</span>
                     <span>My Subscriptions</span>
@@ -284,7 +298,7 @@ import { DashboardService, DashboardData } from '../services/dashboard.service';
                       <span class="text-sm font-bold text-sky-600">{{ completionRate() }}%</span>
                     </div>
                     <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
-                      <div class="bg-gradient-to-r from-sky-500 to-indigo-500 h-full rounded-full transition-all duration-500" 
+                      <div class="bg-gradient-to-r from-sky-500 to-indigo-500 h-full rounded-full transition-all duration-500"
                            [style.width.%]="completionRate()"></div>
                     </div>
                   </div>
@@ -304,7 +318,7 @@ import { DashboardService, DashboardData } from '../services/dashboard.service';
                 </div>
                 <h2 class="text-2xl font-bold text-gray-900">Active Programs</h2>
               </div>
-              <a routerLink="/programs" 
+              <a routerLink="/programs"
                  class="flex items-center gap-2 text-indigo-600 hover:text-indigo-700 font-medium transition group">
                 Browse All
                 <svg class="w-5 h-5 group-hover:translate-x-1 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -316,13 +330,13 @@ import { DashboardService, DashboardData } from '../services/dashboard.service';
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               @if (activePrograms().length > 0) {
                 @for (program of activePrograms(); track program.id) {
-                  <div class="group border-2 border-gray-100 hover:border-indigo-300 rounded-xl overflow-hidden hover:shadow-xl transition-all transform hover:-translate-y-2 cursor-pointer bg-white" 
+                  <div class="group border-2 border-gray-100 hover:border-indigo-300 rounded-xl overflow-hidden hover:shadow-xl transition-all transform hover:-translate-y-2 cursor-pointer bg-white"
                        [routerLink]="['/programs', program.id]">
                     <!-- Program Image -->
                     @if (program.thumbnailUrl) {
                       <div class="relative h-48 overflow-hidden">
-                        <img [src]="program.thumbnailUrl" 
-                             [alt]="program.title" 
+                        <img [src]="program.thumbnailUrl"
+                             [alt]="program.title"
                              class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">
                         <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
                         <div class="absolute bottom-3 left-3 right-3">
@@ -344,11 +358,11 @@ import { DashboardService, DashboardData } from '../services/dashboard.service';
                         </div>
                       </div>
                     }
-                    
+
                     <!-- Program Content -->
                     <div class="p-5">
                       <p class="text-sm text-gray-600 mb-4 line-clamp-2">{{ program.description }}</p>
-                      
+
                       <!-- Program Meta -->
                       <div class="grid grid-cols-2 gap-3 mb-4">
                         <div class="bg-gray-50 rounded-lg p-3">
@@ -390,7 +404,7 @@ import { DashboardService, DashboardData } from '../services/dashboard.service';
                       </svg>
                     </div>
                     <p class="text-gray-600 text-xl font-medium mb-6">No active programs yet</p>
-                    <a routerLink="/programs" 
+                    <a routerLink="/programs"
                        class="inline-flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-8 py-4 rounded-lg font-bold transition shadow-xl">
                       Discover Programs
                       <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -458,31 +472,35 @@ export class DashboardComponent implements OnInit {
   error = signal<string | null>(null);
 
   // Computed values for cleaner template access
-  activeSubscriptionCount = computed(() => 
+  activeSubscriptionCount = computed(() =>
     this.dashboardData()?.dashboard?.summary?.activeSubscriptionCount || 0
   );
-  
-  totalWorkouts = computed(() => 
+
+  totalWorkouts = computed(() =>
     this.dashboardData()?.dashboard?.summary?.totalWorkouts || 0
   );
-  
-  currentWeight = computed(() => 
+
+  currentWeight = computed(() =>
     this.dashboardData()?.lastBodyLog?.weightKg || null
   );
-  
-  completionRate = computed(() => 
+
+  completionRate = computed(() =>
     this.dashboardData()?.dashboard?.metrics?.workoutCompletionRate || 0
   );
-  
-  recentWorkouts = computed(() => 
+
+  currentStreak = computed(() =>
+    (this.dashboardData()?.dashboard?.metrics as any)?.currentStreak || 0
+  );
+
+  recentWorkouts = computed(() =>
     this.dashboardData()?.recentWorkouts || []
   );
-  
-  activePrograms = computed(() => 
+
+  activePrograms = computed(() =>
     this.dashboardData()?.activePrograms || []
   );
-  
-  isOnboardingComplete = computed(() => 
+
+  isOnboardingComplete = computed(() =>
     this.dashboardData()?.isOnboardingComplete ?? true
   );
 

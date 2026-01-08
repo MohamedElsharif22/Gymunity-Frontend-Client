@@ -953,19 +953,24 @@ export class ExerciseExecutionComponent implements OnInit, OnDestroy {
     console.log(`✅ Exercise ${currentIndex + 1} of ${session.exercises.length} completed`);
     console.log(`📋 Current Exercise ID: ${currentExerciseId}`);
 
-    // Find the next exercise in the session
     const nextIndex = currentIndex + 1;
     const dayId = this.route.snapshot.queryParams['dayId'];
     const programId = this.route.snapshot.queryParams['programId'];
 
     if (nextIndex < session.exercises.length) {
-      // There is a next exercise - navigate back to exercises page to select next exercise
-      console.log(`➡️ Moving to Exercise ${nextIndex + 1}/${session.exercises.length}`);
-      console.log(`📍 Navigating to exercises page: /programs/${programId}/days/${dayId}`);
+      // There is a next exercise
+      const nextExerciseId = session.exercises[nextIndex].exerciseId;
 
-      this.router.navigate(['/programs', programId, 'days', dayId]);
+      console.log(`➡️ Moving to Exercise ${nextIndex + 1}/${session.exercises.length}`);
+      console.log(`📍 Next Exercise ID: ${nextExerciseId}`);
+      console.log(`⏱️ Returning to day page, auto-start in 10 seconds...`);
+
+      // Navigate back to day page with autoStart flag
+      this.router.navigate(['/programs', programId, 'days', dayId], {
+        queryParams: { autoStart: 'true' }
+      });
     } else {
-      // This was the last exercise - submit workout and navigate to completion
+      // This was the last exercise
       console.log(`⏹️ LAST EXERCISE COMPLETED! (${currentIndex + 1} of ${session.exercises.length})`);
       console.log(`🔄 Initiating workout finalization...`);
       this.finalizeWorkout();
