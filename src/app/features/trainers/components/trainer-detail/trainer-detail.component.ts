@@ -162,6 +162,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
             <!-- Contact and Action Buttons -->
             <div class="flex flex-col sm:flex-row gap-3">
               <button
+                (click)="viewAllPackages()"
                 class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
               >
                 Book Session

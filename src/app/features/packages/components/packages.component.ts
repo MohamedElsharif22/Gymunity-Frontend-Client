@@ -229,12 +229,6 @@ interface PackageGroup {
                             class="w-full bg-sky-600 hover:bg-sky-700 text-white font-semibold py-2 px-4 rounded-lg transition">
                             View Details
                           </button>
-                          <button
-                            (click)="subscribeToPackage(pkg.id)"
-                            [disabled]="!pkg.isActive"
-                            class="w-full bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold py-2 px-4 rounded-lg transition">
-                            Subscribe Now
-                          </button>
                         </div>
                       </div>
                     }

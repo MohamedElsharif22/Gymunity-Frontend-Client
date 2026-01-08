@@ -27,7 +27,7 @@ import { TrainerCard, Program } from '../../core/models';
 
           <!-- Desktop Navigation Links -->
           <div class="hidden md:flex items-center gap-8">
-            <a href="#featured-trainers" class="text-gray-700 hover:text-sky-600 font-medium transition">Trainers</a>
+            <a [routerLink]="['/discover/trainers']" class="text-gray-700 hover:text-sky-600 font-medium transition">Trainers</a>
             <a [routerLink]="['/discover/programs']" class="text-gray-700 hover:text-sky-600 font-medium transition">Programs</a>
             <a href="#" class="text-gray-700 hover:text-sky-600 font-medium transition">About</a>
             <a href="#" class="text-gray-700 hover:text-sky-600 font-medium transition">Contact</a>
@@ -86,8 +86,8 @@ import { TrainerCard, Program } from '../../core/models';
         @if (mobileMenuOpen()) {
           <div class="md:hidden bg-white border-t border-gray-200">
             <div class="px-2 pt-2 pb-4 space-y-1">
-              <a href="#featured-trainers" (click)="closeMobileMenu()" class="block px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition font-medium">Trainers</a>
-              <a href="#" (click)="closeMobileMenu()" class="block px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition font-medium">Programs</a>
+              <a [routerLink]="['/discover/trainers']" (click)="closeMobileMenu()" class="block px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition font-medium">Trainers</a>
+              <a [routerLink]="['/discover/programs']" (click)="closeMobileMenu()" class="block px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition font-medium">Programs</a>
               <a href="#" (click)="closeMobileMenu()" class="block px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition font-medium">About</a>
               <a href="#" (click)="closeMobileMenu()" class="block px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition font-medium">Contact</a>
               <div class="border-t border-gray-200 pt-4 mt-4 space-y-2">
@@ -636,7 +636,8 @@ import { TrainerCard, Program } from '../../core/models';
           </button>
         </div>
       </div>
-    </section>
+    </section>
+
   `,
   styles: [`
     @keyframes fade-in {
