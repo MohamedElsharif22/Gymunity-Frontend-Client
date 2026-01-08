@@ -187,7 +187,7 @@ import { DashboardService, DashboardData } from '../services/dashboard.service';
                     </div>
                     <h2 class="text-2xl font-bold text-gray-900">Start Exercise</h2>
                   </div>
-                  <a routerLink="/programs"
+                  <a routerLink="/packages"
                      class="flex items-center gap-2 text-sky-600 hover:text-sky-700 font-medium transition group">
                     View the Packages
                     <svg class="w-5 h-5 group-hover:translate-x-1 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -202,7 +202,7 @@ import { DashboardService, DashboardData } from '../services/dashboard.service';
                       Ready to start your workout? Select a program and begin your exercise session.
                     </p>
                     <div class="flex gap-3 justify-center">
-                      <a routerLink="/programs"
+                      <a routerLink="/discover-programs"
                          class="inline-flex items-center gap-2 bg-sky-600 hover:bg-sky-700 text-white px-8 py-4 rounded-lg font-semibold transition shadow-lg">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
@@ -247,7 +247,7 @@ import { DashboardService, DashboardData } from '../services/dashboard.service';
                   Quick Actions
                 </h2>
                 <div class="space-y-3">
-                  <a routerLink="/programs"
+                  <a routerLink="/my-active-programs"
                      class="w-full bg-white hover:bg-gray-50 text-sky-600 font-semibold py-4 rounded-xl flex items-center justify-center gap-3 transition shadow-lg group">
                     <span class="text-2xl">🎯</span>
                     <span>Start Exercise</span>
@@ -263,7 +263,7 @@ import { DashboardService, DashboardData } from '../services/dashboard.service';
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
                     </svg>
                   </a>
-                  <a routerLink="/memberships"
+                  <a routerLink="/subscriptions"
                      class="w-full bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white font-semibold py-4 rounded-xl flex items-center justify-center gap-3 transition group">
                     <span class="text-2xl">🎫</span>
                     <span>My Subscriptions</span>
@@ -318,7 +318,7 @@ import { DashboardService, DashboardData } from '../services/dashboard.service';
                 </div>
                 <h2 class="text-2xl font-bold text-gray-900">Active Programs</h2>
               </div>
-              <a routerLink="/programs"
+              <a routerLink="/discover-programs"
                  class="flex items-center gap-2 text-indigo-600 hover:text-indigo-700 font-medium transition group">
                 Browse All
                 <svg class="w-5 h-5 group-hover:translate-x-1 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">

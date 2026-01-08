@@ -11,6 +11,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink, Router } from '@angular/router';
 import { HomeClientService } from '../services/home-client.service';
 import { TrainerCard, TrainerSearchOptions } from '../../../core/models';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-trainers',
@@ -334,6 +335,7 @@ import { TrainerCard, TrainerSearchOptions } from '../../../core/models';
 export class TrainersComponent implements OnInit {
   private readonly homeClientService = inject(HomeClientService);
   private readonly router = inject(Router);
+  private readonly authService = inject(AuthService);
 
   // State signals
   trainers = signal<TrainerCard[]>([]);
@@ -439,6 +441,14 @@ export class TrainersComponent implements OnInit {
 
   viewTrainerProfile(trainer: TrainerCard): void {
     console.log('[TrainersComponent] Viewing trainer profile:', trainer.id);
-    this.router.navigate(['/discover/trainers', trainer.id], { state: { trainer } });
+    const isAuthenticated = this.authService.isAuthenticated();
+    
+    // Route authenticated users to /trainers/:id (with dashboard layout)
+    // Route non-authenticated users to /discover/trainers/:id (with landing layout)
+    if (isAuthenticated) {
+      this.router.navigate(['/trainers', trainer.id], { state: { trainer } });
+    } else {
+      this.router.navigate(['/discover/trainers', trainer.id], { state: { trainer } });
+    }
   }
 }

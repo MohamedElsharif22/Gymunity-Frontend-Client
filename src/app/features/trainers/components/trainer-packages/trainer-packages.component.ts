@@ -176,11 +176,6 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
                             class="w-full bg-sky-500 hover:bg-sky-600 text-white font-semibold py-3 px-4 rounded-lg transition-colors">
                             View Details
                           </button>
-                          <button
-                            (click)="subscribeToPackage(pkg.id)"
-                            class="w-full border-2 border-sky-500 hover:bg-sky-50 text-sky-600 font-semibold py-2 px-4 rounded-lg transition-colors">
-                            Subscribe
-                          </button>
                         </div>
                       </div>
                     </div>
