@@ -5,7 +5,7 @@ import { ClientProfileService } from '../../../core/services/client-profile.serv
 import { ClientLogsService } from '../../../core/services/client-logs.service';
 import { ClientProfileRequest, ClientProfileResponse, ClientGoal, ExperienceLevel, Gender } from '../../../core/models';
 import { Router } from '@angular/router';
-import { Subject, takeUntil, forkJoin, of } from 'rxjs';
+import { Subject, takeUntil, forkJoin, of, timeout } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
 /**
@@ -89,48 +89,64 @@ export class ProfileComponent implements OnInit, OnDestroy {
     this.loading.set(true);
     this.error.set(null);
 
-    // Fetch profile, body state log, and dashboard data in parallel
+    // Fetch profile with timeout (10 seconds), other requests have shorter timeout (5 seconds)
+    // If profile request hangs, we still allow editing mode
     forkJoin({
-      profile: this.profileService.getProfile(),
-      bodyStateLog: this.logsService.getLastBodyStateLog().pipe(
+      profile: this.profileService.getProfile().pipe(
+        timeout(10000), // 10 second timeout for profile
         catchError(err => {
-          console.warn('[ProfileComponent] Failed to load body state log:', err);
+          console.warn('[ProfileComponent] Failed to load profile:', err.message || err);
+          return of(null);
+        })
+      ),
+      bodyStateLog: this.logsService.getLastBodyStateLog().pipe(
+        timeout(5000), // 5 second timeout for body state log
+        catchError(err => {
+          console.warn('[ProfileComponent] Failed to load body state log:', err.message || err);
           return of(null);
         })
       ),
       dashboard: this.profileService.getDashboard().pipe(
+        timeout(5000), // 5 second timeout for dashboard
         catchError(err => {
-          console.warn('[ProfileComponent] Failed to load dashboard:', err);
+          console.warn('[ProfileComponent] Failed to load dashboard:', err.message || err);
           return of(null);
         })
       )
     })
-      .pipe(takeUntil(this.destroy$))
+      .pipe(
+        timeout(15000), // Overall 15 second timeout for entire forkJoin
+        takeUntil(this.destroy$)
+      )
       .subscribe({
         next: (data) => {
           console.log('[ProfileComponent] Profile response:', data.profile);
           console.log('[ProfileComponent] Dashboard response:', data.dashboard);
           
-          // Merge body state log and dashboard data into profile response
-          let profileData = { ...data.profile };
-          
-          // If dashboard has fitness metadata, merge it
-          if (data.dashboard?.summary) {
-            profileData.goal = profileData.goal || data.dashboard.summary.goal;
-            profileData.experienceLevel = profileData.experienceLevel || data.dashboard.summary.experienceLevel;
+          // Only process if we have at least a profile response
+          if (data.profile) {
+            // Merge body state log and dashboard data into profile response
+            let profileData = { ...data.profile };
+            
+            // If dashboard has fitness metadata, merge it
+            if (data.dashboard?.summary) {
+              profileData.goal = profileData.goal || data.dashboard.summary.goal;
+              profileData.experienceLevel = profileData.experienceLevel || data.dashboard.summary.experienceLevel;
+            }
+            
+            const profileWithBodyState: ClientProfileResponse = {
+              ...profileData,
+              bodyStateLog: data.bodyStateLog || undefined
+            };
+            this.profile.set(profileWithBodyState);
+            this.populateForm(profileWithBodyState);
           }
           
-          const profileWithBodyState: ClientProfileResponse = {
-            ...profileData,
-            bodyStateLog: data.bodyStateLog || undefined
-          };
-          this.profile.set(profileWithBodyState);
-          this.populateForm(profileWithBodyState);
           this.loading.set(false);
         },
         error: (error) => {
-          console.error('[ProfileComponent] Error loading profile:', error);
-          // Profile doesn't exist yet - allow creation
+          console.error('[ProfileComponent] Error loading profile:', error.message || error);
+          // Profile doesn't exist yet or API timeout - allow creation
           this.loading.set(false);
           this.isEditing.set(true);
         }
@@ -138,14 +154,20 @@ export class ProfileComponent implements OnInit, OnDestroy {
   }
 
   private populateForm(profile: ClientProfileResponse): void {
+    console.log('[ProfileComponent] Populating form with profile data:', profile);
+    
     this.profileForm.patchValue({
       userName: profile.userName || '',
-      heightCm: profile.heightCm || null,
-      startingWeightKg: profile.startingWeightKg || null,
-      gender: profile.gender || null,
-      goal: profile.goal || null,
-      experienceLevel: profile.experienceLevel || null
-    });
+      heightCm: profile.heightCm ?? null,
+      startingWeightKg: profile.startingWeightKg ?? null,
+      gender: profile.gender ?? null,
+      goal: profile.goal ?? null,
+      experienceLevel: profile.experienceLevel ?? null
+    }, { emitEvent: false });
+    
+    console.log('[ProfileComponent] Form values after population:', this.profileForm.value);
+    console.log('[ProfileComponent] Goal field value:', this.profileForm.get('goal')?.value);
+    console.log('[ProfileComponent] Experience level field value:', this.profileForm.get('experienceLevel')?.value);
   }
 
   onEdit(): void {
@@ -160,7 +182,13 @@ export class ProfileComponent implements OnInit, OnDestroy {
   }
 
   onSubmit(): void {
+    console.log('[ProfileComponent] Form submission attempted');
+    console.log('[ProfileComponent] Form valid:', this.profileForm.valid);
+    console.log('[ProfileComponent] Form value:', this.profileForm.value);
+    console.log('[ProfileComponent] Form errors:', this.profileForm.errors);
+    
     if (this.profileForm.invalid) {
+      console.warn('[ProfileComponent] Form is invalid. Errors:', this.getFormErrors());
       this.error.set('Please fill in all required fields correctly');
       return;
     }
@@ -172,32 +200,50 @@ export class ProfileComponent implements OnInit, OnDestroy {
     const formValue = this.profileForm.value;
     const request: ClientProfileRequest = {
       userName: formValue.userName || '',
-      heightCm: formValue.heightCm || undefined,
-      startingWeightKg: formValue.startingWeightKg || undefined,
-      gender: formValue.gender || undefined,
-      goal: formValue.goal || undefined,
-      experienceLevel: formValue.experienceLevel || undefined
+      heightCm: formValue.heightCm ?? undefined,
+      startingWeightKg: formValue.startingWeightKg ?? undefined,
+      gender: formValue.gender ?? undefined,
+      goal: formValue.goal ?? undefined,
+      experienceLevel: formValue.experienceLevel ?? undefined
     };
 
     const operation = this.profile() ? 'update' : 'create';
+    console.log(`[ProfileComponent] ${operation === 'update' ? 'Updating' : 'Creating'} profile:`, request);
 
     const service$ = operation === 'update'
       ? this.profileService.updateProfile(request)
       : this.profileService.createProfile(request);
 
-    service$.pipe(takeUntil(this.destroy$)).subscribe({
+    service$.pipe(
+      timeout(10000), // 10 second timeout for profile operations
+      takeUntil(this.destroy$)
+    ).subscribe({
       next: (updatedProfile) => {
+        // Ensure all fields are properly updated from the response
+        console.log('[ProfileComponent] Profile response:', updatedProfile);
+        console.log('[ProfileComponent] Response goal:', updatedProfile.goal, 'Type:', typeof updatedProfile.goal);
+        console.log('[ProfileComponent] Response experienceLevel:', updatedProfile.experienceLevel, 'Type:', typeof updatedProfile.experienceLevel);
+        
         // Merge the submitted form values into the response (in case backend doesn't return them)
         const enrichedProfile: ClientProfileResponse = {
-          ...updatedProfile,
-          goal: updatedProfile.goal || request.goal,
-          experienceLevel: updatedProfile.experienceLevel || request.experienceLevel,
-          gender: updatedProfile.gender || request.gender,
-          heightCm: updatedProfile.heightCm || request.heightCm,
-          startingWeightKg: updatedProfile.startingWeightKg || request.startingWeightKg
+          id: updatedProfile.id,
+          userName: updatedProfile.userName || request.userName,
+          heightCm: updatedProfile.heightCm !== undefined ? updatedProfile.heightCm : request.heightCm,
+          startingWeightKg: updatedProfile.startingWeightKg !== undefined ? updatedProfile.startingWeightKg : request.startingWeightKg,
+          gender: updatedProfile.gender !== undefined ? updatedProfile.gender : request.gender,
+          goal: updatedProfile.goal !== undefined ? updatedProfile.goal : request.goal,
+          experienceLevel: updatedProfile.experienceLevel !== undefined ? updatedProfile.experienceLevel : request.experienceLevel,
+          createdAt: updatedProfile.createdAt,
+          updatedAt: updatedProfile.updatedAt,
+          bodyStateLog: updatedProfile.bodyStateLog
         };
         
+        console.log('[ProfileComponent] Enriched profile:', enrichedProfile);
+        console.log('[ProfileComponent] Enriched goal:', enrichedProfile.goal);
+        console.log('[ProfileComponent] Enriched experienceLevel:', enrichedProfile.experienceLevel);
+        
         this.profile.set(enrichedProfile);
+        this.populateForm(enrichedProfile); // Refresh form with updated data
         this.isEditing.set(false);
         this.loading.set(false);
         this.success.set(`Profile ${operation === 'update' ? 'updated' : 'created'} successfully!`);
@@ -205,6 +251,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
       },
       error: (error) => {
         this.loading.set(false);
+        console.error('[ProfileComponent] Profile operation error:', error);
         const errorMessage = error?.error?.message || `Failed to ${operation} profile. Please try again.`;
         this.error.set(errorMessage);
       }
@@ -220,7 +267,10 @@ export class ProfileComponent implements OnInit, OnDestroy {
     this.error.set(null);
 
     this.profileService.deleteProfile()
-      .pipe(takeUntil(this.destroy$))
+      .pipe(
+        timeout(10000), // 10 second timeout for delete operation
+        takeUntil(this.destroy$)
+      )
       .subscribe({
         next: () => {
           this.loading.set(false);
@@ -251,5 +301,16 @@ export class ProfileComponent implements OnInit, OnDestroy {
     if (!gender) return '';
     const option = this.genderOptions.find(o => o.value === gender);
     return option?.label || '';
+  }
+
+  private getFormErrors(): any {
+    const errors: any = {};
+    Object.keys(this.profileForm.controls).forEach(key => {
+      const control = this.profileForm.get(key);
+      if (control && control.errors) {
+        errors[key] = control.errors;
+      }
+    });
+    return errors;
   }
 }

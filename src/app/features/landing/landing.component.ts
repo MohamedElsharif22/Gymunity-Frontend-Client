@@ -1,17 +1,138 @@
-import { Component, OnInit, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
+﻿import { Component, OnInit, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
-import { TrainerDiscoveryService } from '../trainers/services/trainer-discovery.service';
+import { HomeClientService, ProgramClientResponse } from '../trainers/services/home-client.service';
 import { AuthService } from '../../core/services/auth.service';
-import { TrainerCard } from '../../core/models';
-import { NgOptimizedImage } from '@angular/common';
+import { TrainerCard, Program } from '../../core/models';
 
 @Component({
   selector: 'app-landing',
   standalone: true,
-  imports: [CommonModule, RouterModule, NgOptimizedImage],
+  imports: [CommonModule, RouterModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
+    <!-- Professional Navigation Bar -->
+    <nav class="fixed top-0 left-0 right-0 bg-white shadow-lg z-50">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16">
+          <!-- Logo/Brand -->
+          <div class="flex items-center gap-3 flex-shrink-0 cursor-pointer" (click)="scrollToTop()">
+            <div class="w-10 h-10 bg-gradient-to-br from-sky-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
+              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+              </svg>
+            </div>
+            <span class="text-xl font-bold bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">Gymunity</span>
+          </div>
+
+          <!-- Desktop Navigation Links -->
+          <div class="hidden md:flex items-center gap-8">
+            <a href="#featured-trainers" class="text-gray-700 hover:text-sky-600 font-medium transition">Trainers</a>
+            <a [routerLink]="['/discover/programs']" class="text-gray-700 hover:text-sky-600 font-medium transition">Programs</a>
+            <a href="#" class="text-gray-700 hover:text-sky-600 font-medium transition">About</a>
+            <a href="#" class="text-gray-700 hover:text-sky-600 font-medium transition">Contact</a>
+          </div>
+
+          <!-- Desktop Auth Buttons -->
+          <div class="hidden md:flex items-center gap-4">
+            @if (isAuthenticated()) {
+              <button
+                [routerLink]="['/dashboard']"
+                class="text-sky-600 hover:text-sky-700 font-medium transition">
+                Dashboard
+              </button>
+              <button
+                [routerLink]="['/profile']"
+                class="text-gray-700 hover:text-sky-600 font-medium transition">
+                Profile
+              </button>
+              <button
+                (click)="logout()"
+                class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-6 rounded-lg transition">
+                Logout
+              </button>
+            } @else {
+              <button
+                [routerLink]="['/auth/login']"
+                class="text-sky-600 hover:text-sky-700 font-medium transition">
+                Sign In
+              </button>
+              <button
+                [routerLink]="['/auth/register']"
+                class="bg-sky-600 hover:bg-sky-700 text-white font-semibold py-2 px-6 rounded-lg transition">
+                Get Started
+              </button>
+            }
+          </div>
+
+          <!-- Mobile Menu Button -->
+          <button
+            (click)="toggleMobileMenu()"
+            class="md:hidden p-2 rounded-lg hover:bg-gray-100 transition"
+            [attr.aria-label]="mobileMenuOpen() ? 'Close menu' : 'Open menu'">
+            @if (!mobileMenuOpen()) {
+              <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+              </svg>
+            } @else {
+              <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            }
+          </button>
+        </div>
+
+        <!-- Mobile Menu -->
+        @if (mobileMenuOpen()) {
+          <div class="md:hidden bg-white border-t border-gray-200">
+            <div class="px-2 pt-2 pb-4 space-y-1">
+              <a href="#featured-trainers" (click)="closeMobileMenu()" class="block px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition font-medium">Trainers</a>
+              <a href="#" (click)="closeMobileMenu()" class="block px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition font-medium">Programs</a>
+              <a href="#" (click)="closeMobileMenu()" class="block px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition font-medium">About</a>
+              <a href="#" (click)="closeMobileMenu()" class="block px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition font-medium">Contact</a>
+              <div class="border-t border-gray-200 pt-4 mt-4 space-y-2">
+                @if (isAuthenticated()) {
+                  <button
+                    [routerLink]="['/dashboard']"
+                    (click)="closeMobileMenu()"
+                    class="block w-full text-left px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition font-medium">
+                    Dashboard
+                  </button>
+                  <button
+                    [routerLink]="['/profile']"
+                    (click)="closeMobileMenu()"
+                    class="block w-full text-left px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition font-medium">
+                    Profile
+                  </button>
+                  <button
+                    (click)="logout()"
+                    class="block w-full text-left px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition font-medium">
+                    Logout
+                  </button>
+                } @else {
+                  <button
+                    [routerLink]="['/auth/login']"
+                    (click)="closeMobileMenu()"
+                    class="block w-full text-left px-3 py-2 text-sky-600 hover:bg-sky-50 rounded-lg transition font-medium">
+                    Sign In
+                  </button>
+                  <button
+                    [routerLink]="['/auth/register']"
+                    (click)="closeMobileMenu()"
+                    class="block w-full text-left px-3 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg transition font-medium">
+                    Get Started
+                  </button>
+                }
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    </nav>
+
+    <!-- Add padding-top to account for fixed navbar -->
+    <div class="pt-16"></div>
+
     <!-- Hero Section -->
     <section class="bg-gradient-to-br from-sky-600 to-sky-800 text-white py-20 px-4">
       <div class="max-w-7xl mx-auto">
@@ -36,12 +157,12 @@ import { NgOptimizedImage } from '@angular/common';
             <div class="flex flex-col sm:flex-row gap-4 pt-6">
               @if (isAuthenticated()) {
                 <button
-                  [routerLink]="['/trainers']"
+                  [routerLink]="['/discover/trainers']"
                   class="bg-white text-sky-600 font-bold py-3 px-8 rounded-lg hover:bg-sky-50 transition transform hover:scale-105 shadow-lg">
                   Explore Trainers
                 </button>
                 <button
-                  [routerLink]="['/programs']"
+                  [routerLink]="['/discover/programs']"
                   class="bg-sky-500/30 border-2 border-white text-white font-bold py-3 px-8 rounded-lg hover:bg-sky-500/50 transition">
                   Browse Programs
                 </button>
@@ -108,110 +229,183 @@ import { NgOptimizedImage } from '@angular/common';
           <div class="flex justify-center items-center py-20">
             <div class="animate-spin rounded-full h-16 w-16 border-4 border-sky-600 border-t-transparent"></div>
           </div>
-        } @else if (featuredTrainers().length > 0) {
-          <!-- Trainers Grid -->
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+        } @else if (featuredTrainers().length === 0) {
+          <div class="text-center py-16 bg-white rounded-lg shadow">
+            <svg class="mx-auto h-16 w-16 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4.354a4 4 0 110 5.292m0 0H7.465M4.5 15H21m-16.5-6h16.5"></path>
+            </svg>
+            <h3 class="text-2xl font-bold text-gray-900 mb-2">No trainers found</h3>
+            <p class="text-gray-600">Unable to load trainer information. Please refresh the page.</p>
+          </div>
+        } @else {
+          <!-- Professional Trainers Grid - Enhanced Layout -->
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
             @for (trainer of featuredTrainers(); track trainer.id) {
-              <div class="bg-white rounded-xl shadow-md hover:shadow-xl transition-all transform hover:scale-105 overflow-hidden">
-                <!-- Trainer Image -->
-                <div class="relative h-64 bg-gradient-to-br from-sky-400 to-sky-600 flex items-center justify-center overflow-hidden">
-                  @if (trainer.profilePhotoUrl) {
+              <article 
+                class="group bg-white rounded-2xl shadow-md border border-gray-200 overflow-hidden hover:shadow-2xl hover:border-sky-300 transition-all duration-300 cursor-pointer flex flex-col h-full"
+                (click)="viewTrainerProfile(trainer)"
+              >
+                <!-- Cover Image with Overlay -->
+                <div class="relative h-48 bg-gradient-to-br from-sky-400 via-blue-500 to-indigo-600 overflow-hidden">
+                  @if (getTrainerPhotoUrl(trainer)) {
                     <img 
-                      [ngSrc]="trainer.profilePhotoUrl" 
-                      alt="{{ trainer.fullName }}"
-                      width="300"
-                      height="400"
-                      class="w-full h-full object-cover"
-                      priority="false"
+                      [src]="getTrainerPhotoUrl(trainer)" 
+                      [alt]="trainer.userName || 'Trainer'"
+                      class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                     />
-                  } @else {
-                    <div class="text-6xl">💪</div>
+                    <!-- Dark overlay for better text contrast -->
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
                   }
                   
-                  <!-- Badge -->
+                  <!-- Verified Badge (Top Right) -->
                   @if (trainer.isVerified) {
-                    <div class="absolute top-4 right-4 bg-green-500 text-white rounded-full p-2 shadow-lg">
-                      <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                    <div class="absolute top-3 right-3 bg-yellow-400 text-gray-900 px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-lg font-semibold text-xs">
+                      <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                       </svg>
+                      Verified
+                    </div>
+                  }
+
+                  <!-- Active Badge (Top Left) -->
+                  @if (trainer.hasActiveSubscription) {
+                    <div class="absolute top-3 left-3 bg-green-500 text-white px-3 py-1.5 rounded-full text-xs font-semibold shadow-lg">
+                      Active
                     </div>
                   }
                 </div>
 
                 <!-- Content -->
-                <div class="p-6">
-                  <h3 class="text-xl font-bold text-gray-900 mb-1">{{ trainer.fullName }}</h3>
-                  
-                  @if (trainer.specializations && trainer.specializations.length > 0) {
-                    <p class="text-sky-600 font-semibold text-sm mb-3">{{ trainer.specializations[0] }}</p>
-                  }
-
-                  <!-- Rating -->
-                  @if (trainer.ratingAverage) {
-                    <div class="flex items-center gap-2 mb-4">
-                      <div class="flex gap-1">
-                        @for (i of [1, 2, 3, 4, 5]; track i) {
-                          <svg 
-                            [class]="i <= Math.round(trainer.ratingAverage) ? 'text-yellow-400' : 'text-gray-300'"
-                            class="w-4 h-4" 
-                            fill="currentColor" 
-                            viewBox="0 0 20 20">
-                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                          </svg>
+                <div class="p-6 flex flex-col flex-1">
+                  <!-- Avatar & Name (Overlapping cover) -->
+                  <div class="flex items-start gap-4 -mt-14 mb-4">
+                    <div class="relative flex-shrink-0">
+                      <div class="w-20 h-20 rounded-2xl bg-white border-4 border-white shadow-xl overflow-hidden">
+                        @if (getTrainerPhotoUrl(trainer)) {
+                          <img 
+                            [src]="getTrainerPhotoUrl(trainer)" 
+                            [alt]="trainer.userName"
+                            class="w-full h-full object-cover"
+                          />
+                        } @else {
+                          <div class="w-full h-full bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center text-white font-bold text-2xl">
+                            {{ trainer.userName.charAt(0).toUpperCase() || 'T' }}
+                          </div>
                         }
                       </div>
-                      <span class="text-sm text-gray-600">({{ trainer.totalReviews || 0 }})</span>
+                      <!-- Online Status Indicator -->
+                      <div class="absolute -bottom-1 -right-1 w-5 h-5 bg-green-400 border-2 border-white rounded-full"></div>
                     </div>
-                  }
+                    <!-- Trainer Info -->
+                    <div class="flex-1 pt-10">
+                      <h3 class="text-lg font-bold text-gray-900 mb-0.5 group-hover:text-sky-600 transition-colors">
+                        {{ trainer.userName || 'Trainer' }}
+                      </h3>
+                      @if (trainer.handle) {
+                        <p class="text-xs text-sky-600 font-medium">{{ '@' + trainer.handle }}</p>
+                      }
+                    </div>
+                  </div>
 
                   <!-- Bio -->
                   @if (trainer.bio) {
-                    <p class="text-gray-600 text-sm mb-4 line-clamp-2">{{ trainer.bio }}</p>
+                    <p class="text-sm text-gray-600 mb-4 line-clamp-2 leading-relaxed flex-grow">
+                      {{ trainer.bio }}
+                    </p>
                   }
 
-                  <!-- Experience -->
-                  <div class="flex items-center gap-2 text-sm text-gray-500 mb-6">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
+                  <!-- Rating & Reviews -->
+                  @if (trainer.ratingAverage || trainer.totalReviews) {
+                    <div class="flex items-center gap-2 mb-4">
+                      <div class="flex items-center gap-0.5">
+                        @for (i of [1, 2, 3, 4, 5]; track i) {
+                          <svg 
+                            [class]="i <= Math.round(trainer.ratingAverage || 0) ? 'text-yellow-400' : 'text-gray-300'"
+                            class="w-4 h-4" 
+                            fill="currentColor" 
+                            viewBox="0 0 20 20"
+                          >
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                          </svg>
+                        }
+                      </div>
+                      <span class="text-sm font-semibold text-gray-900">{{ (trainer.ratingAverage || 0).toFixed(1) }}</span>
+                      @if (trainer.totalReviews) {
+                        <span class="text-xs text-gray-500">({{ trainer.totalReviews }})</span>
+                      }
+                    </div>
+                  }
+
+                  <!-- Stats Grid -->
+                  <div class="grid gap-3 py-4 border-t border-b border-gray-200 mb-4" [ngClass]="'grid-cols-' + getVisibleStatsCount(trainer)">
                     @if (trainer.yearsExperience) {
-                      <span>{{ trainer.yearsExperience }} years experience</span>
+                      <div class="text-center">
+                        <p class="text-lg font-bold text-gray-900">{{ trainer.yearsExperience }}</p>
+                        <p class="text-xs text-gray-600">Years</p>
+                      </div>
+                    }
+                    @if (trainer.totalClients) {
+                      <div class="text-center">
+                        <p class="text-lg font-bold text-gray-900">{{ trainer.totalClients }}</p>
+                        <p class="text-xs text-gray-600">Clients</p>
+                      </div>
+                    }
+                    @if (trainer.ratingAverage) {
+                      <div class="text-center">
+                        <p class="text-lg font-bold text-gray-900">{{ (trainer.ratingAverage || 0).toFixed(1) }}</p>
+                        <p class="text-xs text-gray-600">Rating</p>
+                      </div>
                     }
                   </div>
 
-                  <!-- View Profile Button -->
-                  <button
-                    (click)="viewTrainerProfile(trainer)"
-                    class="w-full bg-gradient-to-r from-sky-600 to-sky-700 hover:from-sky-700 hover:to-sky-800 text-white font-semibold py-2 px-4 rounded-lg transition">
-                    View Profile
-                  </button>
+                  <!-- Price & CTA -->
+                  <div class="flex flex-col gap-3 mt-auto">
+                    @if (trainer.startingPrice) {
+                      <div class="flex flex-col">
+                        <span class="text-xs text-gray-500">Starting at</span>
+                        <div class="flex items-baseline gap-1">
+                          <span class="text-2xl font-bold text-gray-900">\${{ trainer.startingPrice }}</span>
+                          <span class="text-sm text-gray-600">/session</span>
+                        </div>
+                      </div>
+                    }
+                    
+                    <button
+                      (click)="viewTrainerProfile(trainer); $event.stopPropagation()"
+                      class="w-full bg-sky-600 hover:bg-sky-700 text-white font-semibold py-2.5 px-4 rounded-lg transition-colors shadow-sm hover:shadow-md flex items-center justify-center gap-2 group"
+                    >
+                      <span>View Profile</span>
+                      <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                      </svg>
+                    </button>
+                  </div>
                 </div>
-              </div>
+              </article>
             }
           </div>
 
-          <!-- View All Trainers Link -->
-          <div class="text-center">
-            @if (isAuthenticated()) {
-              <button
-                [routerLink]="['/trainers']"
-                class="inline-flex items-center gap-2 text-sky-600 font-semibold hover:text-sky-700 transition">
-                View All Trainers
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
-                </svg>
-              </button>
-            } @else {
-              <button
-                (click)="scrollToTrainers()"
-                class="inline-flex items-center gap-2 text-sky-600 font-semibold hover:text-sky-700 transition">
-                View All Trainers
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
-                </svg>
-              </button>
-            }
+          <!-- View All Trainers Button -->
+          <div class="flex justify-center pt-8">
+            <button
+              [routerLink]="['/discover/trainers']"
+              class="inline-flex items-center gap-2 bg-sky-600 hover:bg-sky-700 text-white font-semibold py-3 px-8 rounded-lg transition-all shadow-md hover:shadow-lg transform hover:scale-105"
+            >
+              <span>View All Trainers</span>
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+              </svg>
+            </button>
           </div>
+
+          <style>
+            .line-clamp-2 {
+              display: -webkit-box;
+              -webkit-line-clamp: 2;
+              -webkit-box-orient: vertical;
+              overflow: hidden;
+            }
+          </style>
         }
       </div>
     </section>
@@ -284,60 +478,100 @@ import { NgOptimizedImage } from '@angular/common';
         </div>
 
         <!-- Program Categories -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
-          <!-- Strength Training -->
-          <div class="bg-white rounded-xl shadow-md hover:shadow-lg transition overflow-hidden group cursor-pointer">
-            <div class="h-48 bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center text-6xl group-hover:scale-110 transition transform">
-              🏋️
-            </div>
-            <div class="p-6">
-              <h3 class="text-xl font-bold text-gray-900 mb-2">Strength Training</h3>
-              <p class="text-gray-600 mb-4">Build muscle and increase your overall strength with our comprehensive programs</p>
-              <button
-                [routerLink]="['/programs']"
-                class="text-orange-600 font-semibold hover:text-orange-700 transition inline-flex items-center gap-2">
-                Explore <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-              </button>
-            </div>
+        @if (isLoadingPrograms()) {
+          <div class="flex justify-center items-center py-20">
+            <div class="animate-spin rounded-full h-12 w-12 border-4 border-sky-600 border-t-transparent"></div>
           </div>
+        } @else if (popularPrograms().length > 0) {
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+            @for (program of popularPrograms(); track program.id) {
+              <div 
+                (click)="viewProgram(program.id)"
+                class="bg-white rounded-xl shadow-md hover:shadow-lg transition overflow-hidden group cursor-pointer transform hover:scale-105">
+                <div class="h-48 bg-gradient-to-br from-sky-400 to-sky-600 flex items-center justify-center text-6xl group-hover:scale-110 transition">
+                  @if (program.thumbnailUrl) {
+                    <img
+                      [src]="program.thumbnailUrl"
+                      [alt]="program.title || 'Program'"
+                      class="w-full h-full object-cover"
+                    />
+                  } @else {
+                    <span>ðŸ’ª</span>
+                  }
+                </div>
+                <div class="p-6">
+                  <h3 class="text-xl font-bold text-gray-900 mb-2">{{ program.title || 'Program' }}</h3>
+                  <p class="text-gray-600 mb-4 line-clamp-2">{{ program.description || 'Fitness program designed for you' }}</p>
+                  
+                  <!-- Program Stats -->
+                  <div class="flex gap-4 mb-4 text-sm text-gray-600">
+                    @if (program.durationWeeks) {
+                      <span>â±ï¸ {{ program.durationWeeks }} weeks</span>
+                    }
+                    @if (program.type) {
+                      <span>ðŸŽ¯ {{ program.type }}</span>
+                    }
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+            <!-- Strength Training -->
+            <div class="bg-white rounded-xl shadow-md hover:shadow-lg transition overflow-hidden group cursor-pointer">
+              <div class="h-48 bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center text-6xl group-hover:scale-110 transition transform">
+                ðŸ‹ï¸
+              </div>
+              <div class="p-6">
+                <h3 class="text-xl font-bold text-gray-900 mb-2">Strength Training</h3>
+                <p class="text-gray-600 mb-4">Build muscle and increase your overall strength with our comprehensive programs</p>
+                <button
+                  [routerLink]="['/discover/programs']"
+                  class="text-orange-600 font-semibold hover:text-orange-700 transition inline-flex items-center gap-2">
+                  Explore <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                </button>
+              </div>
+            </div>
 
-          <!-- Cardio & Endurance -->
-          <div class="bg-white rounded-xl shadow-md hover:shadow-lg transition overflow-hidden group cursor-pointer">
-            <div class="h-48 bg-gradient-to-br from-blue-400 to-cyan-500 flex items-center justify-center text-6xl group-hover:scale-110 transition transform">
-              🏃
+            <!-- Cardio & Endurance -->
+            <div class="bg-white rounded-xl shadow-md hover:shadow-lg transition overflow-hidden group cursor-pointer">
+              <div class="h-48 bg-gradient-to-br from-blue-400 to-cyan-500 flex items-center justify-center text-6xl group-hover:scale-110 transition transform">
+                ðŸƒ
+              </div>
+              <div class="p-6">
+                <h3 class="text-xl font-bold text-gray-900 mb-2">Cardio & Endurance</h3>
+                <p class="text-gray-600 mb-4">Improve your cardiovascular health and stamina with dynamic cardio workouts</p>
+                <button
+                  [routerLink]="['/discover/programs']"
+                  class="text-blue-600 font-semibold hover:text-blue-700 transition inline-flex items-center gap-2">
+                  Explore <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                </button>
+              </div>
             </div>
-            <div class="p-6">
-              <h3 class="text-xl font-bold text-gray-900 mb-2">Cardio & Endurance</h3>
-              <p class="text-gray-600 mb-4">Improve your cardiovascular health and stamina with dynamic cardio workouts</p>
-              <button
-                [routerLink]="['/programs']"
-                class="text-blue-600 font-semibold hover:text-blue-700 transition inline-flex items-center gap-2">
-                Explore <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-              </button>
-            </div>
-          </div>
 
-          <!-- Flexibility & Yoga -->
-          <div class="bg-white rounded-xl shadow-md hover:shadow-lg transition overflow-hidden group cursor-pointer">
-            <div class="h-48 bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center text-6xl group-hover:scale-110 transition transform">
-              🧘
-            </div>
-            <div class="p-6">
-              <h3 class="text-xl font-bold text-gray-900 mb-2">Flexibility & Yoga</h3>
-              <p class="text-gray-600 mb-4">Enhance flexibility, balance, and mental wellness through yoga and stretching</p>
-              <button
-                [routerLink]="['/programs']"
-                class="text-purple-600 font-semibold hover:text-purple-700 transition inline-flex items-center gap-2">
-                Explore <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-              </button>
+            <!-- Flexibility & Yoga -->
+            <div class="bg-white rounded-xl shadow-md hover:shadow-lg transition overflow-hidden group cursor-pointer">
+              <div class="h-48 bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center text-6xl group-hover:scale-110 transition transform">
+                ðŸ§˜
+              </div>
+              <div class="p-6">
+                <h3 class="text-xl font-bold text-gray-900 mb-2">Flexibility & Yoga</h3>
+                <p class="text-gray-600 mb-4">Enhance flexibility, balance, and mental wellness through yoga and stretching</p>
+                <button
+                  [routerLink]="['/discover/programs']"
+                  class="text-purple-600 font-semibold hover:text-purple-700 transition inline-flex items-center gap-2">
+                  Explore <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        }
 
         <!-- CTA -->
         <div class="text-center">
           <button
-            [routerLink]="['/programs']"
+            [routerLink]="['/discover/programs']"
             class="inline-flex items-center gap-2 text-sky-600 font-semibold hover:text-sky-700 transition">
             View All Programs
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -396,13 +630,13 @@ import { NgOptimizedImage } from '@angular/common';
             Get Started
           </button>
           <button
-            [routerLink]="['/trainers']"
+            [routerLink]="['/discover/trainers']"
             class="bg-sky-500/30 border-2 border-white text-white font-bold py-3 px-10 rounded-lg hover:bg-sky-500/50 transition">
             Browse Trainers
           </button>
         </div>
       </div>
-    </section>
+    </section>
   `,
   styles: [`
     @keyframes fade-in {
@@ -422,13 +656,16 @@ import { NgOptimizedImage } from '@angular/common';
   `]
 })
 export class LandingComponent implements OnInit {
-  private trainerDiscoveryService = inject(TrainerDiscoveryService);
+  private homeClientService = inject(HomeClientService);
   private authService = inject(AuthService);
   private router = inject(Router);
 
   isAuthenticated = signal(false);
+  mobileMenuOpen = signal(false);
   featuredTrainers = signal<TrainerCard[]>([]);
   isLoadingTrainers = signal(true);
+  popularPrograms = signal<ProgramClientResponse[]>([]);
+  isLoadingPrograms = signal(true);
   Math = Math;
 
   testimonials = [
@@ -456,30 +693,29 @@ export class LandingComponent implements OnInit {
     console.log('[LandingComponent] Initializing landing page');
     this.isAuthenticated.set(this.authService.isAuthenticated());
     console.log('[LandingComponent] User authenticated:', this.isAuthenticated());
-    // Always load trainers, regardless of authentication status
+    // Always load trainers and programs, regardless of authentication status
     this.loadFeaturedTrainers();
+    this.loadPopularPrograms();
   }
 
   loadFeaturedTrainers() {
     this.isLoadingTrainers.set(true);
-    this.trainerDiscoveryService.searchTrainers({ 
-      pageSize: 6,
-      isVerified: true,
-      sortBy: 'rating'
-    })
+    this.homeClientService.getAllTrainers()
       .subscribe({
         next: (response) => {
-          // Take top 6 trainers
-          const trainers = response.items || [];
-          this.featuredTrainers.set(trainers.slice(0, 6));
+          // Cast trainers to TrainerProfile and get top 6
+          const trainers = (response || []) as unknown as TrainerCard[];
+          if (trainers.length > 0) {
+            this.featuredTrainers.set(trainers.slice(0, 6));
+          } else {
+            this.loadDemoTrainers();
+          }
           this.isLoadingTrainers.set(false);
         },
         error: (error) => {
-          console.log('Trainers not available at the moment. If unauthenticated, please sign in to see trainers.');
-          // For unauthenticated users or when API fails, show demo trainers
-          if (!this.isAuthenticated()) {
-            this.loadDemoTrainers();
-          }
+          console.log('[LandingComponent] Error loading trainers:', error);
+          // Show demo trainers on any error (API not available, 403, etc.)
+          this.loadDemoTrainers();
           this.isLoadingTrainers.set(false);
         }
       });
@@ -489,113 +725,131 @@ export class LandingComponent implements OnInit {
     // Demo trainers for unauthenticated users
     const demoTrainers: TrainerCard[] = [
       {
-        id: '1',
-        fullName: 'Alex Johnson',
+        id: 1,
+        userId: '1',
+        userName: 'Alex Johnson',
         handle: 'alexjohnson',
-        profilePhotoUrl: 'https://images.unsplash.com/photo-1567721913486-5f3c4dd8357f?w=400&h=400&fit=crop',
-        coverImageUrl: null,
+        coverImageUrl: 'https://images.unsplash.com/photo-1567721913486-5f3c4dd8357f?w=400&h=400&fit=crop',
         bio: 'Certified fitness coach with 8 years of experience in strength training',
         isVerified: true,
         ratingAverage: 4.8,
-        totalReviews: 142,
         totalClients: 95,
         yearsExperience: 8,
-        specializations: ['Strength Training', 'Weight Loss'],
+        totalReviews: 45,
         startingPrice: 50,
-        currency: 'USD',
-        hasActiveSubscription: false
+        hasActiveSubscription: true
       },
       {
-        id: '2',
-        fullName: 'Maria Garcia',
+        id: 2,
+        userId: '2',
+        userName: 'Maria Garcia',
         handle: 'mariagarcia',
-        profilePhotoUrl: 'https://images.unsplash.com/photo-1535083783855-76ae62b2914e?w=400&h=400&fit=crop',
-        coverImageUrl: null,
+        coverImageUrl: 'https://images.unsplash.com/photo-1535083783855-76ae62b2914e?w=400&h=400&fit=crop',
         bio: 'Yoga and flexibility specialist helping clients achieve balance and wellness',
         isVerified: true,
         ratingAverage: 4.9,
-        totalReviews: 187,
         totalClients: 120,
         yearsExperience: 10,
-        specializations: ['Yoga', 'Flexibility'],
+        totalReviews: 67,
         startingPrice: 45,
-        currency: 'USD',
-        hasActiveSubscription: false
+        hasActiveSubscription: true
       },
       {
-        id: '3',
-        fullName: 'David Chen',
+        id: 3,
+        userId: '3',
+        userName: 'David Chen',
         handle: 'davidchen',
-        profilePhotoUrl: 'https://images.unsplash.com/photo-1574156519202-18a6cacfe814?w=400&h=400&fit=crop',
-        coverImageUrl: null,
+        coverImageUrl: 'https://images.unsplash.com/photo-1574156519202-18a6cacfe814?w=400&h=400&fit=crop',
         bio: 'Marathon coach and cardio expert with proven track record',
         isVerified: true,
         ratingAverage: 4.7,
-        totalReviews: 156,
         totalClients: 110,
         yearsExperience: 9,
-        specializations: ['Cardio', 'Endurance'],
+        totalReviews: 52,
         startingPrice: 55,
-        currency: 'USD',
-        hasActiveSubscription: false
+        hasActiveSubscription: true
       },
       {
-        id: '4',
-        fullName: 'Sarah Williams',
+        id: 4,
+        userId: '4',
+        userName: 'Sarah Williams',
         handle: 'sarahwilliams',
-        profilePhotoUrl: 'https://images.unsplash.com/photo-1517836357463-d25ddfcb3ef7?w=400&h=400&fit=crop',
-        coverImageUrl: null,
+        coverImageUrl: 'https://images.unsplash.com/photo-1517836357463-d25ddfcb3ef7?w=400&h=400&fit=crop',
         bio: 'Personal trainer specializing in functional fitness and HIIT training',
         isVerified: true,
         ratingAverage: 4.8,
-        totalReviews: 128,
         totalClients: 85,
         yearsExperience: 7,
-        specializations: ['HIIT', 'Functional Fitness'],
+        totalReviews: 41,
         startingPrice: 60,
-        currency: 'USD',
-        hasActiveSubscription: false
+        hasActiveSubscription: true
       },
       {
-        id: '5',
-        fullName: 'James Wilson',
+        id: 5,
+        userId: '5',
+        userName: 'James Wilson',
         handle: 'jameswilson',
-        profilePhotoUrl: 'https://images.unsplash.com/photo-1570829034853-aae4b8ff8f13?w=400&h=400&fit=crop',
-        coverImageUrl: null,
+        coverImageUrl: 'https://images.unsplash.com/photo-1570829034853-aae4b8ff8f13?w=400&h=400&fit=crop',
         bio: 'Nutritionist and fitness coach combining diet and exercise for optimal results',
         isVerified: true,
         ratingAverage: 4.9,
-        totalReviews: 203,
         totalClients: 150,
         yearsExperience: 12,
-        specializations: ['Nutrition', 'Weight Management'],
+        totalReviews: 78,
         startingPrice: 65,
-        currency: 'USD',
-        hasActiveSubscription: false
+        hasActiveSubscription: true
       },
       {
-        id: '6',
-        fullName: 'Emma Thompson',
+        id: 6,
+        userId: '6',
+        userName: 'Emma Thompson',
         handle: 'emmathompson',
-        profilePhotoUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&h=400&fit=crop',
-        coverImageUrl: null,
+        coverImageUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&h=400&fit=crop',
         bio: 'Pilates and core strength specialist for all fitness levels',
-        isVerified: true,
+        isVerified: false,
         ratingAverage: 4.6,
-        totalReviews: 119,
         totalClients: 92,
         yearsExperience: 6,
-        specializations: ['Pilates', 'Core Strength'],
-        startingPrice: 50,
-        currency: 'USD',
-        hasActiveSubscription: false
+        totalReviews: 39,
+        startingPrice: 48,
+        hasActiveSubscription: true
       }
     ];
     this.featuredTrainers.set(demoTrainers);
   }
 
+  loadPopularPrograms() {
+    this.isLoadingPrograms.set(true);
+    this.homeClientService.getAllPrograms().subscribe({
+      next: (programs) => {
+        if (programs && programs.length > 0) {
+          // Take top 6 programs and sort by title for consistency
+          const sortedPrograms = programs
+            .sort((a, b) => (a.title || '').localeCompare(b.title || ''))
+            .slice(0, 6);
+          this.popularPrograms.set(sortedPrograms);
+        } else {
+          // No programs returned, show empty state
+          this.popularPrograms.set([]);
+        }
+        this.isLoadingPrograms.set(false);
+      },
+      error: (error) => {
+        console.log('[LandingComponent] Error loading programs:', error);
+        // On any error (API not available, 403, etc.), show empty state
+        // This will trigger the category fallback cards
+        this.popularPrograms.set([]);
+        this.isLoadingPrograms.set(false);
+      }
+    });
+  }
+
+  viewProgram(programId: number) {
+    this.router.navigate(['/discover/programs', programId]);
+  }
+
   viewTrainerProfile(trainer: TrainerCard) {
-    this.router.navigate(['/trainers', trainer.id], { 
+    this.router.navigate(['/discover/trainers', trainer.userId], { 
       state: { trainer } 
     });
   }
@@ -607,4 +861,36 @@ export class LandingComponent implements OnInit {
       element.scrollIntoView({ behavior: 'smooth' });
     }
   }
+
+  scrollToTop() {
+    // Scroll to top of page
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  getTrainerPhotoUrl(trainer: TrainerCard): string {
+    return trainer.coverImageUrl || '';
+  }
+
+  getVisibleStatsCount(trainer: TrainerCard): number {
+    let count = 0;
+    if (trainer.yearsExperience) count++;
+    if (trainer.totalClients) count++;
+    if (trainer.ratingAverage) count++;
+    return Math.max(count, 1); // At least 1 to avoid grid errors
+  }
+
+  toggleMobileMenu(): void {
+    this.mobileMenuOpen.update(value => !value);
+  }
+
+  closeMobileMenu(): void {
+    this.mobileMenuOpen.set(false);
+  }
+
+  logout(): void {
+    this.authService.logout();
+    this.closeMobileMenu();
+    this.router.navigate(['/auth/login']);
+  }
 }
+

@@ -1,6 +1,7 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 interface NavItem {
   label: string;
@@ -9,6 +10,7 @@ interface NavItem {
   badge?: number;
   isNew?: boolean;
   color?: string;
+  safeIcon?: SafeHtml;
 }
 
 @Component({
@@ -46,7 +48,7 @@ interface NavItem {
           class="group flex items-center justify-between px-4 py-4 rounded-xl hover:bg-gradient-to-r hover:from-sky-50 hover:to-indigo-50 transition-all duration-200 text-gray-700 font-semibold cursor-pointer relative overflow-hidden"
         >
           <span class="flex items-center gap-3 relative z-10">
-            <span [innerHTML]="item.icon" 
+            <span [innerHTML]="getSafeIcon(item.icon)" 
                   class="w-6 h-6 group-hover:scale-110 group-hover:rotate-3 transition-all duration-200"
                   [class]="getIconColorClass(item)"></span>
             <span class="group-hover:translate-x-1 transition-transform duration-200">{{ item.label }}</span>
@@ -88,7 +90,7 @@ interface NavItem {
           [routerLinkActiveOptions]="{exact: false}"
           class="group flex items-center gap-3 px-4 py-4 rounded-xl hover:bg-white/80 transition-all duration-200 text-gray-700 font-semibold cursor-pointer relative overflow-hidden"
         >
-          <span [innerHTML]="item.icon" 
+          <span [innerHTML]="getSafeIcon(item.icon)" 
                 class="w-6 h-6 relative z-10 group-hover:scale-110 group-hover:rotate-3 transition-all duration-200"></span>
           <span class="relative z-10 group-hover:translate-x-1 transition-transform duration-200">{{ item.label }}</span>
         </a>
@@ -138,6 +140,8 @@ interface NavItem {
   `]
 })
 export class SidebarComponent {
+  private sanitizer = inject(DomSanitizer);
+
   mainNavItems: NavItem[] = [
     {
       label: 'Home',
@@ -152,26 +156,19 @@ export class SidebarComponent {
       color: 'sky'
     },
     {
-      label: 'Body State',
+      label: 'My Body-State Logs',
       icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>',
       route: '/body-state',
       color: 'purple'
     },
     {
-      label: 'Workout Logs',
+      label: 'My Workout Logs',
       icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>',
       route: '/workout-logs',
       color: 'green'
     },
     {
-      label: 'Programs',
-      icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>',
-      route: '/programs',
-      color: 'indigo',
-      isNew: true
-    },
-    {
-      label: 'Packages',
+      label: 'Discover Packages',
       icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>',
       route: '/packages'
     },
@@ -181,21 +178,16 @@ export class SidebarComponent {
       route: '/subscriptions'
     },
     {
-      label: 'Programs',
-      icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>',
-      route: '/programs'
-    },
-    {
-      label: 'Memberships',
-      icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>',
-      route: '/memberships',
-      color: 'blue'
-    },
-    {
       label: 'Trainers',
       icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>',
       route: '/trainers',
       color: 'orange'
+    },
+    {
+      label: 'Discover Programs',
+      icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>',
+      route: '/discover-programs',
+      color: 'cyan'
     }
   ];
 
@@ -210,5 +202,9 @@ export class SidebarComponent {
   getIconColorClass(item: NavItem): string {
     // Return empty for active state (will be white)
     return '';
+  }
+
+  getSafeIcon(iconHtml: string): SafeHtml {
+    return this.sanitizer.bypassSecurityTrustHtml(iconHtml);
   }
 }

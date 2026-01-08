@@ -2,6 +2,7 @@ import { Component, OnInit, inject, signal, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ProgramService, Program, ProgramWeek, ProgramDay } from '../../services/program.service';
+import { HomeClientService } from '../../../trainers/services/home-client.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
@@ -135,6 +136,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 })
 export class ProgramDetailComponent implements OnInit {
   private programService = inject(ProgramService);
+  private homeClientService = inject(HomeClientService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private destroyRef = inject(DestroyRef);
@@ -162,26 +164,41 @@ export class ProgramDetailComponent implements OnInit {
 
   private loadProgram(programId: number) {
     this.isLoading.set(true);
-    this.programService.getProgramById(programId)
+    
+    // Check if accessing via discover route (guest) or authenticated route
+    const useGuestService = this.router.url.includes('/discover/');
+
+    // Use HomeClientService for guest routes, ProgramService for authenticated routes
+    const programObservable = useGuestService
+      ? (this.homeClientService.getProgramById(programId) as any)
+      : (this.programService.getProgramById(programId) as any);
+
+    programObservable
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: (prog: Program) => {
+        next: (prog: any) => {
           console.log('Program loaded:', prog);
-          this.program.set(prog);
+          this.program.set(prog as Program);
 
-          // Load weeks from backend (backend is source of truth)
-          this.programService.getProgramWeeks(prog.id)
-            .pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe({
-              next: (weeks) => {
-                console.log('Program weeks loaded from backend:', weeks);
-                this.weeks.set(weeks);
-              },
-              error: (err) => {
-                console.error('Error loading program weeks:', err);
-                this.weeks.set([]);
-              }
-            });
+          // Use weeks from program data if available
+          if (prog.weeks && prog.weeks.length > 0) {
+            console.log('Program weeks loaded from program data:', prog.weeks);
+            this.weeks.set(prog.weeks);
+          } else if (!useGuestService) {
+            // Only load weeks via API if authenticated and not from program data
+            this.programService.getProgramWeeks(prog.id)
+              .pipe(takeUntilDestroyed(this.destroyRef))
+              .subscribe({
+                next: (weeks) => {
+                  console.log('Program weeks loaded from backend:', weeks);
+                  this.weeks.set(weeks);
+                },
+                error: (err) => {
+                  console.error('Error loading program weeks:', err);
+                  this.weeks.set([]);
+                }
+              });
+          }
 
           this.isLoading.set(false);
         },

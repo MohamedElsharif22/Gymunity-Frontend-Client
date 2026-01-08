@@ -4,7 +4,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { SubscriptionService, SubscribePackageRequest, SubscriptionResponse } from '../../services/subscription.service';
 import { PackageDetails } from '../../../../core/models';
-import { HomeClientService } from '../../../trainers/services/home-client.service';
+import { HomeClientService, PackageClientResponse } from '../../../trainers/services/home-client.service';
 
 @Component({
   selector: 'app-package-subscribe',
@@ -202,7 +202,7 @@ export class PackageSubscribeComponent implements OnInit {
   private homeClientService = inject(HomeClientService);
 
   packageId!: number;
-  packageData = signal<PackageDetails | null>(null);
+  packageData = signal<PackageClientResponse | null>(null);
   isLoading = signal(false);
   isSubscribing = signal(false);
   error = signal(false);
@@ -222,7 +222,7 @@ export class PackageSubscribeComponent implements OnInit {
     this.isLoading.set(true);
     this.homeClientService.getPackageById(this.packageId)
     .subscribe({
-      next: (pkg: PackageDetails) => {
+      next: (pkg: PackageClientResponse) => {
         this.packageData.set(pkg);
         this.isLoading.set(false);
       },

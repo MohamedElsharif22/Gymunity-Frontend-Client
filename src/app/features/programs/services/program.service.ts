@@ -66,11 +66,19 @@ export interface Program {
 })
 export class ProgramService {
   private readonly apiService = inject(ApiService);
+
   /**
-   * Get all available programs
+   * Get all programs for current user (client's programs)
    */
   getPrograms(): Observable<Program[]> {
-    return this.apiService.get<Program[]>('/api/client/ClientPrograms');
+    return this.apiService.get<Program[]>(`/api/client/ClientPrograms`);
+  }
+
+  /**
+   * Get active programs for current user
+   */
+  getActivePrograms(): Observable<Program[]> {
+    return this.apiService.get<Program[]>(`/api/client/ClientPrograms/active`);
   }
 
   /**

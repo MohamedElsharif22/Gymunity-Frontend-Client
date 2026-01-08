@@ -3,7 +3,7 @@ import { Observable, forkJoin, of, merge, Subject } from 'rxjs';
 import { map, catchError, retry, shareReplay, switchMap, startWith, tap } from 'rxjs/operators';
 import { ClientProfileService } from '../../../core/services/client-profile.service';
 import { ClientLogsService } from '../../../core/services/client-logs.service';
-import { ClientProgramsService } from '../../programs/services/client-programs.service';
+import { ProgramService, Program } from '../../programs/services/program.service';
 import { SubscriptionService } from '../../memberships/services/subscription.service';
 import { WorkoutHistoryService } from '../../workout/services/workout-history.service';
 import {
@@ -17,7 +17,7 @@ export interface DashboardData {
   dashboard: ClientProfileDashboardResponse;
   lastBodyLog: BodyStateLogResponse | null;
   recentWorkouts: WorkoutLogResponse[];
-  activePrograms: ProgramResponse[];
+  activePrograms: Program[];
   isOnboardingComplete: boolean;
 }
 
@@ -32,7 +32,7 @@ export interface DashboardData {
 export class DashboardService {
   private readonly clientProfileService = inject(ClientProfileService);
   private readonly clientLogsService = inject(ClientLogsService);
-  private readonly clientProgramsService = inject(ClientProgramsService);
+  private readonly programsService = inject(ProgramService);
   private readonly subscriptionService = inject(SubscriptionService);
   private readonly workoutHistoryService = inject(WorkoutHistoryService);
 
@@ -98,7 +98,11 @@ export class DashboardService {
           return of([]);
         })
       ),
-      activePrograms: this.clientProgramsService.getActivePrograms().pipe(
+      activePrograms: this.programsService.getActivePrograms().pipe(
+        catchError((err: any) => {
+          console.warn('[DashboardService] Error loading active programs, falling back:', err);
+          return this.programsService.getPrograms();
+        }),
         map(programs => programs.slice(0, 6)),
         catchError(err => {
           console.warn('[DashboardService] Error loading programs:', err);
@@ -213,7 +217,8 @@ export class DashboardService {
         map(workouts => workouts.slice(0, 5)),
         catchError(() => of([]))
       ),
-      activePrograms: this.clientProgramsService.getActivePrograms().pipe(
+      activePrograms: this.programsService.getActivePrograms().pipe(
+        catchError(() => this.programsService.getPrograms()),
         map(programs => programs.slice(0, 6)),
         catchError(() => of([]))
       ),

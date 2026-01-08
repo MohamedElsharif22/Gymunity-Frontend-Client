@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { authGuard, noAuthGuard } from './core/guards/auth.guard';
 import { profileCompletionGuard } from './core/guards/profile-completion.guard';
 import { LayoutComponent } from './shared/components/layout/layout.component';
+import { GuestLayoutComponent } from './shared/components/layout/guest-layout.component';
 
 export const routes: Routes = [
   // Landing page - accessible to everyone (NO GUARDS)
@@ -34,6 +35,37 @@ export const routes: Routes = [
       }
     ]
   },
+  // Guest-accessible discovery routes (NO AUTHENTICATION REQUIRED)
+  {
+    path: 'discover',
+    component: GuestLayoutComponent,
+    children: [
+      {
+        path: 'trainers',
+        loadComponent: () => import('./features/trainers/components/trainers.component').then(m => m.TrainersComponent)
+      },
+      {
+        path: 'trainers/:id',
+        loadComponent: () => import('./features/trainers/components/trainer-detail/trainer-detail.component').then(m => m.TrainerDetailComponent)
+      },
+      {
+        path: 'trainers/:id/packages',
+        loadComponent: () => import('./features/trainers/components/trainer-packages/trainer-packages.component').then(m => m.TrainerPackagesComponent)
+      },
+      {
+        path: 'trainers/:id/programs',
+        loadComponent: () => import('./features/trainers/components/trainer-programs/trainer-programs.component').then(m => m.TrainerProgramsComponent)
+      },
+      {
+        path: 'programs',
+        loadComponent: () => import('./features/programs/components/discover-programs/discover-programs.component').then(m => m.DiscoverProgramsComponent)
+      },
+      {
+        path: 'programs/:id',
+        loadComponent: () => import('./features/programs/components/program-detail/program-detail.component').then(m => m.ProgramDetailComponent)
+      }
+    ]
+  },
   // Protected routes requiring authentication
   {
     path: '',
@@ -56,27 +88,27 @@ export const routes: Routes = [
       },
       {
         path: 'trainers',
-        canActivate: [profileCompletionGuard],
         loadComponent: () => import('./features/trainers/components/trainers.component').then(m => m.TrainersComponent)
       },
       {
         path: 'trainers/:id',
-        canActivate: [profileCompletionGuard],
         loadComponent: () => import('./features/trainers/components/trainer-detail/trainer-detail.component').then(m => m.TrainerDetailComponent)
       },
       {
-        path: 'programs',
+        path: 'discover-programs',
+        loadComponent: () => import('./features/programs/components/discover-programs/discover-programs.component').then(m => m.DiscoverProgramsComponent)
+      },
+      {
+        path: 'my-active-programs',
         canActivate: [profileCompletionGuard],
-        loadComponent: () => import('./features/programs/components/programs.component').then(m => m.ProgramsComponent)
+        loadComponent: () => import('./features/programs/components/my-active-programs/my-active-programs.component').then(m => m.MyActiveProgramsComponent)
       },
       {
         path: 'programs/:id',
-        canActivate: [profileCompletionGuard],
         loadComponent: () => import('./features/programs/components/program-detail/program-detail.component').then(m => m.ProgramDetailComponent)
       },
       {
         path: 'programs/:programId/days/:dayId',
-        canActivate: [profileCompletionGuard],
         loadComponent: () => import('./features/programs/components/program-day-detail/program-day-detail.component').then(m => m.ProgramDayDetailComponent)
       },
       {
@@ -170,10 +202,6 @@ export const routes: Routes = [
         path: 'programs',
         canActivate: [authGuard],
         children: [
-          {
-            path: '',
-            loadComponent: () => import('./features/programs/components/programs-list/programs-list.component').then(m => m.ProgramsListComponent)
-          },
           {
             path: ':programId',
             loadComponent: () => import('./features/programs/components/program-details/program-details.component').then(m => m.ProgramDetailsComponent)

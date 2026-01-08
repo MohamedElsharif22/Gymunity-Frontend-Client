@@ -4,24 +4,23 @@
  */
 
 /**
- * TrainerCard - Represents a trainer in the trainer discovery list
+ * TrainerCard/TrainerClientResponse - Represents a trainer in the trainer discovery list
  * Contains all essential information for displaying trainer cards and applying filters
+ * Maps to API response: GET /api/client/homeclient/trainers
  */
 export interface TrainerCard {
-  id: string;
-  fullName: string;
+  id: number;
+  userId: string;
+  userName: string;
   handle: string;
-  profilePhotoUrl: string | null;
-  coverImageUrl: string | null;
-  bio: string | null;
+  bio: string;
   isVerified: boolean;
+  coverImageUrl?: string | null;
   ratingAverage: number;
-  totalReviews: number;
   totalClients: number;
   yearsExperience: number;
-  specializations: string[];
-  startingPrice: number;
-  currency: string;
+  totalReviews: number;
+  startingPrice?: number | null;
   hasActiveSubscription: boolean;
 }
 

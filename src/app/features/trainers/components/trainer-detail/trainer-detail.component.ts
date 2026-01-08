@@ -4,15 +4,18 @@ import {
   OnDestroy,
   inject,
   signal,
-  ChangeDetectionStrategy
+  ChangeDetectionStrategy,
+  DestroyRef
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule, Router } from '@angular/router';
 import { Location } from '@angular/common';
 import { TrainerProfileService } from '../../services/trainer-profile.service';
+import { HomeClientService } from '../../services/home-client.service';
 import { TrainerCard } from '../../../../core/models';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 /**
  * Trainer Detail Component
@@ -22,12 +25,11 @@ import { takeUntil } from 'rxjs/operators';
  * Data source: TrainerProfileService.getTrainerProfile(trainerId)
  *
  * Features:
- * - Full trainer profile with cover image and photo
- * - Trainer stats (experience, ratings, clients, specializations)
- * - Video introduction (if available)
- * - Verification badge and suspension status
+ * - Full trainer profile with cover image
+ * - Trainer stats (experience, ratings, clients)
+ * - Verification badge
  * - Contact/booking buttons
- * - Package offerings (if available)
+ * - Pricing information
  */
 @Component({
   selector: 'app-trainer-detail',
@@ -88,27 +90,19 @@ import { takeUntil } from 'rxjs/operators';
             <div class="bg-white rounded-lg shadow-lg p-6 md:p-8 -mt-16 relative z-10">
               <!-- Profile Info Row -->
               <div class="flex flex-col md:flex-row items-start md:items-center gap-6">
-                <!-- Profile Photo -->
+                <!-- Avatar -->
                 <div class="flex-shrink-0">
-                  @if (trainer()!.profilePhotoUrl) {
-                    <img
-                      [src]="trainer()!.profilePhotoUrl"
-                      [alt]="trainer()!.handle"
-                      class="w-32 h-32 rounded-full object-cover border-4 border-white shadow-lg"
-                    />
-                  } @else {
-                    <div
-                      class="w-32 h-32 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-bold text-4xl border-4 border-white shadow-lg"
-                    >
-                      {{ trainer()!.fullName.charAt(0).toUpperCase() }}
-                    </div>
-                  }
+                  <div
+                    class="w-32 h-32 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-bold text-4xl border-4 border-white shadow-lg"
+                  >
+                    {{ trainer()!.userName.charAt(0).toUpperCase() }}
+                  </div>
                 </div>
 
                 <!-- Name and Basic Info -->
                 <div class="flex-1">
                   <div class="flex items-center gap-3 mb-2">
-                    <h1 class="text-3xl font-bold text-gray-900">{{ trainer()!.fullName }}</h1>
+                    <h1 class="text-3xl font-bold text-gray-900">{{ trainer()!.userName }}</h1>
                     @if (trainer()!.isVerified) {
                       <div class="flex items-center gap-1 bg-blue-100 text-blue-800 px-3 py-1 rounded-full">
                         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -130,27 +124,36 @@ import { takeUntil } from 'rxjs/operators';
 
                   <!-- Quick Stats -->
                   <div class="flex flex-wrap gap-6 pt-4 border-t border-gray-200">
-                    <div>
-                      <p class="text-2xl font-bold text-gray-900">{{ trainer()!.yearsExperience }}</p>
-                      <p class="text-sm text-gray-600">Years Experience</p>
-                    </div>
-                    <div>
-                      <div class="flex items-center gap-1">
-                        <span class="text-2xl font-bold text-gray-900">
-                          {{ trainer()!.ratingAverage.toFixed(1) }}
-                        </span>
-                        <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                          <path
-                            d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.381-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"
-                          />
-                        </svg>
+                    @if (trainer()!.yearsExperience) {
+                      <div>
+                        <p class="text-2xl font-bold text-gray-900">{{ trainer()!.yearsExperience }}</p>
+                        <p class="text-sm text-gray-600">Years Experience</p>
                       </div>
-                      <p class="text-sm text-gray-600">Rating</p>
-                    </div>
-                    <div>
-                      <p class="text-2xl font-bold text-gray-900">{{ trainer()!.totalClients }}</p>
-                      <p class="text-sm text-gray-600">Total Clients</p>
-                    </div>
+                    }
+                    @if (trainer()!.ratingAverage) {
+                      <div>
+                        <div class="flex items-center gap-1">
+                          <span class="text-2xl font-bold text-gray-900">
+                            {{ (trainer()!.ratingAverage || 0).toFixed(1) }}
+                          </span>
+                          <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path
+                              d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.381-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"
+                            />
+                          </svg>
+                        </div>
+                        <p class="text-sm text-gray-600">Rating</p>
+                        @if (trainer()!.totalReviews) {
+                          <p class="text-xs text-gray-500">({{ trainer()!.totalReviews }} reviews)</p>
+                        }
+                      </div>
+                    }
+                    @if (trainer()!.totalClients) {
+                      <div>
+                        <p class="text-2xl font-bold text-gray-900">{{ trainer()!.totalClients }}</p>
+                        <p class="text-sm text-gray-600">Total Clients</p>
+                      </div>
+                    }
                   </div>
                 </div>
               </div>
@@ -170,29 +173,16 @@ import { takeUntil } from 'rxjs/operators';
               </button>
             </div>
 
-            <!-- Specializations Section -->
-            @if (trainer()!.specializations.length > 0) {
-              <div class="bg-white rounded-lg shadow p-6">
-                <h2 class="text-xl font-bold text-gray-900 mb-4">Specializations</h2>
-                <div class="flex flex-wrap gap-2">
-                  @for (spec of trainer()!.specializations; track spec) {
-                    <span class="bg-blue-100 text-blue-800 px-4 py-2 rounded-full font-medium">
-                      {{ spec }}
-                    </span>
-                  }
-                </div>
-              </div>
-            }
-
             <!-- Pricing Information -->
             @if (trainer()!.startingPrice) {
               <div class="bg-white rounded-lg shadow p-6">
                 <h2 class="text-xl font-bold text-gray-900 mb-4">Pricing</h2>
                 <div class="flex items-baseline gap-2">
+                  <span class="text-4xl font-bold text-gray-900">$</span>
                   <span class="text-4xl font-bold text-gray-900">
                     {{ trainer()!.startingPrice }}
                   </span>
-                  <span class="text-gray-600">{{ trainer()!.currency }} / session</span>
+                  <span class="text-gray-600">/ session</span>
                 </div>
                 <p class="text-sm text-gray-600 mt-2">Starting price for sessions</p>
               </div>
@@ -206,15 +196,89 @@ import { takeUntil } from 'rxjs/operators';
               </div>
             }
 
-            <!-- Specializations Section -->
-            @if (trainer()!.specializations.length > 0) {
+            <!-- Packages Section -->
+            <!-- Packages Section - Always show with View All button -->
+            <div class="bg-white rounded-lg shadow p-6">
+              <div class="flex items-center justify-between mb-6">
+                <h2 class="text-xl font-bold text-gray-900">Packages</h2>
+                <button
+                  (click)="viewAllPackages(); $event.preventDefault(); $event.stopPropagation()"
+                  type="button"
+                  class="inline-flex items-center gap-2 px-4 py-2 bg-sky-50 hover:bg-sky-100 text-sky-600 hover:text-sky-700 font-semibold rounded-lg transition-colors border border-sky-200">
+                  View All
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                  </svg>
+                </button>
+              </div>
+
+              @if (loadingPackages()) {
+                <div class="flex justify-center py-8">
+                  <div class="text-gray-600">Loading packages...</div>
+                </div>
+              } @else if (packages().length === 0) {
+                <div class="text-center py-8 text-gray-500">
+                  <p>No packages available for this trainer.</p>
+                </div>
+              } @else {
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  @for (pkg of packages(); track pkg.id) {
+                    <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
+                      <h3 class="text-lg font-semibold text-gray-900 mb-2">{{ pkg.name }}</h3>
+                      @if (pkg.description) {
+                        <p class="text-sm text-gray-600 mb-4 line-clamp-2">{{ pkg.description }}</p>
+                      }
+                      <div class="space-y-2 mb-4 text-sm text-gray-700">
+                        <p><span class="font-medium">Monthly:</span> \${{ pkg.priceMonthly }}</p>
+                        <p><span class="font-medium">Yearly:</span> \${{ pkg.priceYearly }}</p>
+                      </div>
+                      <button
+                        (click)="viewPackage(pkg.id)"
+                        class="w-full bg-sky-500 hover:bg-sky-600 text-white font-medium py-2 px-4 rounded transition-colors">
+                        View Details
+                      </button>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+
+            <!-- Programs Section -->
+            @if (!loadingPrograms() && trainerPrograms().length > 0) {
               <div class="bg-white rounded-lg shadow p-6">
-                <h2 class="text-xl font-bold text-gray-900 mb-4">Specializations</h2>
-                <div class="flex flex-wrap gap-2">
-                  @for (spec of trainer()!.specializations; track spec) {
-                    <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
-                      {{ spec }}
-                    </span>
+                <div class="flex items-center justify-between mb-6">
+                  <h2 class="text-xl font-bold text-gray-900">Programs</h2>
+                  <button
+                    (click)="viewAllPrograms(); $event.preventDefault(); $event.stopPropagation()"
+                    type="button"
+                    class="inline-flex items-center gap-2 px-4 py-2 bg-sky-50 hover:bg-sky-100 text-sky-600 hover:text-sky-700 font-semibold rounded-lg transition-colors border border-sky-200">
+                    View All
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                    </svg>
+                  </button>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  @for (program of trainerPrograms(); track program.id) {
+                    <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
+                      <!-- Program Header -->
+                      <h3 class="text-lg font-semibold text-gray-900 mb-2">{{ program.title }}</h3>
+                      @if (program.description) {
+                        <p class="text-sm text-gray-600 mb-4 line-clamp-2">{{ program.description }}</p>
+                      }
+                      
+                      <!-- Program Stats -->
+                      <div class="grid grid-cols-2 gap-2 mb-4 text-sm">
+                        <div class="bg-gray-50 p-2 rounded">
+                          <p class="text-gray-700"><span class="font-medium">{{ program.durationWeeks }}</span> weeks</p>
+                        </div>
+                        <div class="bg-gray-50 p-2 rounded">
+                          <p class="text-gray-700 capitalize"><span class="font-medium">{{ program.type }}</span></p>
+                        </div>
+                      </div>
+
+
+                    </div>
                   }
                 </div>
               </div>
@@ -228,13 +292,19 @@ import { takeUntil } from 'rxjs/operators';
 })
 export class TrainerDetailComponent implements OnInit, OnDestroy {
   private readonly trainerProfileService = inject(TrainerProfileService);
+  private readonly homeClientService = inject(HomeClientService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly location = inject(Location);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly destroy$ = new Subject<void>();
 
   trainer = signal<TrainerCard | null>(null);
+  packages = signal<any[]>([]);
+  trainerPrograms = signal<any[]>([]);
   isLoading = signal(false);
+  loadingPackages = signal(false);
+  loadingPrograms = signal(false);
   error = signal<string | null>(null);
 
   ngOnInit(): void {
@@ -243,15 +313,18 @@ export class TrainerDetailComponent implements OnInit, OnDestroy {
     if (state?.trainer) {
       this.trainer.set(state.trainer);
       console.log('[TrainerDetailComponent] Trainer loaded from navigation state:', state.trainer);
+      this.loadTrainerPackages(state.trainer.id);
+      this.loadTrainerPrograms(state.trainer.id);
       return;
     }
 
     // Fall back to loading from API if not in state
-    const trainerHandle = this.route.snapshot.paramMap.get('id');
-    if (trainerHandle) {
-      this.loadTrainerProfile(trainerHandle);
+    const trainerId = this.route.snapshot.paramMap.get('id');
+    if (trainerId) {
+      console.log('[TrainerDetailComponent] Trainer not in navigation state, attempting to load from API with ID:', trainerId);
+      this.loadTrainerProfile(trainerId);
     } else {
-      this.error.set('No trainer handle provided');
+      this.error.set('No trainer information provided. Please navigate from the trainers list.');
     }
   }
 
@@ -273,24 +346,108 @@ export class TrainerDetailComponent implements OnInit, OnDestroy {
           this.trainer.set(profile);
           this.isLoading.set(false);
           console.log('[TrainerDetailComponent] Trainer profile loaded:', profile);
+          
+          // Load trainer's packages and programs
+          this.loadTrainerPackages(profile.id);
+          this.loadTrainerPrograms(profile.id);
         },
         error: (err: any) => {
           this.isLoading.set(false);
-          const errorMessage =
-            err?.error?.message ||
-            err?.error?.errors?.[0] ||
-            'Failed to load trainer profile. The detail endpoint may not be available.';
-          this.error.set(errorMessage);
           console.error('[TrainerDetailComponent] Error loading trainer profile:', err);
           console.log('[TrainerDetailComponent] Error details - URL:', err?.url);
           console.log('[TrainerDetailComponent] Error details - Status:', err?.status);
           console.log('[TrainerDetailComponent] Error details - Message:', err?.error?.message);
+          
+          // If API fails (404, 403, etc.), show user-friendly error message
+          let errorMessage = 'Failed to load trainer profile.';
+          if (err?.status === 404) {
+            errorMessage = 'Trainer profile not found. Please go back and try again.';
+          } else if (err?.status === 403) {
+            errorMessage = 'You do not have permission to view this trainer profile.';
+          } else if (err?.status === 0) {
+            errorMessage = 'Unable to connect to the server. Please check your internet connection.';
+          }
+          
+          this.error.set(errorMessage);
         }
       });
   }
 
+  loadTrainerPackages(trainerId: number): void {
+    this.loadingPackages.set(true);
+    this.homeClientService
+      .getPackagesByTrainer(trainerId.toString())
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (packages: any[]) => {
+          this.packages.set(packages);
+          this.loadingPackages.set(false);
+          console.log('[TrainerDetailComponent] Trainer packages loaded:', packages);
+        },
+        error: (err: any) => {
+          this.loadingPackages.set(false);
+          console.error('[TrainerDetailComponent] Error loading trainer packages:', err);
+        }
+      });
+  }
+
+  loadTrainerPrograms(trainerId: number): void {
+    this.loadingPrograms.set(true);
+    this.homeClientService
+      .getAllPrograms()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (allPrograms: any[]) => {
+          // Filter programs for this trainer
+          const filtered = allPrograms.filter(p => p.trainerProfileId === trainerId);
+          this.trainerPrograms.set(filtered);
+          this.loadingPrograms.set(false);
+          console.log('[TrainerDetailComponent] Trainer programs loaded:', filtered);
+        },
+        error: (err: any) => {
+          this.loadingPrograms.set(false);
+          console.error('[TrainerDetailComponent] Error loading trainer programs:', err);
+        }
+      });
+  }
+
+  viewPackage(packageId: number): void {
+    this.router.navigate(['/packages', packageId]);
+  }
+
+  viewAllPackages(): void {
+    const trainerId = this.trainer()?.id;
+    if (trainerId) {
+      this.router.navigate(['/discover/trainers', trainerId, 'packages']);
+    }
+  }
+
+  viewAllPrograms(): void {
+    const trainerId = this.trainer()?.id;
+    if (trainerId) {
+      this.router.navigate(['/discover/trainers', trainerId, 'programs']);
+    }
+  }
+
+  viewProgram(programId: number): void {
+    this.router.navigate(['/discover/programs', programId]);
+  }
+
+  viewProgramPackage(programId: number): void {
+    // Find the program and navigate to packages page with trainer ID
+    const program = this.trainerPrograms().find(p => p.id === programId);
+    if (program && program.trainerProfileId) {
+      this.router.navigate(['/packages'], { 
+        queryParams: { trainerId: program.trainerProfileId } 
+      });
+    } else {
+      // Fallback to program details if trainer ID not available
+      this.viewProgram(programId);
+    }
+  }
+
   goBack(): void {
-    this.router.navigate(['/trainers']);
+    this.location.back();
   }
 
   ngOnDestroy(): void {
