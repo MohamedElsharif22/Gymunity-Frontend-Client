@@ -1,7 +1,6 @@
 import {
   Component,
   OnInit,
-  OnDestroy,
   inject,
   signal,
   ChangeDetectionStrategy,
@@ -13,292 +12,447 @@ import { Location } from '@angular/common';
 import { TrainerProfileService } from '../../services/trainer-profile.service';
 import { HomeClientService } from '../../services/home-client.service';
 import { TrainerCard } from '../../../../core/models';
-import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
-/**
- * Trainer Detail Component
- * Displays comprehensive trainer profile information
- *
- * Route parameter: trainerId (numeric ID)
- * Data source: TrainerProfileService.getTrainerProfile(trainerId)
- *
- * Features:
- * - Full trainer profile with cover image
- * - Trainer stats (experience, ratings, clients)
- * - Verification badge
- * - Contact/booking buttons
- * - Pricing information
- */
 @Component({
   selector: 'app-trainer-detail',
   standalone: true,
   imports: [CommonModule, RouterModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="flex-1 bg-gray-50 py-8 px-4 md:px-8">
-      <div class="max-w-4xl mx-auto">
-        <!-- Back Button -->
-        <button
-          (click)="goBack()"
-          class="mb-6 inline-flex items-center text-blue-600 hover:text-blue-700 font-medium transition"
-        >
-          ← Back
-        </button>
+    <!-- Facebook-Style Profile Layout -->
+    <div class="min-h-screen bg-gray-100">
+      <!-- Loading State -->
+      @if (isLoading()) {
+        <div class="max-w-5xl mx-auto px-4 py-8">
+          <div class="bg-white rounded-lg shadow p-12 text-center">
+            <div class="w-16 h-16 border-4 border-gray-200 border-t-blue-600 rounded-full animate-spin mx-auto"></div>
+            <p class="mt-4 text-gray-600">Loading profile...</p>
+          </div>
+        </div>
+      }
 
-        <!-- Loading State -->
-        @if (isLoading()) {
+      <!-- Error State -->
+      @if (error()) {
+        <div class="max-w-5xl mx-auto px-4 py-8">
           <div class="bg-white rounded-lg shadow p-8">
-            <div class="flex flex-col items-center justify-center">
-              <div class="w-12 h-12 border-4 border-gray-300 border-t-blue-500 rounded-full animate-spin"></div>
-              <p class="mt-4 text-gray-600">Loading trainer profile...</p>
+            <div class="text-center">
+              <svg class="w-16 h-16 text-red-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              <h3 class="text-lg font-semibold text-gray-900 mb-2">Something went wrong</h3>
+              <p class="text-gray-600 mb-4">{{ error() }}</p>
+              <button
+                (click)="loadTrainerProfile()"
+                class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+              >
+                Try Again
+              </button>
             </div>
           </div>
-        }
+        </div>
+      }
 
-        <!-- Error State -->
-        @if (error()) {
-          <div class="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
-            <p class="text-red-800 font-medium">{{ error() }}</p>
-            <button
-              (click)="loadTrainerProfile()"
-              class="mt-4 px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
-            >
-              Try Again
-            </button>
-          </div>
-        }
-
-        <!-- Trainer Profile -->
-        @if (!isLoading() && !error() && trainer()) {
-          <div class="space-y-6">
-            <!-- Cover Image -->
-            @if (trainer()!.coverImageUrl) {
-              <div class="rounded-lg overflow-hidden shadow-lg h-64">
-                <img
-                  [src]="trainer()!.coverImageUrl"
-                  [alt]="trainer()!.handle"
-                  class="w-full h-full object-cover"
-                />
+      <!-- Profile Content -->
+      @if (!isLoading() && !error() && trainer()) {
+        <div class="max-w-5xl mx-auto">
+          <!-- Cover Photo Section -->
+          <div class="bg-white shadow">
+            <div class="relative">
+              <!-- Cover Image -->
+              <div class="h-[450px] bg-gradient-to-br from-blue-400 via-purple-500 to-pink-500 overflow-hidden">
+                @if (trainer()!.coverImageUrl) {
+                  <img
+                    [src]="trainer()!.coverImageUrl"
+                    [alt]="trainer()!.userName"
+                    class="w-full h-full object-cover"
+                  />
+                } @else {
+                  <!-- Gradient fallback with pattern -->
+                  <div class="w-full h-full bg-gradient-to-br from-blue-400 via-purple-500 to-pink-500 opacity-90"></div>
+                }
               </div>
-            } @else {
-              <div class="rounded-lg bg-gradient-to-r from-blue-400 to-purple-500 h-64 shadow-lg"></div>
-            }
 
-            <!-- Profile Header Card -->
-            <div class="bg-white rounded-lg shadow-lg p-6 md:p-8 -mt-16 relative z-10">
-              <!-- Profile Info Row -->
-              <div class="flex flex-col md:flex-row items-start md:items-center gap-6">
-                <!-- Avatar -->
-                <div class="flex-shrink-0">
-                  <div
-                    class="w-32 h-32 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-bold text-4xl border-4 border-white shadow-lg"
-                  >
-                    {{ trainer()!.userName.charAt(0).toUpperCase() }}
+              <!-- Back Button (Top Left on Cover) -->
+              <button
+                (click)="goBack()"
+                class="absolute top-4 left-4 bg-white/90 backdrop-blur-sm hover:bg-white text-gray-900 p-2 rounded-full shadow-lg transition-all"
+                title="Go back"
+              >
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                </svg>
+              </button>
+
+              <!-- Profile Info Container -->
+              <div class="px-4 md:px-8 pb-4">
+                <!-- Avatar & Name Row -->
+                <div class="flex flex-col md:flex-row md:items-end md:justify-between -mt-20 relative">
+                  <!-- Avatar -->
+                  <div class="flex items-end gap-4">
+                    <div class="relative">
+                      <div class="w-40 h-40 rounded-full bg-white p-1 shadow-xl">
+                        @if (trainer()!.profilePhotoUrl) {
+                          <img
+                            [src]="trainer()!.profilePhotoUrl"
+                            [alt]="trainer()!.userName"
+                            class="w-full h-full rounded-full object-cover"
+                          />
+                        } @else {
+                          <div class="w-full h-full rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-5xl">
+                            {{ trainer()!.userName.charAt(0).toUpperCase() }}
+                          </div>
+                        }
+                      </div>
+                      <!-- Online Status -->
+                      <div class="absolute bottom-2 right-2 w-8 h-8 bg-green-500 border-4 border-white rounded-full"></div>
+                    </div>
+
+                    <!-- Name & Handle (Desktop) -->
+                    <div class="hidden md:block mb-4">
+                      <div class="flex items-center gap-2">
+                        <h1 class="text-3xl font-bold text-gray-900">{{ trainer()!.userName }}</h1>
+                        @if (trainer()!.isVerified) {
+                          <svg class="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                          </svg>
+                        }
+                      </div>
+                      <p class="text-gray-600 mt-1">{{ '@' + trainer()!.handle }}</p>
+                      @if (trainer()!.totalClients) {
+                        <p class="text-sm text-gray-500 mt-1">{{ trainer()!.totalClients }} clients</p>
+                      }
+                    </div>
+                  </div>
+
+                  <!-- Action Buttons (Desktop) -->
+                  <div class="hidden md:flex items-center gap-2 mb-4">
+                    <button
+                      (click)="viewAllPackages()"
+                      class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors flex items-center gap-2"
+                    >
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                      </svg>
+                      Subscribe
+                    </button>
+                    <button
+                      class="px-6 py-2 bg-gray-200 hover:bg-gray-300 text-gray-900 font-semibold rounded-lg transition-colors"
+                    >
+                      Message
+                    </button>
+                    <button
+                      class="p-2 bg-gray-200 hover:bg-gray-300 text-gray-900 rounded-lg transition-colors"
+                      title="More options"
+                    >
+                      <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"/>
+                      </svg>
+                    </button>
                   </div>
                 </div>
 
-                <!-- Name and Basic Info -->
-                <div class="flex-1">
-                  <div class="flex items-center gap-3 mb-2">
-                    <h1 class="text-3xl font-bold text-gray-900">{{ trainer()!.userName }}</h1>
+                <!-- Name & Handle (Mobile) -->
+                <div class="md:hidden mt-4">
+                  <div class="flex items-center gap-2">
+                    <h1 class="text-2xl font-bold text-gray-900">{{ trainer()!.userName }}</h1>
                     @if (trainer()!.isVerified) {
-                      <div class="flex items-center gap-1 bg-blue-100 text-blue-800 px-3 py-1 rounded-full">
-                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                          <path
-                            fill-rule="evenodd"
-                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                            clip-rule="evenodd"
-                          />
+                      <svg class="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                      </svg>
+                    }
+                  </div>
+                  <p class="text-gray-600 mt-1">{{ '@' + trainer()!.handle }}</p>
+                  @if (trainer()!.totalClients) {
+                    <p class="text-sm text-gray-500 mt-1">{{ trainer()!.totalClients }} clients</p>
+                  }
+                </div>
+
+                <!-- Navigation Tabs -->
+                <div class="border-t border-gray-200 mt-4">
+                  <div class="flex gap-1 overflow-x-auto">
+                    <button
+                      [class.border-blue-600]="activeTab() === 'about'"
+                      [class.text-blue-600]="activeTab() === 'about'"
+                      [class.text-gray-600]="activeTab() !== 'about'"
+                      (click)="activeTab.set('about')"
+                      class="px-4 py-3 font-semibold border-b-4 border-transparent hover:bg-gray-50 rounded-t-lg transition-colors whitespace-nowrap"
+                    >
+                      About
+                    </button>
+                    <button
+                      [class.border-blue-600]="activeTab() === 'packages'"
+                      [class.text-blue-600]="activeTab() === 'packages'"
+                      [class.text-gray-600]="activeTab() !== 'packages'"
+                      (click)="activeTab.set('packages')"
+                      class="px-4 py-3 font-semibold border-b-4 border-transparent hover:bg-gray-50 rounded-t-lg transition-colors whitespace-nowrap"
+                    >
+                      Packages
+                    </button>
+                    <button
+                      [class.border-blue-600]="activeTab() === 'programs'"
+                      [class.text-blue-600]="activeTab() === 'programs'"
+                      [class.text-gray-600]="activeTab() !== 'programs'"
+                      (click)="activeTab.set('programs')"
+                      class="px-4 py-3 font-semibold border-b-4 border-transparent hover:bg-gray-50 rounded-t-lg transition-colors whitespace-nowrap"
+                    >
+                      Programs
+                    </button>
+                    <button
+                      [class.border-blue-600]="activeTab() === 'reviews'"
+                      [class.text-blue-600]="activeTab() === 'reviews'"
+                      [class.text-gray-600]="activeTab() !== 'reviews'"
+                      (click)="activeTab.set('reviews')"
+                      class="px-4 py-3 font-semibold border-b-4 border-transparent hover:bg-gray-50 rounded-t-lg transition-colors whitespace-nowrap"
+                    >
+                      Reviews
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Action Buttons (Mobile) -->
+            <div class="md:hidden px-4 pb-4 flex gap-2">
+              <button
+                (click)="viewAllPackages()"
+                class="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors"
+              >
+                Subscribe
+              </button>
+              <button
+                class="flex-1 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-900 font-semibold rounded-lg transition-colors"
+              >
+                Message
+              </button>
+              <button
+                class="p-2 bg-gray-200 hover:bg-gray-300 text-gray-900 rounded-lg transition-colors"
+              >
+                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Content Area -->
+          <div class="px-4 md:px-8 py-4">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              <!-- Left Sidebar -->
+              <div class="lg:col-span-1 space-y-4">
+                <!-- Intro Card -->
+                <div class="bg-white rounded-lg shadow p-4">
+                  <h2 class="text-xl font-bold text-gray-900 mb-4">Intro</h2>
+                  
+                  @if (trainer()!.bio) {
+                    <p class="text-gray-700 text-sm mb-4 leading-relaxed">{{ trainer()!.bio }}</p>
+                  }
+
+                  <!-- Stats -->
+                  <div class="space-y-3">
+                    @if (trainer()!.yearsExperience) {
+                      <div class="flex items-center gap-3 text-gray-700">
+                        <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                         </svg>
-                        <span class="text-xs font-semibold">Verified</span>
+                        <span class="text-sm"><span class="font-semibold">{{ trainer()!.yearsExperience }}</span> years of experience</span>
+                      </div>
+                    }
+
+                    @if (trainer()!.ratingAverage) {
+                      <div class="flex items-center gap-3 text-gray-700">
+                        <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.381-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                        </svg>
+                        <span class="text-sm"><span class="font-semibold">{{ trainer()!.ratingAverage.toFixed(1) }}</span> rating ({{ trainer()!.totalReviews }} reviews)</span>
+                      </div>
+                    }
+
+                    @if (trainer()!.startingPrice) {
+                      <div class="flex items-center gap-3 text-gray-700">
+                        <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <span class="text-sm">Starting at <span class="font-semibold">\${{ trainer()!.startingPrice }}</span></span>
+                      </div>
+                    }
+
+                    @if (trainer()!.specializations?.length) {
+                      <div class="flex items-start gap-3 text-gray-700">
+                        <svg class="w-5 h-5 text-gray-500 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <div class="flex-1">
+                          <p class="text-sm font-semibold mb-2">Specializations</p>
+                          <div class="flex flex-wrap gap-1.5">
+                            @for (spec of trainer()!.specializations; track spec) {
+                              <span class="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">{{ spec }}</span>
+                            }
+                          </div>
+                        </div>
                       </div>
                     }
                   </div>
+                </div>
+              </div>
 
-                  <p class="text-xl text-blue-600 font-semibold mb-3">@{{ trainer()!.handle }}</p>
+              <!-- Main Content -->
+              <div class="lg:col-span-2 space-y-4">
+                <!-- About Tab -->
+                @if (activeTab() === 'about') {
                   @if (trainer()!.bio) {
-                    <p class="text-gray-700 mb-4">{{ trainer()!.bio }}</p>
+                    <div class="bg-white rounded-lg shadow p-6">
+                      <h2 class="text-xl font-bold text-gray-900 mb-4">About</h2>
+                      <p class="text-gray-700 leading-relaxed">{{ trainer()!.bio }}</p>
+                    </div>
                   }
+                }
 
-                  <!-- Quick Stats -->
-                  <div class="flex flex-wrap gap-6 pt-4 border-t border-gray-200">
-                    @if (trainer()!.yearsExperience) {
-                      <div>
-                        <p class="text-2xl font-bold text-gray-900">{{ trainer()!.yearsExperience }}</p>
-                        <p class="text-sm text-gray-600">Years Experience</p>
+                <!-- Packages Tab -->
+                @if (activeTab() === 'packages') {
+                  <div class="bg-white rounded-lg shadow p-6">
+                    <div class="flex items-center justify-between mb-6">
+                      <h2 class="text-xl font-bold text-gray-900">Packages</h2>
+                      @if (packages().length > 0) {
+                        <button
+                          (click)="viewAllPackages()"
+                          class="text-blue-600 hover:text-blue-700 font-semibold text-sm"
+                        >
+                          View all
+                        </button>
+                      }
+                    </div>
+
+                    @if (loadingPackages()) {
+                      <div class="text-center py-8 text-gray-600">Loading packages...</div>
+                    } @else if (packages().length === 0) {
+                      <div class="text-center py-12">
+                        <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+                        </svg>
+                        <p class="text-gray-600">No packages available</p>
                       </div>
-                    }
-                    @if (trainer()!.ratingAverage) {
-                      <div>
-                        <div class="flex items-center gap-1">
-                          <span class="text-2xl font-bold text-gray-900">
-                            {{ (trainer()!.ratingAverage || 0).toFixed(1) }}
-                          </span>
-                          <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                            <path
-                              d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.381-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"
-                            />
-                          </svg>
-                        </div>
-                        <p class="text-sm text-gray-600">Rating</p>
-                        @if (trainer()!.totalReviews) {
-                          <p class="text-xs text-gray-500">({{ trainer()!.totalReviews }} reviews)</p>
+                    } @else {
+                      <div class="space-y-4">
+                        @for (pkg of packages(); track pkg.id) {
+                          <div class="border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow cursor-pointer" (click)="viewPackage(pkg.id)">
+                            <!-- Package Image -->
+                            @if (pkg.thumbnailUrl) {
+                              <img [src]="pkg.thumbnailUrl" [alt]="pkg.name" class="w-full h-48 object-cover"/>
+                            } @else {
+                              <div class="w-full h-48 bg-gradient-to-br from-blue-400 to-purple-500"></div>
+                            }
+                            <!-- Package Info -->
+                            <div class="p-4">
+                              <div class="flex items-start justify-between">
+                                <div class="flex-1">
+                                  <h3 class="text-lg font-semibold text-gray-900 mb-1">{{ pkg.name }}</h3>
+                                  @if (pkg.description) {
+                                    <p class="text-sm text-gray-600 mb-3 line-clamp-2">{{ pkg.description }}</p>
+                                  }
+                                  <div class="flex items-center gap-4 text-sm">
+                                    <span class="text-gray-700"><span class="font-semibold">\${{ pkg.priceMonthly }}</span>/month</span>
+                                    <span class="text-gray-700"><span class="font-semibold">\${{ pkg.priceYearly }}</span>/year</span>
+                                  </div>
+                                </div>
+                                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                </svg>
+                              </div>
+                            </div>
+                          </div>
                         }
                       </div>
                     }
-                    @if (trainer()!.totalClients) {
-                      <div>
-                        <p class="text-2xl font-bold text-gray-900">{{ trainer()!.totalClients }}</p>
-                        <p class="text-sm text-gray-600">Total Clients</p>
+                  </div>
+                }
+
+                <!-- Programs Tab -->
+                @if (activeTab() === 'programs') {
+                  <div class="bg-white rounded-lg shadow p-6">
+                    <div class="flex items-center justify-between mb-6">
+                      <h2 class="text-xl font-bold text-gray-900">Programs</h2>
+                      @if (trainerPrograms().length > 0) {
+                        <button
+                          (click)="viewAllPrograms()"
+                          class="text-blue-600 hover:text-blue-700 font-semibold text-sm"
+                        >
+                          View all
+                        </button>
+                      }
+                    </div>
+
+                    @if (loadingPrograms()) {
+                      <div class="text-center py-8 text-gray-600">Loading programs...</div>
+                    } @else if (trainerPrograms().length === 0) {
+                      <div class="text-center py-12">
+                        <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <p class="text-gray-600">No programs available</p>
+                      </div>
+                    } @else {
+                      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        @for (program of trainerPrograms(); track program.id) {
+                          <div class="border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow cursor-pointer" (click)="viewProgram(program.id)">
+                            @if (program.thumbnailUrl) {
+                              <img [src]="program.thumbnailUrl" [alt]="program.title" class="w-full h-32 object-cover"/>
+                            } @else {
+                              <div class="w-full h-32 bg-gradient-to-br from-blue-400 to-purple-500"></div>
+                            }
+                            <div class="p-4">
+                              <h3 class="font-semibold text-gray-900 mb-1">{{ program.title }}</h3>
+                              @if (program.description) {
+                                <p class="text-sm text-gray-600 mb-2 line-clamp-2">{{ program.description }}</p>
+                              }
+                              <div class="flex items-center gap-3 text-xs text-gray-500">
+                                <span>{{ program.durationWeeks }} weeks</span>
+                                <span>•</span>
+                                <span class="capitalize">{{ program.type }}</span>
+                              </div>
+                            </div>
+                          </div>
+                        }
                       </div>
                     }
                   </div>
-                </div>
-              </div>
-            </div>
+                }
 
-            <!-- Contact and Action Buttons -->
-            <div class="flex flex-col sm:flex-row gap-3">
-              <button
-                (click)="viewAllPackages()"
-                class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
-              >
-                Book Session
-              </button>
-              <button
-                class="flex-1 bg-white hover:bg-gray-50 text-blue-600 font-semibold py-3 px-6 rounded-lg border border-blue-200 transition-colors"
-              >
-                Send Message
-              </button>
-            </div>
-
-            <!-- Pricing Information -->
-            @if (trainer()!.startingPrice) {
-              <div class="bg-white rounded-lg shadow p-6">
-                <h2 class="text-xl font-bold text-gray-900 mb-4">Pricing</h2>
-                <div class="flex items-baseline gap-2">
-                  <span class="text-4xl font-bold text-gray-900">$</span>
-                  <span class="text-4xl font-bold text-gray-900">
-                    {{ trainer()!.startingPrice }}
-                  </span>
-                  <span class="text-gray-600">/ session</span>
-                </div>
-                <p class="text-sm text-gray-600 mt-2">Starting price for sessions</p>
-              </div>
-            }
-
-            <!-- Bio Section -->
-            @if (trainer()!.bio) {
-              <div class="bg-white rounded-lg shadow p-6">
-                <h2 class="text-xl font-bold text-gray-900 mb-4">About</h2>
-                <p class="text-gray-700 leading-relaxed">{{ trainer()!.bio }}</p>
-              </div>
-            }
-
-            <!-- Packages Section -->
-            <!-- Packages Section - Always show with View All button -->
-            <div class="bg-white rounded-lg shadow p-6">
-              <div class="flex items-center justify-between mb-6">
-                <h2 class="text-xl font-bold text-gray-900">Packages</h2>
-                <button
-                  (click)="viewAllPackages(); $event.preventDefault(); $event.stopPropagation()"
-                  type="button"
-                  class="inline-flex items-center gap-2 px-4 py-2 bg-sky-50 hover:bg-sky-100 text-sky-600 hover:text-sky-700 font-semibold rounded-lg transition-colors border border-sky-200">
-                  View All
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                  </svg>
-                </button>
-              </div>
-
-              @if (loadingPackages()) {
-                <div class="flex justify-center py-8">
-                  <div class="text-gray-600">Loading packages...</div>
-                </div>
-              } @else if (packages().length === 0) {
-                <div class="text-center py-8 text-gray-500">
-                  <p>No packages available for this trainer.</p>
-                </div>
-              } @else {
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  @for (pkg of packages(); track pkg.id) {
-                    <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
-                      <h3 class="text-lg font-semibold text-gray-900 mb-2">{{ pkg.name }}</h3>
-                      @if (pkg.description) {
-                        <p class="text-sm text-gray-600 mb-4 line-clamp-2">{{ pkg.description }}</p>
-                      }
-                      <div class="space-y-2 mb-4 text-sm text-gray-700">
-                        <p><span class="font-medium">Monthly:</span> \${{ pkg.priceMonthly }}</p>
-                        <p><span class="font-medium">Yearly:</span> \${{ pkg.priceYearly }}</p>
-                      </div>
-                      <button
-                        (click)="viewPackage(pkg.id)"
-                        class="w-full bg-sky-500 hover:bg-sky-600 text-white font-medium py-2 px-4 rounded transition-colors">
-                        View Details
-                      </button>
+                <!-- Reviews Tab -->
+                @if (activeTab() === 'reviews') {
+                  <div class="bg-white rounded-lg shadow p-6">
+                    <h2 class="text-xl font-bold text-gray-900 mb-6">Reviews</h2>
+                    <div class="text-center py-12 text-gray-600">
+                      <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
+                      </svg>
+                      Reviews coming soon
                     </div>
-                  }
-                </div>
-              }
-            </div>
-
-            <!-- Programs Section -->
-            @if (!loadingPrograms() && trainerPrograms().length > 0) {
-              <div class="bg-white rounded-lg shadow p-6">
-                <div class="flex items-center justify-between mb-6">
-                  <h2 class="text-xl font-bold text-gray-900">Programs</h2>
-                  <button
-                    (click)="viewAllPrograms(); $event.preventDefault(); $event.stopPropagation()"
-                    type="button"
-                    class="inline-flex items-center gap-2 px-4 py-2 bg-sky-50 hover:bg-sky-100 text-sky-600 hover:text-sky-700 font-semibold rounded-lg transition-colors border border-sky-200">
-                    View All
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                    </svg>
-                  </button>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  @for (program of trainerPrograms(); track program.id) {
-                    <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
-                      <!-- Program Header -->
-                      <h3 class="text-lg font-semibold text-gray-900 mb-2">{{ program.title }}</h3>
-                      @if (program.description) {
-                        <p class="text-sm text-gray-600 mb-4 line-clamp-2">{{ program.description }}</p>
-                      }
-                      
-                      <!-- Program Stats -->
-                      <div class="grid grid-cols-2 gap-2 mb-4 text-sm">
-                        <div class="bg-gray-50 p-2 rounded">
-                          <p class="text-gray-700"><span class="font-medium">{{ program.durationWeeks }}</span> weeks</p>
-                        </div>
-                        <div class="bg-gray-50 p-2 rounded">
-                          <p class="text-gray-700 capitalize"><span class="font-medium">{{ program.type }}</span></p>
-                        </div>
-                      </div>
-
-
-                    </div>
-                  }
-                </div>
+                  </div>
+                }
               </div>
-            }
+            </div>
           </div>
-        }
-      </div>
+        </div>
+      }
     </div>
   `,
-  styles: []
+  styles: [`
+    .line-clamp-2 {
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+  `]
 })
-export class TrainerDetailComponent implements OnInit, OnDestroy {
+export class TrainerDetailComponent implements OnInit {
   private readonly trainerProfileService = inject(TrainerProfileService);
   private readonly homeClientService = inject(HomeClientService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly location = inject(Location);
   private readonly destroyRef = inject(DestroyRef);
-  private readonly destroy$ = new Subject<void>();
 
   trainer = signal<TrainerCard | null>(null);
   packages = signal<any[]>([]);
@@ -307,25 +461,22 @@ export class TrainerDetailComponent implements OnInit, OnDestroy {
   loadingPackages = signal(false);
   loadingPrograms = signal(false);
   error = signal<string | null>(null);
+  activeTab = signal<'about' | 'packages' | 'programs' | 'reviews'>('about');
 
   ngOnInit(): void {
-    // First try to get trainer from navigation state (from trainers list)
     const state = this.location.getState() as any;
     if (state?.trainer) {
       this.trainer.set(state.trainer);
-      console.log('[TrainerDetailComponent] Trainer loaded from navigation state:', state.trainer);
       this.loadTrainerPackages(state.trainer.id);
       this.loadTrainerPrograms(state.trainer.id);
       return;
     }
 
-    // Fall back to loading from API if not in state
     const trainerId = this.route.snapshot.paramMap.get('id');
     if (trainerId) {
-      console.log('[TrainerDetailComponent] Trainer not in navigation state, attempting to load from API with ID:', trainerId);
       this.loadTrainerProfile(trainerId);
     } else {
-      this.error.set('No trainer information provided. Please navigate from the trainers list.');
+      this.error.set('No trainer information provided');
     }
   }
 
@@ -341,35 +492,17 @@ export class TrainerDetailComponent implements OnInit, OnDestroy {
 
     this.trainerProfileService
       .getTrainerProfile(handle)
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (profile: TrainerCard) => {
           this.trainer.set(profile);
           this.isLoading.set(false);
-          console.log('[TrainerDetailComponent] Trainer profile loaded:', profile);
-          
-          // Load trainer's packages and programs
           this.loadTrainerPackages(profile.id);
           this.loadTrainerPrograms(profile.id);
         },
         error: (err: any) => {
           this.isLoading.set(false);
-          console.error('[TrainerDetailComponent] Error loading trainer profile:', err);
-          console.log('[TrainerDetailComponent] Error details - URL:', err?.url);
-          console.log('[TrainerDetailComponent] Error details - Status:', err?.status);
-          console.log('[TrainerDetailComponent] Error details - Message:', err?.error?.message);
-          
-          // If API fails (404, 403, etc.), show user-friendly error message
-          let errorMessage = 'Failed to load trainer profile.';
-          if (err?.status === 404) {
-            errorMessage = 'Trainer profile not found. Please go back and try again.';
-          } else if (err?.status === 403) {
-            errorMessage = 'You do not have permission to view this trainer profile.';
-          } else if (err?.status === 0) {
-            errorMessage = 'Unable to connect to the server. Please check your internet connection.';
-          }
-          
-          this.error.set(errorMessage);
+          this.error.set(this.getErrorMessage(err));
         }
       });
   }
@@ -383,11 +516,10 @@ export class TrainerDetailComponent implements OnInit, OnDestroy {
         next: (packages: any[]) => {
           this.packages.set(packages);
           this.loadingPackages.set(false);
-          console.log('[TrainerDetailComponent] Trainer packages loaded:', packages);
         },
         error: (err: any) => {
           this.loadingPackages.set(false);
-          console.error('[TrainerDetailComponent] Error loading trainer packages:', err);
+          console.error('Error loading packages:', err);
         }
       });
   }
@@ -399,17 +531,26 @@ export class TrainerDetailComponent implements OnInit, OnDestroy {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (allPrograms: any[]) => {
-          // Filter programs for this trainer
           const filtered = allPrograms.filter(p => p.trainerProfileId === trainerId);
           this.trainerPrograms.set(filtered);
           this.loadingPrograms.set(false);
-          console.log('[TrainerDetailComponent] Trainer programs loaded:', filtered);
         },
         error: (err: any) => {
           this.loadingPrograms.set(false);
-          console.error('[TrainerDetailComponent] Error loading trainer programs:', err);
+          console.error('Error loading programs:', err);
         }
       });
+  }
+
+  getErrorMessage(err: any): string {
+    if (err?.status === 404) {
+      return 'Trainer not found.';
+    } else if (err?.status === 403) {
+      return 'You do not have permission to view this profile.';
+    } else if (err?.status === 0) {
+      return 'Network error. Please check your connection.';
+    }
+    return 'Failed to load trainer profile.';
   }
 
   viewPackage(packageId: number): void {
@@ -434,25 +575,7 @@ export class TrainerDetailComponent implements OnInit, OnDestroy {
     this.router.navigate(['/discover/programs', programId]);
   }
 
-  viewProgramPackage(programId: number): void {
-    // Find the program and navigate to packages page with trainer ID
-    const program = this.trainerPrograms().find(p => p.id === programId);
-    if (program && program.trainerProfileId) {
-      this.router.navigate(['/packages'], { 
-        queryParams: { trainerId: program.trainerProfileId } 
-      });
-    } else {
-      // Fallback to program details if trainer ID not available
-      this.viewProgram(programId);
-    }
-  }
-
   goBack(): void {
     this.location.back();
-  }
-
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
   }
 }

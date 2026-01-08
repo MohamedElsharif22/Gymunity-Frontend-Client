@@ -16,11 +16,13 @@ export interface TrainerCard {
   bio: string;
   isVerified: boolean;
   coverImageUrl?: string | null;
+  profilePhotoUrl?: string | null;
   ratingAverage: number;
   totalClients: number;
   yearsExperience: number;
   totalReviews: number;
   startingPrice?: number | null;
+  specializations?: string[];
   hasActiveSubscription: boolean;
 }
 
