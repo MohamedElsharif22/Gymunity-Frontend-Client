@@ -166,9 +166,13 @@ interface SetLog {
     .execution-container {
       display: flex;
       flex-direction: column;
+      width: 100%;
+      min-height: 100vh;
       height: 100vh;
       background: #000;
       overflow: hidden;
+      margin: 0;
+      padding: 0;
     }
 
     /* REP SELECTION MODAL */
