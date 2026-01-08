@@ -94,30 +94,34 @@ export const routes: Routes = [
         canActivate: [profileCompletionGuard],
         loadComponent: () => import('./features/subscriptions/subscriptions.component').then(m => m.SubscriptionsComponent)
       },
+      // Payment Routes - Stripe & PayPal Integration
+      {
+        path: 'payments',
+        canActivate: [profileCompletionGuard],
+        children: [
+         
+          // Payment return handler (after user returns from Stripe/PayPal)
+          {
+            path: 'return',
+            loadComponent: () => import('./features/payments/components/payment-return/payment-return.component').then(m => m.PaymentReturnComponent)
+          },
+          // Payment cancellation handler
+          {
+            path: 'cancel',
+            loadComponent: () => import('./features/payments/components/payment-cancel/payment-cancel.component').then(m => m.PaymentCancelComponent)
+          },
+          // Legacy payment route (for backward compatibility with old system)
+          {
+            path: ':id',
+            loadComponent: () => import('./features/payments/components/payment/payment.component').then(m => m.PaymentComponent)
+          }
+        ]
+      },
+      // Legacy payment routes (for backward compatibility with old system)
       {
         path: 'payment/:id',
         canActivate: [profileCompletionGuard],
         loadComponent: () => import('./features/payments/components/payment/payment.component').then(m => m.PaymentComponent)
-      },
-      {
-        path: 'payment/success',
-        canActivate: [profileCompletionGuard],
-        loadComponent: () => import('./features/payments/components/payment-success/payment-success.component').then(m => m.PaymentSuccessComponent)
-      },
-      {
-        path: 'payment/failed',
-        canActivate: [profileCompletionGuard],
-        loadComponent: () => import('./features/payments/components/payment-failed/payment-failed.component').then(m => m.PaymentFailedComponent)
-      },
-      {
-        path: 'payment/canceled',
-        canActivate: [profileCompletionGuard],
-        loadComponent: () => import('./features/payments/components/payment-canceled/payment-canceled.component').then(m => m.PaymentCanceledComponent)
-      },
-      {
-        path: 'payment/error',
-        canActivate: [profileCompletionGuard],
-        loadComponent: () => import('./features/payments/components/payment-error/payment-error.component').then(m => m.PaymentErrorComponent)
       },
       {
         path: 'settings',

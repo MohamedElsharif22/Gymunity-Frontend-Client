@@ -1,0 +1,411 @@
+{
+  "info": {
+    "name": "Gymunity - Chat & Notifications",
+    "description": "Chat messaging and notifications endpoints for Gymunity Client App",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "1.0.0"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{jwt_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "https://api.gymunity.com",
+      "type": "string"
+    },
+    {
+      "key": "jwt_token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Chat",
+      "description": "Real-time messaging with trainers",
+      "item": [
+        {
+          "name": "Get All Threads",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/chat/threads",
+              "host": ["{{base_url}}"],
+              "path": ["api", "chat", "threads"]
+            },
+            "description": "Get all chat threads for the current user"
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/chat/threads",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "chat", "threads"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "body": "[\n  {\n    \"id\": 1,\n    \"clientId\": \"client-uuid-1\",\n    \"trainerId\": \"trainer-uuid-1\",\n    \"createdAt\": \"2024-01-15T10:35:00Z\",\n    \"lastMessageAt\": \"2024-01-15T10:35:00Z\"\n  }\n]"
+            }
+          ]
+        },
+        {
+          "name": "Create Chat Thread",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"otherUserId\": \"trainer-uuid-1\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/chat/threads",
+              "host": ["{{base_url}}"],
+              "path": ["api", "chat", "threads"]
+            },
+            "description": "Create a new chat thread with a trainer"
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"otherUserId\": \"trainer-uuid-1\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/chat/threads",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "chat", "threads"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "body": "{\n  \"id\": 1,\n  \"clientId\": \"client-uuid-1\",\n  \"trainerId\": \"trainer-uuid-1\",\n  \"createdAt\": \"2024-01-15T10:35:00Z\",\n  \"lastMessageAt\": \"2024-01-15T10:35:00Z\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Thread Messages",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/chat/threads/1/messages",
+              "host": ["{{base_url}}"],
+              "path": ["api", "chat", "threads", "1", "messages"]
+            },
+            "description": "Get all messages in a specific thread"
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/chat/threads/1/messages",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "chat", "threads", "1", "messages"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "body": "[\n  {\n    \"id\": 1,\n    \"threadId\": 1,\n    \"senderId\": \"client-uuid-1\",\n    \"senderName\": \"John Doe\",\n    \"senderProfilePhoto\": \"https://cdn.example.com/photos/client-uuid-1.jpg\",\n    \"content\": \"Hi trainer! I have a question about the workout\",\n    \"mediaUrl\": null,\n    \"type\": 1,\n    \"createdAt\": \"2024-01-15T10:40:00Z\",\n    \"isRead\": false\n  }\n]"
+            }
+          ]
+        },
+        {
+          "name": "Send Message",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Hi trainer! I have a question about the workout\",\n  \"mediaUrl\": null,\n  \"type\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/chat/threads/1/messages",
+              "host": ["{{base_url}}"],
+              "path": ["api", "chat", "threads", "1", "messages"]
+            },
+            "description": "Send a message in a thread\n\nMessage Types:\n- 1 = Text message\n- 2 = Media message (image/video)\n- 3 = System message"
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"content\": \"Hi trainer! I have a question about the workout\",\n  \"mediaUrl\": null,\n  \"type\": 1\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/chat/threads/1/messages",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "chat", "threads", "1", "messages"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "body": "{\n  \"id\": 1,\n  \"threadId\": 1,\n  \"senderId\": \"client-uuid-1\",\n  \"senderName\": \"John Doe\",\n  \"senderProfilePhoto\": \"https://cdn.example.com/photos/client-uuid-1.jpg\",\n  \"content\": \"Hi trainer! I have a question about the workout\",\n  \"mediaUrl\": null,\n  \"type\": 1,\n  \"createdAt\": \"2024-01-15T10:40:00Z\",\n  \"isRead\": false\n}"
+            }
+          ]
+        },
+        {
+          "name": "Mark Message as Read",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/chat/messages/1/read",
+              "host": ["{{base_url}}"],
+              "path": ["api", "chat", "messages", "1", "read"]
+            },
+            "description": "Mark a specific message as read"
+          },
+          "response": []
+        },
+        {
+          "name": "Mark Thread as Read",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/chat/threads/1/read",
+              "host": ["{{base_url}}"],
+              "path": ["api", "chat", "threads", "1", "read"]
+            },
+            "description": "Mark all messages in a thread as read"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Notifications",
+      "description": "User notifications and alerts",
+      "item": [
+        {
+          "name": "Get All Notifications",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/notifications?unreadOnly=false",
+              "host": ["{{base_url}}"],
+              "path": ["api", "notifications"],
+              "query": [
+                {
+                  "key": "unreadOnly",
+                  "value": "false",
+                  "description": "Filter for unread notifications only (true/false)"
+                }
+              ]
+            },
+            "description": "Get all notifications for the current user with optional filter for unread only"
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/notifications?unreadOnly=false",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "notifications"],
+                  "query": [
+                    {
+                      "key": "unreadOnly",
+                      "value": "false"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "body": "[\n  {\n    \"id\": 1,\n    \"userId\": \"client-uuid-1\",\n    \"type\": \"NewMessage\",\n    \"title\": \"New message from trainer\",\n    \"message\": \"John Trainer sent you a message\",\n    \"isRead\": false,\n    \"createdAt\": \"2024-01-15T10:45:00Z\",\n    \"actionUrl\": \"/chat/threads/1\"\n  }\n]"
+            }
+          ]
+        },
+        {
+          "name": "Get Unread Count",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/notifications/unread-count",
+              "host": ["{{base_url}}"],
+              "path": ["api", "notifications", "unread-count"]
+            },
+            "description": "Get the count of unread notifications"
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/notifications/unread-count",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "notifications", "unread-count"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "body": "{\n  \"count\": 5\n}"
+            }
+          ]
+        },
+        {
+          "name": "Mark Notification as Read",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/notifications/1/read",
+              "host": ["{{base_url}}"],
+              "path": ["api", "notifications", "1", "read"]
+            },
+            "description": "Mark a specific notification as read"
+          },
+          "response": []
+        },
+        {
+          "name": "Mark All as Read",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/notifications/read-all",
+              "host": ["{{base_url}}"],
+              "path": ["api", "notifications", "read-all"]
+            },
+            "description": "Mark all notifications as read for the current user"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
