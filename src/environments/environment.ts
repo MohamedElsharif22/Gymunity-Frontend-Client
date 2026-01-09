@@ -1,4 +1,5 @@
 export const environment = {
     production: false,
-    apiUrl: 'https://gymunity-fp-apis.runasp.net'
+    apiUrl: 'https://gymunity-fp-apis.runasp.net',
+    trainerUrl: 'https://gymunity.netlify.app'
 };

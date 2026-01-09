@@ -30,6 +30,7 @@ export interface RegisterRequest {
 
 export interface GoogleAuthRequest {
   idToken: string;
+  role: UserRole; // 1 = Client, 2 = Trainer
 }
 
 export interface AuthResponse {
