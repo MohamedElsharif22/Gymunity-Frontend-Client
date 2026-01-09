@@ -2,7 +2,8 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ApiService } from '../../../core/services/api.service';
 import { Subscription, SubscribeRequest, Package, SubscribePackageRequest, ActivateSubscriptionRequest, SubscriptionResponse } from '../../../core/models';
-import { HttpParams } from '@angular/common/http';
+import { HttpParams, HttpResponse } from '@angular/common/http';
+import { map } from 'rxjs/operators';
 
 /**
  * Subscription Service
@@ -53,14 +54,20 @@ export class SubscriptionService {
   /**
    * Get all client subscriptions
    * GET /api/client/subscriptions
-   * @param status Optional filter by SubscriptionStatus
+   * Response format: { success: boolean, data: { totalSubscriptions, activeSubscriptions, subscriptions: [] } }
+   * @param status Optional filter by SubscriptionStatus ('Active', 'Unpaid', 'Canceled', 'Expired')
    */
   getClientSubscriptions(status?: string): Observable<SubscriptionResponse[]> {
     let params = new HttpParams();
     if (status) {
       params = params.set('status', status);
     }
-    return this.apiService.get<SubscriptionResponse[]>('/api/client/subscriptions', params);
+    return this.apiService.get<{ success: boolean; data: { subscriptions: SubscriptionResponse[] } }>(
+      '/api/client/subscriptions',
+      params
+    ).pipe(
+      map(response => response?.data?.subscriptions || [])
+    );
   }
 
   /**

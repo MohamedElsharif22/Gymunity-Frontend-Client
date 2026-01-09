@@ -115,7 +115,7 @@ export class DashboardService {
           return of(true);
         })
       ),
-      subscriptions: this.subscriptionService.getClientSubscriptions().pipe(
+      subscriptions: this.subscriptionService.getClientSubscriptions('Active').pipe(
         catchError(err => {
           console.warn('[DashboardService] Error loading subscriptions:', err);
           return of([]);
@@ -154,7 +154,7 @@ export class DashboardService {
 
             // Otherwise fetch fresh subscriptions
             console.log('[DashboardService] Fetching fresh subscriptions...');
-            return this.subscriptionService.getClientSubscriptions().pipe(
+            return this.subscriptionService.getClientSubscriptions('Active').pipe(
               catchError(() => of([])),
               map(subs => subs?.length || 0)
             );

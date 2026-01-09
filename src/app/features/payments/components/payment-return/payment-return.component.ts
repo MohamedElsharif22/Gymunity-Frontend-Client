@@ -105,16 +105,28 @@ import { takeUntil, switchMap, take } from 'rxjs/operators';
                 </div>
               </div>
 
-              <!-- Action Button -->
-              <button
-                (click)="goToDashboard()"
-                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition duration-200 flex items-center justify-center gap-2">
-                <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
-                  <path
-                    d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
-                </svg>
-                Go to Dashboard
-              </button>
+              <!-- Action Buttons -->
+              <div class="grid grid-cols-2 gap-3">
+                <button
+                  (click)="goToSubscription()"
+                  class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition duration-200 flex items-center justify-center gap-2">
+                  <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd"
+                      d="M5 2a1 1 0 011 1v1h1V3a1 1 0 112 0v1h1V3a1 1 0 112 0v1h1V3a1 1 0 112 0v1h2a2 2 0 012 2v2h1a1 1 0 110 2h-1v1h1a1 1 0 110 2h-1v1h1a1 1 0 110 2h-1v2a2 2 0 01-2 2h-2v-1a1 1 0 110-2h1v-1h-1a1 1 0 110-2h1v-1h-1a1 1 0 110-2h1V9h-2V7h2V6H5a2 2 0 01-2-2V3a1 1 0 011-1zm0 5v2h2V7H5z"
+                      clip-rule="evenodd" />
+                  </svg>
+                  View Subscription
+                </button>
+                <button
+                  (click)="goToDashboard()"
+                  class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition duration-200 flex items-center justify-center gap-2">
+                  <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path
+                      d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
+                  </svg>
+                  Dashboard
+                </button>
+              </div>
             </div>
           </div>
         }
@@ -408,6 +420,13 @@ export class PaymentReturnComponent implements OnInit, OnDestroy {
     this.router.navigate(['/payments/checkout'], {
       queryParams: { subscriptionId: this.subscriptionId }
     });
+  }
+
+  /**
+   * Navigate to subscription details page
+   */
+  goToSubscription(): void {
+    this.router.navigate(['/subscriptions']);
   }
 
   /**
