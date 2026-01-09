@@ -78,7 +78,7 @@ export class BodyStateAddComponent implements OnInit, OnDestroy {
           this.success.set(true);
           this.loading.set(false);
           setTimeout(() => {
-            this.router.navigate(['/client/body-state']);
+            this.router.navigate(['/body-state']);
           }, 1500);
         },
         error: (err) => {

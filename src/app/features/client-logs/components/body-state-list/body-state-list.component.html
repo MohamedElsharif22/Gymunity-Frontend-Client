@@ -1,85 +1,156 @@
-<div class="container mx-auto px-4 py-8">
-  <div class="flex justify-between items-center mb-6">
-    <h1 class="text-3xl font-bold">Body State Logs</h1>
-    <a routerLink="add" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
-      Add New Log
-    </a>
-  </div>
-
-  @if (error()) {
-    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-      {{ error() }}
+<div class="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50">
+  <div class="max-w-7xl mx-auto p-4 md:p-8">
+    <!-- Header Section -->
+    <div class="mb-8">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <h1 class="text-4xl md:text-5xl font-bold bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">
+            Body State Logs
+          </h1>
+          <p class="text-gray-600 mt-2 text-lg">Track your body measurements and progress over time</p>
+        </div>
+        <a 
+          routerLink="add" 
+          class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-sky-600 to-indigo-600 hover:from-sky-700 hover:to-indigo-700 text-white font-semibold rounded-xl shadow-lg transition transform hover:scale-105">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+          </svg>
+          <span>Add New Log</span>
+        </a>
+      </div>
     </div>
-  }
 
-  @if (loading()) {
-    <div class="text-center py-8">
-      <p class="text-gray-600">Loading logs...</p>
-    </div>
-  } @else {
-    <!-- Last Log Summary -->
-    @if (lastLog(); as log) {
-      <div class="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-6">
-        <h2 class="text-xl font-semibold mb-4">Latest Measurement</h2>
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-          @if (log.weightKg) {
-            <div>
-              <p class="text-gray-600 text-sm">Weight</p>
-              <p class="text-2xl font-bold">{{ log.weightKg }}kg</p>
-            </div>
-          }
-          @if (log.bodyFatPercent) {
-            <div>
-              <p class="text-gray-600 text-sm">Body Fat</p>
-              <p class="text-2xl font-bold">{{ log.bodyFatPercent }}%</p>
-            </div>
-          }
+    <!-- Error State -->
+    @if (error()) {
+      <div class="bg-white border-l-4 border-red-500 rounded-xl shadow-lg p-6 mb-8">
+        <div class="flex items-start gap-4">
+          <div class="bg-red-100 rounded-full p-3">
+            <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
           <div>
-            <p class="text-gray-600 text-sm">Date</p>
-            <p class="text-lg font-semibold">{{ formatDate(log.loggedAt) }}</p>
+            <h3 class="text-lg font-semibold text-red-600">Error</h3>
+            <p class="text-gray-600 mt-1">{{ error() }}</p>
           </div>
         </div>
       </div>
     }
 
-    <!-- Logs List -->
-    <div class="space-y-4">
-      @if (logs().length > 0) {
-        <h2 class="text-xl font-semibold mb-4">All Logs</h2>
-        @for (log of logs(); track log.id) {
-          <div class="border rounded-lg p-4 hover:shadow-md transition">
-            <div class="flex justify-between items-start">
-              <div class="flex-1">
-                <div class="flex gap-6">
-                  @if (log.weightKg) {
-                    <div>
-                      <p class="text-gray-600 text-sm">Weight</p>
-                      <p class="font-semibold">{{ log.weightKg }}kg</p>
-                    </div>
-                  }
-                  @if (log.bodyFatPercent) {
-                    <div>
-                      <p class="text-gray-600 text-sm">Body Fat</p>
-                      <p class="font-semibold">{{ log.bodyFatPercent }}%</p>
-                    </div>
-                  }
-                  <div>
-                    <p class="text-gray-600 text-sm">Date</p>
-                    <p class="font-semibold">{{ formatDate(log.loggedAt) }}</p>
+    <!-- Loading State -->
+    @if (loading()) {
+      <div class="flex flex-col items-center justify-center py-20">
+        <div class="relative">
+          <div class="w-20 h-20 border-4 border-sky-200 rounded-full"></div>
+          <div class="w-20 h-20 border-4 border-sky-600 rounded-full animate-spin border-t-transparent absolute top-0 left-0"></div>
+        </div>
+        <p class="text-gray-600 mt-6 text-lg font-medium">Loading your body state logs...</p>
+      </div>
+    } @else {
+      <!-- Latest Measurement Card -->
+      @if (lastLog(); as log) {
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-8 mb-8 overflow-hidden">
+          <div class="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-sky-100 to-indigo-100 rounded-full -mr-20 -mt-20 opacity-50"></div>
+          <div class="relative">
+            <div class="flex items-center gap-3 mb-6">
+              <div class="bg-gradient-to-br from-sky-500 to-indigo-600 rounded-xl p-3">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                </svg>
+              </div>
+              <h2 class="text-2xl font-bold text-gray-900">Latest Measurement</h2>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6 pt-4">
+              @if (log.weightKg) {
+                <div class="p-6 bg-gradient-to-br from-sky-50 to-blue-50 border border-sky-100 rounded-2xl hover:shadow-md transition">
+                  <p class="text-gray-600 text-xs font-semibold uppercase tracking-wider">Weight</p>
+                  <div class="mt-3 flex items-baseline gap-1">
+                    <p class="text-4xl font-bold text-sky-600">{{ log.weightKg }}</p>
+                    <span class="text-sm text-gray-500 font-medium">kg</span>
                   </div>
                 </div>
-                @if (log.notes) {
-                  <p class="text-gray-700 mt-2 text-sm">{{ log.notes }}</p>
-                }
+              }
+              @if (log.bodyFatPercent) {
+                <div class="p-6 bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-100 rounded-2xl hover:shadow-md transition">
+                  <p class="text-gray-600 text-xs font-semibold uppercase tracking-wider">Body Fat</p>
+                  <div class="mt-3 flex items-baseline gap-1">
+                    <p class="text-4xl font-bold text-indigo-600">{{ log.bodyFatPercent }}</p>
+                    <span class="text-sm text-gray-500 font-medium">%</span>
+                  </div>
+                </div>
+              }
+              <div class="p-6 bg-gradient-to-br from-gray-50 to-slate-50 border border-gray-100 rounded-2xl hover:shadow-md transition">
+                <p class="text-gray-600 text-xs font-semibold uppercase tracking-wider">Date</p>
+                <p class="text-lg font-semibold text-gray-900 mt-3">{{ formatDate(log.loggedAt) }}</p>
               </div>
             </div>
           </div>
-        }
-      } @else {
-        <div class="text-center py-8">
-          <p class="text-gray-600">No logs yet. Start by adding your first body state log.</p>
         </div>
       }
-    </div>
-  }
+
+      <!-- Logs List -->
+      <div>
+        @if (logs().length > 0) {
+          <div class="mb-6">
+            <h2 class="text-2xl font-bold text-gray-900">All Logs</h2>
+            <p class="text-gray-600 mt-1">{{ logs().length }} measurement{{ logs().length !== 1 ? 's' : '' }} recorded</p>
+          </div>
+          <div class="grid gap-4">
+            @for (log of logs(); track log.id) {
+              <div class="bg-white rounded-xl shadow-md border border-gray-200 hover:shadow-xl hover:border-sky-300 transition-all duration-300 p-6">
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                  <div class="flex-1">
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-6 mb-4">
+                      @if (log.weightKg) {
+                        <div>
+                          <p class="text-gray-600 text-sm font-medium">Weight</p>
+                          <p class="text-2xl font-bold text-sky-600 mt-1">{{ log.weightKg }} kg</p>
+                        </div>
+                      }
+                      @if (log.bodyFatPercent) {
+                        <div>
+                          <p class="text-gray-600 text-sm font-medium">Body Fat</p>
+                          <p class="text-2xl font-bold text-indigo-600 mt-1">{{ log.bodyFatPercent }}%</p>
+                        </div>
+                      }
+                      <div>
+                        <p class="text-gray-600 text-sm font-medium">Date</p>
+                        <p class="text-lg font-semibold text-gray-900 mt-1">{{ formatDate(log.loggedAt) }}</p>
+                      </div>
+                    </div>
+                    @if (log.notes) {
+                      <div class="mt-4 pt-4 border-t border-gray-200">
+                        <p class="text-gray-600 text-sm">
+                          <span class="font-medium text-gray-900">Notes:</span> {{ log.notes }}
+                        </p>
+                      </div>
+                    }
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        } @else {
+          <!-- Empty State -->
+          <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-12 text-center">
+            <div class="bg-gradient-to-br from-sky-100 to-indigo-100 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
+              <svg class="w-10 h-10 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+              </svg>
+            </div>
+            <h3 class="text-2xl font-bold text-gray-900 mb-2">No Logs Yet</h3>
+            <p class="text-gray-600 mb-6 max-w-md mx-auto">Start tracking your body measurements today to monitor your progress and celebrate your achievements.</p>
+            <a 
+              routerLink="add" 
+              class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-sky-600 to-indigo-600 hover:from-sky-700 hover:to-indigo-700 text-white font-semibold rounded-xl shadow-lg transition transform hover:scale-105">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+              </svg>
+              <span>Create Your First Log</span>
+            </a>
+          </div>
+        }
+      </div>
+    }
+  </div>
 </div>

@@ -1,141 +1,229 @@
-<div class="container mx-auto px-4 py-8 max-w-2xl">
-  <h1 class="text-3xl font-bold mb-8">Add Body State Log</h1>
-
-  @if (error()) {
-    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-      {{ error() }}
-    </div>
-  }
-
-  @if (success()) {
-    <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
-      Body state log added successfully! Redirecting...
-    </div>
-  }
-
-  <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-6">
-    <!-- Weight (Required) -->
-    <div>
-      <label class="block text-sm font-medium text-gray-700 mb-1">
-        Weight (kg) <span class="text-red-500">*</span>
-      </label>
-      <input
-        type="number"
-        formControlName="weightKg"
-        step="0.1"
-        min="20"
-        max="500"
-        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-        placeholder="Enter weight in kg"
-      />
-      @if (form.get('weightKg')?.invalid && form.get('weightKg')?.touched) {
-        <p class="text-red-500 text-sm mt-1">Weight must be between 20-500 kg</p>
-      }
-    </div>
-
-    <!-- Body Fat Percentage -->
-    <div>
-      <label class="block text-sm font-medium text-gray-700 mb-1">
-        Body Fat Percentage (%)
-      </label>
-      <input
-        type="number"
-        formControlName="bodyFatPercent"
-        step="0.1"
-        min="1"
-        max="80"
-        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-        placeholder="Enter body fat percentage"
-      />
-      @if (form.get('bodyFatPercent')?.invalid && form.get('bodyFatPercent')?.touched) {
-        <p class="text-red-500 text-sm mt-1">Body fat must be between 1-80%</p>
-      }
-    </div>
-
-    <!-- Measurements JSON -->
-    <div>
-      <label class="block text-sm font-medium text-gray-700 mb-1">
-        Measurements (JSON)
-      </label>
-      <textarea
-        formControlName="measurementsJson"
-        rows="3"
-        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-sm"
-        placeholder='e.g., {"waist": 82, "chest": 95}'
-      ></textarea>
-      @if (measurementsError()) {
-        <p class="text-red-500 text-sm mt-1">{{ measurementsError() }}</p>
-      }
-    </div>
-
-    <!-- Photos -->
-    <div class="space-y-4">
-      <label class="block text-sm font-medium text-gray-700">Photos</label>
-      
-      <div>
-        <label class="block text-xs font-medium text-gray-600 mb-1">Front Photo URL</label>
-        <input
-          type="url"
-          formControlName="photoFrontUrl"
-          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          placeholder="https://..."
-        />
-      </div>
-
-      <div>
-        <label class="block text-xs font-medium text-gray-600 mb-1">Side Photo URL</label>
-        <input
-          type="url"
-          formControlName="photoSideUrl"
-          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          placeholder="https://..."
-        />
-      </div>
-
-      <div>
-        <label class="block text-xs font-medium text-gray-600 mb-1">Back Photo URL</label>
-        <input
-          type="url"
-          formControlName="photoBackUrl"
-          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          placeholder="https://..."
-        />
+<div class="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50">
+  <div class="max-w-2xl mx-auto p-4 md:p-8">
+    <!-- Header Section -->
+    <div class="mb-8">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="bg-gradient-to-br from-sky-500 to-indigo-600 rounded-xl p-3">
+          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m0 0h-6"></path>
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-4xl font-bold bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">
+            Log Body State
+          </h1>
+          <p class="text-gray-600 mt-1">Record your body measurements and progress</p>
+        </div>
       </div>
     </div>
 
-    <!-- Notes -->
-    <div>
-      <label class="block text-sm font-medium text-gray-700 mb-1">
-        Notes
-      </label>
-      <textarea
-        formControlName="notes"
-        rows="3"
-        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-        placeholder="Any additional notes..."
-      ></textarea>
-    </div>
+    <!-- Alert Messages -->
+    @if (error()) {
+      <div class="bg-white border-l-4 border-red-500 rounded-xl shadow-lg p-6 mb-6">
+        <div class="flex items-start gap-4">
+          <div class="bg-red-100 rounded-full p-3 flex-shrink-0">
+            <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-lg font-semibold text-red-600">Error</h3>
+            <p class="text-gray-600 mt-1">{{ error() }}</p>
+          </div>
+        </div>
+      </div>
+    }
 
-    <!-- Buttons -->
-    <div class="flex gap-4 pt-6">
-      <button
-        type="submit"
-        [disabled]="loading()"
-        class="flex-1 bg-blue-600 text-white font-medium py-2 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 transition"
-      >
-        {{ loading() ? 'Saving...' : 'Save Log' }}
-      </button>
-      <button
-        type="button"
-        routerLink="/client/body-state"
-        class="flex-1 bg-gray-300 text-gray-700 font-medium py-2 rounded-lg hover:bg-gray-400 transition"
-      >
-        Cancel
-      </button>
+    @if (success()) {
+      <div class="bg-white border-l-4 border-green-500 rounded-xl shadow-lg p-6 mb-6">
+        <div class="flex items-start gap-4">
+          <div class="bg-green-100 rounded-full p-3 flex-shrink-0">
+            <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-lg font-semibold text-green-600">Success!</h3>
+            <p class="text-gray-600 mt-1">Body state log added successfully. Redirecting...</p>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- Form Card -->
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-8">
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-8">
+        <!-- Essential Measurements Section -->
+        <div>
+          <div class="flex items-center gap-2 mb-6">
+            <div class="bg-gradient-to-br from-sky-100 to-indigo-100 rounded-lg p-2">
+              <svg class="w-5 h-5 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25m0-3H5.625C4.504 9 4 8.496 4 7.875v-1.5C4 4.504 4.504 4 5.625 4h12.75c1.121 0 1.625.504 1.625 1.125v1.5c0 .621-.504 1.125-1.625 1.125H15m2.25 3H17.625c1.121 0 1.625.504 1.625 1.125v1.5c0 1.121-.504 1.625-1.625 1.625h-2.25m0 0H9m0 3h2.25m0 0H7.125C4.504 17.625 3 16.121 3 13.875v-1.5C3 11.504 3.504 11 4.125 11h12.75c1.121 0 1.625.504 1.625 1.125v1.5C19.625 16.121 18.121 17.625 15.375 17.625H13.125"></path>
+              </svg>
+            </div>
+            <h2 class="text-xl font-bold text-gray-900">Essential Measurements</h2>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Weight -->
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-3">
+                Weight (kg) <span class="text-red-500">*</span>
+              </label>
+              <div class="relative">
+                <input
+                  type="number"
+                  formControlName="weightKg"
+                  step="0.1"
+                  min="20"
+                  max="500"
+                  class="w-full px-4 py-3 pr-10 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:border-transparent transition"
+                  placeholder="Enter weight"
+                />
+                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 font-medium pointer-events-none">kg</span>
+              </div>
+              @if (form.get('weightKg')?.invalid && form.get('weightKg')?.touched) {
+                <p class="text-red-500 text-sm mt-2 flex items-center gap-1">
+                  <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M18.101 12.93a1 1 0 00-1.414-1.414L10 15.586 7.707 13.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l8-8z" clip-rule="evenodd"></path>
+                  </svg>
+                  Weight must be between 20-500 kg
+                </p>
+              }
+            </div>
+
+            <!-- Body Fat Percentage -->
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-3">
+                Body Fat (%)
+              </label>
+              <div class="relative">
+                <input
+                  type="number"
+                  formControlName="bodyFatPercent"
+                  step="0.1"
+                  min="1"
+                  max="80"
+                  class="w-full px-4 py-3 pr-10 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:border-transparent transition"
+                  placeholder="Enter percentage"
+                />
+                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 font-medium pointer-events-none">%</span>
+              </div>
+              @if (form.get('bodyFatPercent')?.invalid && form.get('bodyFatPercent')?.touched) {
+                <p class="text-red-500 text-sm mt-2 flex items-center gap-1">
+                  <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M18.101 12.93a1 1 0 00-1.414-1.414L10 15.586 7.707 13.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l8-8z" clip-rule="evenodd"></path>
+                  </svg>
+                  Body fat must be between 1-80%
+                </p>
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- Photos Section -->
+        <div>
+          <div class="flex items-center gap-2 mb-6">
+            <div class="bg-gradient-to-br from-purple-100 to-pink-100 rounded-lg p-2">
+              <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+              </svg>
+            </div>
+            <h2 class="text-xl font-bold text-gray-900">Progress Photos</h2>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <!-- Front Photo -->
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-3">
+                Front Photo
+              </label>
+              <input
+                type="url"
+                formControlName="photoFrontUrl"
+                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:border-transparent transition"
+                placeholder="https://..."
+              />
+            </div>
+
+            <!-- Side Photo -->
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-3">
+                Side Photo
+              </label>
+              <input
+                type="url"
+                formControlName="photoSideUrl"
+                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:border-transparent transition"
+                placeholder="https://..."
+              />
+            </div>
+
+            <!-- Back Photo -->
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-3">
+                Back Photo
+              </label>
+              <input
+                type="url"
+                formControlName="photoBackUrl"
+                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:border-transparent transition"
+                placeholder="https://..."
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- Notes Section -->
+        <div>
+          <div class="flex items-center gap-2 mb-6">
+            <div class="bg-gradient-to-br from-yellow-100 to-orange-100 rounded-lg p-2">
+              <svg class="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+              </svg>
+            </div>
+            <h2 class="text-xl font-bold text-gray-900">Notes</h2>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-3">
+              Add Notes
+            </label>
+            <textarea
+              formControlName="notes"
+              rows="4"
+              class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:border-transparent transition"
+              placeholder="How are you feeling? Any observations about your progress?"
+            ></textarea>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex gap-4 pt-6 border-t border-gray-200">
+          <button
+            type="submit"
+            [disabled]="loading()"
+            class="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-sky-600 to-indigo-600 hover:from-sky-700 hover:to-indigo-700 disabled:from-gray-400 disabled:to-gray-400 text-white font-semibold rounded-xl shadow-lg transition transform hover:scale-105 disabled:scale-100 disabled:opacity-75">
+            @if (loading()) {
+              <svg class="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+              </svg>
+              <span>Saving...</span>
+            } @else {
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+              </svg>
+              <span>Save Log</span>
+            }
+          </button>
+          <button
+            type="button"
+            routerLink="/body-state"
+            class="flex-1 px-6 py-3 bg-white hover:bg-gray-50 border border-gray-300 text-gray-900 font-semibold rounded-xl shadow transition">
+            Cancel
+          </button>
+        </div>
+      </form>
     </div>
-  </form>
+  </div>
 </div>
-
-@if (!form) {
-  <p>Loading form...</p>
-}
