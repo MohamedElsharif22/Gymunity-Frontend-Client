@@ -1,5 +1,6 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { Router } from '@angular/router';
 import { Observable, tap, finalize } from 'rxjs';
 import { ApiService } from './api.service';
 import {
@@ -11,7 +12,8 @@ import {
   UpdateProfileRequest,
   ChangePasswordRequest,
   SendResetPasswordLinkRequest,
-  ResetPasswordRequest
+  ResetPasswordRequest,
+  UserRole
 } from '../models';
 import { environment } from '../../../environments/environment';
 
@@ -21,7 +23,9 @@ import { environment } from '../../../environments/environment';
 export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly apiService = inject(ApiService);
+  private readonly router = inject(Router);
   private readonly apiUrl = (environment as any).apiUrl;
+  private readonly trainerUrl = (environment as any).trainerUrl;
   private readonly tokenKey = 'authToken';
   private readonly userKey = 'authUser';
 
@@ -107,6 +111,25 @@ export class AuthService {
 
   getCurrentUser(): User | null {
     return this.currentUserSignal();
+  }
+
+  /**
+   * Navigate user based on their role
+   * Follows Angular routing best practices
+   *
+   * @param user - The authenticated user with role information
+   * @param returnUrl - Optional return URL for clients
+   */
+  navigateByRole(user: User, returnUrl?: string): void {
+    // Default role is Client (1) if not specified
+    if (user.role === UserRole.Trainer) {
+      // Navigate trainer to trainer app
+      window.location.href = this.trainerUrl;
+    } else {
+      // Navigate client to dashboard
+      const route = returnUrl || '/dashboard';
+      this.router.navigateByUrl(route);
+    }
   }
 
   private setAuthData(response: AuthResponse): void {

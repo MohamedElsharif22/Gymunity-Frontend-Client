@@ -1,9 +1,10 @@
-import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../../../core/services/auth.service';
-import { LoginRequest } from '../../../../core/models';
+import { GoogleAuthService } from '../../../../core/services/google-auth.service';
+import { LoginRequest, GoogleAuthRequest, UserRole } from '../../../../core/models';
 import { IconComponent } from '../../../../shared/components/icon/icon.component';
 
 @Component({
@@ -12,7 +13,7 @@ import { IconComponent } from '../../../../shared/components/icon/icon.component
   imports: [CommonModule, ReactiveFormsModule, RouterModule, IconComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="min-h-screen bg-gradient-to-br from-sky-600 via-sky-700 to-blue-800 flex items-center justify-center px-4 py-8">
+    <div class="min-h-screen bg-linear-to-br from-sky-600 via-sky-700 to-blue-800 flex items-center justify-center px-4 py-8">
       <div class="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
         
         <!-- Left Side - Branding & Benefits -->
@@ -27,7 +28,7 @@ import { IconComponent } from '../../../../shared/components/icon/icon.component
 
           <div class="space-y-6">
             <div class="flex items-start gap-4">
-              <div class="w-12 h-12 bg-white bg-opacity-10 rounded-lg flex items-center justify-center flex-shrink-0 backdrop-blur-md border border-white border-opacity-20">
+              <div class="w-12 h-12 bg-white bg-opacity-10 rounded-lg flex items-center justify-center shrink-0 backdrop-blur-md border border-white border-opacity-20">
                 <app-icon name="zap" size="24" color="sky"></app-icon>
               </div>
               <div>
@@ -37,7 +38,7 @@ import { IconComponent } from '../../../../shared/components/icon/icon.component
             </div>
 
             <div class="flex items-start gap-4">
-              <div class="w-12 h-12 bg-white bg-opacity-10 rounded-lg flex items-center justify-center flex-shrink-0 backdrop-blur-md border border-white border-opacity-20">
+              <div class="w-12 h-12 bg-white bg-opacity-10 rounded-lg flex items-center justify-center shrink-0 backdrop-blur-md border border-white border-opacity-20">
                 <app-icon name="users" size="24" color="sky"></app-icon>
               </div>
               <div>
@@ -47,7 +48,7 @@ import { IconComponent } from '../../../../shared/components/icon/icon.component
             </div>
 
             <div class="flex items-start gap-4">
-              <div class="w-12 h-12 bg-white bg-opacity-10 rounded-lg flex items-center justify-center flex-shrink-0 backdrop-blur-md border border-white border-opacity-20">
+              <div class="w-12 h-12 bg-white bg-opacity-10 rounded-lg flex items-center justify-center shrink-0 backdrop-blur-md border border-white border-opacity-20">
                 <app-icon name="award" size="24" color="sky"></app-icon>
               </div>
               <div>
@@ -121,7 +122,7 @@ import { IconComponent } from '../../../../shared/components/icon/icon.component
 
               <!-- Error Message -->
               <div *ngIf="error()" class="bg-red-50 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded-lg text-sm flex items-start gap-3">
-                <app-icon name="x" size="20" color="red" class="flex-shrink-0 mt-0.5"></app-icon>
+                <app-icon name="x" size="20" color="red" class="shrink-0 mt-0.5"></app-icon>
                 <span>{{ error() }}</span>
               </div>
 
@@ -129,11 +130,28 @@ import { IconComponent } from '../../../../shared/components/icon/icon.component
               <button
                 type="submit"
                 [disabled]="isLoading() || loginForm.invalid"
-                class="w-full py-3 px-4 bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-700 hover:to-blue-700 disabled:from-gray-400 disabled:to-gray-400 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition duration-300 transform hover:scale-105 hover:shadow-lg disabled:hover:scale-100 disabled:shadow-md flex items-center justify-center gap-2"
+                class="w-full py-3 px-4 bg-linear-to-r from-sky-600 to-blue-600 hover:from-sky-700 hover:to-blue-700 disabled:from-gray-400 disabled:to-gray-400 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition duration-300 transform hover:scale-105 hover:shadow-lg disabled:hover:scale-100 disabled:shadow-md flex items-center justify-center gap-2"
               >
                 <app-icon *ngIf="!isLoading()" name="zap" size="20" color="white"></app-icon>
                 {{ isLoading() ? 'Signing in...' : 'Sign In' }}
               </button>
+
+              <!-- Divider -->
+              <div class="relative my-6">
+                <div class="absolute inset-0 flex items-center">
+                  <div class="w-full border-t border-gray-300"></div>
+                </div>
+                <div class="relative flex justify-center text-sm">
+                  <span class="px-2 bg-white text-gray-500">or</span>
+                </div>
+              </div>
+
+              <!-- Google Sign-In Button -->
+              <div #googleSignInButton id="google-signin-button" class="w-full"></div>
+              <p *ngIf="googleError()" class="text-red-500 text-xs mt-2 flex items-center gap-1">
+                <app-icon name="alert" size="16" color="red"></app-icon>
+                {{ googleError() }}
+              </p>
             </form>
 
             <!-- Sign Up Link -->
@@ -152,9 +170,12 @@ import { IconComponent } from '../../../../shared/components/icon/icon.component
   `,
   styles: []
 })
-export class LoginComponent {
+export class LoginComponent implements AfterViewInit {
+  @ViewChild('googleSignInButton') googleSignInButton!: ElementRef;
+
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
+  private googleAuthService = inject(GoogleAuthService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
 
@@ -165,10 +186,77 @@ export class LoginComponent {
 
   isLoading = this.authService.isLoading;
   error = signal<string | null>(null);
+  googleError = signal<string | null>(null);
   private returnUrl: string = '/dashboard';
 
   constructor() {
     this.returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/dashboard';
+    this.initializeGoogleAuth();
+  }
+
+  /**
+   * Initialize Google Authentication
+   * Load Google Sign-In library on component creation
+   */
+  private initializeGoogleAuth(): void {
+    this.googleAuthService.initialize().catch(err => {
+      console.error('Failed to initialize Google Auth:', err);
+    });
+  }
+
+  /**
+   * After view initialization, render Google Sign-In button
+   * This runs after component template is rendered
+   */
+  ngAfterViewInit(): void {
+    if (this.googleSignInButton?.nativeElement) {
+      this.googleAuthService.initializeButton(
+        this.googleSignInButton.nativeElement.id || 'google-signin-button',
+        (response) => this.handleGoogleSuccess(response),
+        (error) => this.handleGoogleError(error)
+      );
+    }
+  }
+
+  /**
+   * Handle successful Google sign-in
+   * Send ID token to backend for authentication
+   */
+  private handleGoogleSuccess(response: any): void {
+    this.googleError.set(null);
+    const idToken = response.credential;
+
+    // Create Google Auth Request with default role as Client
+    const googleAuthRequest: GoogleAuthRequest = {
+      idToken,
+      role: UserRole.Client // Default to Client (1)
+    };
+
+    // Send to backend
+    this.authService.googleAuth(googleAuthRequest).subscribe({
+      next: (authResponse) => {
+        // Navigate based on user role
+        const user = this.authService.getCurrentUser();
+        if (user) {
+          this.authService.navigateByRole(user, this.returnUrl);
+        }
+      },
+      error: (err) => {
+        const errorMessage =
+          err.error?.message ||
+          err.error?.errors?.[0] ||
+          'Google sign-in failed. Please try again.';
+        this.googleError.set(errorMessage);
+      }
+    });
+  }
+
+  /**
+   * Handle Google sign-in error
+   */
+  private handleGoogleError(error: any): void {
+    console.error('Google Sign-In error:', error);
+    this.googleError.set('Failed to sign in with Google. Please try again.');
   }
 
   onSubmit() {
@@ -186,7 +274,11 @@ export class LoginComponent {
 
     this.authService.login(credentials).subscribe({
       next: () => {
-        this.router.navigateByUrl(this.returnUrl);
+        // Navigate based on user role
+        const user = this.authService.getCurrentUser();
+        if (user) {
+          this.authService.navigateByRole(user, this.returnUrl);
+        }
       },
       error: (err: any) => {
         const errorMessage = err.error?.message || err.error?.errors?.[0] || 'Login failed. Please try again.';
