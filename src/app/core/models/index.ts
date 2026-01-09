@@ -12,6 +12,7 @@ export * from './trainer.model';
 export * from './workout.model';
 export * from './payment.model';
 export * from './common.model';
-export * from './chat.model';
 export * from './notification.model';
+export * from './chat.model';
+
 

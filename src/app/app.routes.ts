@@ -126,6 +126,13 @@ export const routes: Routes = [
         canActivate: [profileCompletionGuard],
         loadComponent: () => import('./features/subscriptions/subscriptions.component').then(m => m.SubscriptionsComponent)
       },
+      // Chat Routes
+      {
+        path: 'chat',
+        canActivate: [profileCompletionGuard],
+        loadComponent: () => import('./features/chat/components/chat.component').then(m => m.ChatComponent),
+        data: { fullscreen: false }
+      },
       // Payment Routes - Stripe & PayPal Integration
       {
         path: 'payments',

@@ -9,4 +9,5 @@ export * from './auth.interceptor';
 export * from './notification.service';
 export * from './client-profile.service';
 export * from './client-logs.service';
+export * from './chat.service';
 
