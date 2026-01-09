@@ -131,7 +131,7 @@
                 }
                 <div class="detail-row">
                   <span class="label">Recorded:</span>
-                  <span class="value">{{ p.bodyStateLog.createdAt | date: 'MMM dd, yyyy' }}</span>
+                  <span class="value">{{ p.bodyStateLog.loggedAt | date: 'MMM dd, yyyy' }}</span>
                 </div>
               </div>
             }
@@ -156,95 +156,156 @@
   } @else if (!loading() && isEditing()) {
     <!-- Edit Mode -->
     <div class="profile-card">
-      <form [formGroup]="profileForm" (ngSubmit)="onSubmit()">
-        <div class="form-section">
-          <h3>Basic Information</h3>
-          <div class="form-group">
-            <label for="userName">Username *</label>
-            <input
-              id="userName"
-              type="text"
-              formControlName="userName"
-              class="form-input"
-              placeholder="Enter username (3-50 characters)"
-            >
-            @if (profileForm.get('userName')?.invalid && profileForm.get('userName')?.touched) {
-              <span class="error">Username must be between 3 and 50 characters</span>
-            }
+      <div class="bg-gradient-to-r from-blue-50 to-blue-100 px-6 py-4 border-b border-gray-200">
+        <h2 class="text-2xl font-bold text-gray-900 m-0">{{ profile() ? '✏️ Edit Profile' : '✨ Create Profile' }}</h2>
+        <p class="text-sm text-gray-600 mt-1 m-0">{{ profile() ? 'Update your fitness information' : 'Set up your fitness profile' }}</p>
+      </div>
+
+      <form [formGroup]="profileForm" (ngSubmit)="onSubmit()" class="px-6 py-6">
+        <!-- Basic Information Section -->
+        <div class="mb-8">
+          <div class="flex items-center gap-2 mb-4">
+            <div class="w-1 h-6 bg-blue-600 rounded-full"></div>
+            <h3 class="text-lg font-semibold text-gray-900">Basic Information</h3>
+          </div>
+          
+          <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+            <div class="form-group">
+              <label for="userName" class="block text-sm font-medium text-gray-700 mb-2">Username *</label>
+              <input
+                id="userName"
+                type="text"
+                formControlName="userName"
+                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder-gray-500 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Enter username (3-50 characters)"
+              >
+              @if (profileForm.get('userName')?.invalid && profileForm.get('userName')?.touched) {
+                <span class="text-red-600 text-sm mt-1 flex items-center gap-1">
+                  <span>⚠️</span> Username must be between 3 and 50 characters
+                </span>
+              }
+            </div>
           </div>
         </div>
 
-        <div class="form-section">
-          <h3>Physical Information</h3>
-          <div class="form-group">
-            <label for="heightCm">Height (cm)</label>
-            <input
-              id="heightCm"
-              type="number"
-              formControlName="heightCm"
-              class="form-input"
-              placeholder="Enter height in cm (50-300)"
-            >
-            @if (profileForm.get('heightCm')?.invalid && profileForm.get('heightCm')?.touched) {
-              <span class="error">Height must be between 50 and 300 cm</span>
-            }
+        <!-- Physical Information Section -->
+        <div class="mb-8">
+          <div class="flex items-center gap-2 mb-4">
+            <div class="w-1 h-6 bg-blue-600 rounded-full"></div>
+            <h3 class="text-lg font-semibold text-gray-900">Physical Information</h3>
           </div>
 
-          <div class="form-group">
-            <label for="startingWeightKg">Starting Weight (kg)</label>
-            <input
-              id="startingWeightKg"
-              type="number"
-              step="0.1"
-              formControlName="startingWeightKg"
-              class="form-input"
-              placeholder="Enter starting weight in kg (20-500)"
-            >
-            @if (profileForm.get('startingWeightKg')?.invalid && profileForm.get('startingWeightKg')?.touched) {
-              <span class="error">Weight must be between 20 and 500 kg</span>
-            }
-          </div>
+          <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 space-y-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div class="form-group">
+                <label for="heightCm" class="block text-sm font-medium text-gray-700 mb-2">Height (cm)</label>
+                <input
+                  id="heightCm"
+                  type="number"
+                  formControlName="heightCm"
+                  class="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder-gray-500 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="150-250"
+                >
+                @if (profileForm.get('heightCm')?.invalid && profileForm.get('heightCm')?.touched) {
+                  <span class="text-red-600 text-sm mt-1 flex items-center gap-1">
+                    <span>⚠️</span> Must be between 50 and 300 cm
+                  </span>
+                }
+              </div>
 
-          <div class="form-group">
-            <label for="gender">Gender</label>
-            <select id="gender" formControlName="gender" class="form-input">
-              <option [value]="null">Select gender</option>
-              @for (option of genderOptions; track option.value) {
-                <option [value]="option.value">{{ option.label }}</option>
-              }
-            </select>
-          </div>
-        </div>
+              <div class="form-group">
+                <label for="startingWeightKg" class="block text-sm font-medium text-gray-700 mb-2">Starting Weight (kg)</label>
+                <input
+                  id="startingWeightKg"
+                  type="number"
+                  step="0.1"
+                  formControlName="startingWeightKg"
+                  class="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder-gray-500 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="50-150"
+                >
+                @if (profileForm.get('startingWeightKg')?.invalid && profileForm.get('startingWeightKg')?.touched) {
+                  <span class="text-red-600 text-sm mt-1 flex items-center gap-1">
+                    <span>⚠️</span> Must be between 20 and 500 kg
+                  </span>
+                }
+              </div>
+            </div>
 
-        <div class="form-section">
-          <h3>Fitness Profile</h3>
-          <div class="form-group">
-            <label for="goal">Fitness Goal</label>
-            <select id="goal" formControlName="goal" class="form-input">
-              <option [value]="null">Select fitness goal</option>
-              @for (option of goalOptions; track option.value) {
-                <option [value]="option.value">{{ option.label }}</option>
-              }
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label for="experienceLevel">Experience Level</label>
-            <select id="experienceLevel" formControlName="experienceLevel" class="form-input">
-              <option [value]="null">Select experience level</option>
-              @for (option of experienceLevelOptions; track option.value) {
-                <option [value]="option.value">{{ option.label }}</option>
-              }
-            </select>
+            <div class="form-group">
+              <label for="gender" class="block text-sm font-medium text-gray-700 mb-2">Gender</label>
+              <select 
+                id="gender" 
+                formControlName="gender" 
+                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder-gray-500 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none cursor-pointer hover:bg-gray-50"
+                style="background-image: url('data:image/svg+xml;charset=UTF-8,%3csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22currentColor%22 stroke-width=%222%22%3e%3cpolyline points=%226 9 12 15 18 9%22%3e%3c/polyline%3e%3c/svg%3e'); background-repeat: no-repeat; background-position: right 0.75rem center; background-size: 1.5em 1.5em; padding-right: 2.5rem;"
+              >
+                <option [value]="null">Select gender</option>
+                @for (option of genderOptions; track option.value) {
+                  <option [value]="option.value">{{ option.label }}</option>
+                }
+              </select>
+            </div>
           </div>
         </div>
 
-        <div class="action-buttons">
-          <button type="submit" class="btn btn-primary" [disabled]="loading() || profileForm.invalid">
-            {{ profile() ? 'Update Profile' : 'Create Profile' }}
+        <!-- Fitness Profile Section -->
+        <div class="mb-8">
+          <div class="flex items-center gap-2 mb-4">
+            <div class="w-1 h-6 bg-blue-600 rounded-full"></div>
+            <h3 class="text-lg font-semibold text-gray-900">Fitness Profile</h3>
+          </div>
+
+          <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 space-y-4">
+            <div class="form-group">
+              <label for="goal" class="block text-sm font-medium text-gray-700 mb-2">Fitness Goal</label>
+              <select 
+                id="goal" 
+                formControlName="goal" 
+                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder-gray-500 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none cursor-pointer hover:bg-gray-50"
+                style="background-image: url('data:image/svg+xml;charset=UTF-8,%3csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22currentColor%22 stroke-width=%222%22%3e%3cpolyline points=%226 9 12 15 18 9%22%3e%3c/polyline%3e%3c/svg%3e'); background-repeat: no-repeat; background-position: right 0.75rem center; background-size: 1.5em 1.5em; padding-right: 2.5rem;"
+              >
+                <option [value]="null">Select fitness goal</option>
+                @for (option of goalOptions; track option.value) {
+                  <option [value]="option.value">{{ option.label }}</option>
+                }
+              </select>
+              <p class="text-xs text-gray-500 mt-1">What's your primary fitness goal?</p>
+            </div>
+
+            <div class="form-group">
+              <label for="experienceLevel" class="block text-sm font-medium text-gray-700 mb-2">Experience Level</label>
+              <select 
+                id="experienceLevel" 
+                formControlName="experienceLevel" 
+                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder-gray-500 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none cursor-pointer hover:bg-gray-50"
+                style="background-image: url('data:image/svg+xml;charset=UTF-8,%3csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22currentColor%22 stroke-width=%222%22%3e%3cpolyline points=%226 9 12 15 18 9%22%3e%3c/polyline%3e%3c/svg%3e'); background-repeat: no-repeat; background-position: right 0.75rem center; background-size: 1.5em 1.5em; padding-right: 2.5rem;"
+              >
+                <option [value]="null">Select experience level</option>
+                @for (option of experienceLevelOptions; track option.value) {
+                  <option [value]="option.value">{{ option.label }}</option>
+                }
+              </select>
+              <p class="text-xs text-gray-500 mt-1">Your fitness experience level</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex gap-3 pt-6 border-t border-gray-200">
+          <button 
+            type="submit" 
+            class="flex-1 px-4 py-3 rounded-lg font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800 focus:ring-blue-500 shadow-md hover:shadow-lg"
+            [disabled]="loading() || profileForm.invalid"
+          >
+            {{ profile() ? '💾 Update Profile' : '✨ Create Profile' }}
           </button>
-          <button type="button" class="btn btn-secondary" (click)="onCancel()" [disabled]="loading()">
-            Cancel
+          <button 
+            type="button" 
+            class="flex-1 px-4 py-3 rounded-lg font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 bg-gray-200 text-gray-900 hover:bg-gray-300 active:bg-gray-400 focus:ring-gray-400"
+            (click)="onCancel()" 
+            [disabled]="loading()"
+          >
+            ❌ Cancel
           </button>
         </div>
       </form>

@@ -128,10 +128,15 @@ export class ProfileComponent implements OnInit, OnDestroy {
             // Merge body state log and dashboard data into profile response
             let profileData = { ...data.profile };
             
+            // Convert string enum values to numeric enums
+            profileData.gender = this.convertStringToGenderEnum(profileData.gender as any);
+            profileData.goal = this.convertStringToGoalEnum(profileData.goal as any);
+            profileData.experienceLevel = this.convertStringToExperienceLevelEnum(profileData.experienceLevel as any);
+            
             // If dashboard has fitness metadata, merge it
             if (data.dashboard?.summary) {
-              profileData.goal = profileData.goal || data.dashboard.summary.goal;
-              profileData.experienceLevel = profileData.experienceLevel || data.dashboard.summary.experienceLevel;
+              profileData.goal = profileData.goal || this.convertStringToGoalEnum(data.dashboard.summary.goal as any);
+              profileData.experienceLevel = profileData.experienceLevel || this.convertStringToExperienceLevelEnum(data.dashboard.summary.experienceLevel as any);
             }
             
             const profileWithBodyState: ClientProfileResponse = {
@@ -156,18 +161,41 @@ export class ProfileComponent implements OnInit, OnDestroy {
   private populateForm(profile: ClientProfileResponse): void {
     console.log('[ProfileComponent] Populating form with profile data:', profile);
     
+    // Convert string enum values from backend to numeric enums if needed
+    const gender = this.convertStringToGenderEnum(profile.gender as any);
+    const goal = this.convertStringToGoalEnum(profile.goal as any);
+    const experienceLevel = this.convertStringToExperienceLevelEnum(profile.experienceLevel as any);
+    
     this.profileForm.patchValue({
       userName: profile.userName || '',
       heightCm: profile.heightCm ?? null,
       startingWeightKg: profile.startingWeightKg ?? null,
-      gender: profile.gender ?? null,
-      goal: profile.goal ?? null,
-      experienceLevel: profile.experienceLevel ?? null
+      gender: gender ?? null,
+      goal: goal ?? null,
+      experienceLevel: experienceLevel ?? null
     }, { emitEvent: false });
     
     console.log('[ProfileComponent] Form values after population:', this.profileForm.value);
     console.log('[ProfileComponent] Goal field value:', this.profileForm.get('goal')?.value);
     console.log('[ProfileComponent] Experience level field value:', this.profileForm.get('experienceLevel')?.value);
+  }
+
+  private convertStringToGenderEnum(value: string | Gender | undefined): Gender | undefined {
+    if (!value) return undefined;
+    if (typeof value === 'number') return value as Gender;
+    return Gender[value as keyof typeof Gender];
+  }
+
+  private convertStringToGoalEnum(value: string | ClientGoal | undefined): ClientGoal | undefined {
+    if (!value) return undefined;
+    if (typeof value === 'number') return value as ClientGoal;
+    return ClientGoal[value as keyof typeof ClientGoal];
+  }
+
+  private convertStringToExperienceLevelEnum(value: string | ExperienceLevel | undefined): ExperienceLevel | undefined {
+    if (!value) return undefined;
+    if (typeof value === 'number') return value as ExperienceLevel;
+    return ExperienceLevel[value as keyof typeof ExperienceLevel];
   }
 
   onEdit(): void {
@@ -219,23 +247,57 @@ export class ProfileComponent implements OnInit, OnDestroy {
       takeUntil(this.destroy$)
     ).subscribe({
       next: (updatedProfile) => {
+        // Handle case where backend returns null by using current profile + form values
+        if (!updatedProfile) {
+          console.warn('[ProfileComponent] Backend returned null response, using form values');
+          const currentProfile = this.profile();
+          
+          // Convert string enums to numeric
+          const enrichedProfile: ClientProfileResponse = {
+            id: currentProfile?.id || 0,
+            userName: request.userName,
+            heightCm: request.heightCm,
+            startingWeightKg: request.startingWeightKg,
+            gender: this.convertStringToGenderEnum(request.gender as any),
+            goal: this.convertStringToGoalEnum(request.goal as any),
+            experienceLevel: this.convertStringToExperienceLevelEnum(request.experienceLevel as any),
+            createdAt: currentProfile?.createdAt || new Date(),
+            updatedAt: new Date(),
+            bodyStateLog: currentProfile?.bodyStateLog
+          };
+          
+          console.log('[ProfileComponent] Using fallback profile:', enrichedProfile);
+          this.profile.set(enrichedProfile);
+          this.populateForm(enrichedProfile);
+          this.isEditing.set(false);
+          this.loading.set(false);
+          this.success.set(`Profile ${operation === 'update' ? 'updated' : 'created'} successfully!`);
+          setTimeout(() => this.success.set(null), 3000);
+          return;
+        }
+
         // Ensure all fields are properly updated from the response
         console.log('[ProfileComponent] Profile response:', updatedProfile);
         console.log('[ProfileComponent] Response goal:', updatedProfile.goal, 'Type:', typeof updatedProfile.goal);
         console.log('[ProfileComponent] Response experienceLevel:', updatedProfile.experienceLevel, 'Type:', typeof updatedProfile.experienceLevel);
         
+        // Convert string enum values to numeric enums
+        const convertedGender = this.convertStringToGenderEnum(updatedProfile.gender as any);
+        const convertedGoal = this.convertStringToGoalEnum(updatedProfile.goal as any);
+        const convertedExperienceLevel = this.convertStringToExperienceLevelEnum(updatedProfile.experienceLevel as any);
+        
         // Merge the submitted form values into the response (in case backend doesn't return them)
         const enrichedProfile: ClientProfileResponse = {
-          id: updatedProfile.id,
+          id: updatedProfile.id || this.profile()?.id || 0,
           userName: updatedProfile.userName || request.userName,
           heightCm: updatedProfile.heightCm !== undefined ? updatedProfile.heightCm : request.heightCm,
           startingWeightKg: updatedProfile.startingWeightKg !== undefined ? updatedProfile.startingWeightKg : request.startingWeightKg,
-          gender: updatedProfile.gender !== undefined ? updatedProfile.gender : request.gender,
-          goal: updatedProfile.goal !== undefined ? updatedProfile.goal : request.goal,
-          experienceLevel: updatedProfile.experienceLevel !== undefined ? updatedProfile.experienceLevel : request.experienceLevel,
-          createdAt: updatedProfile.createdAt,
+          gender: convertedGender || request.gender,
+          goal: convertedGoal || request.goal,
+          experienceLevel: convertedExperienceLevel || request.experienceLevel,
+          createdAt: updatedProfile.createdAt || this.profile()?.createdAt || new Date(),
           updatedAt: updatedProfile.updatedAt,
-          bodyStateLog: updatedProfile.bodyStateLog
+          bodyStateLog: updatedProfile.bodyStateLog || this.profile()?.bodyStateLog
         };
         
         console.log('[ProfileComponent] Enriched profile:', enrichedProfile);

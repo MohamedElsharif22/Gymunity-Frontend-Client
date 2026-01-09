@@ -36,7 +36,7 @@
           }
           <div>
             <p class="text-gray-600 text-sm">Date</p>
-            <p class="text-lg font-semibold">{{ formatDate(log.createdAt) }}</p>
+            <p class="text-lg font-semibold">{{ formatDate(log.loggedAt) }}</p>
           </div>
         </div>
       </div>
@@ -65,7 +65,7 @@
                   }
                   <div>
                     <p class="text-gray-600 text-sm">Date</p>
-                    <p class="font-semibold">{{ formatDate(log.createdAt) }}</p>
+                    <p class="font-semibold">{{ formatDate(log.loggedAt) }}</p>
                   </div>
                 </div>
                 @if (log.notes) {

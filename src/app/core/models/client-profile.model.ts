@@ -60,8 +60,7 @@ export interface ClientProfileRequest {
  * Current weight and body composition tracking
  */
 export interface BodyStateLogResponse {
-  id: number;
-  clientProfileId: number;
+  id?: number;
   weightKg: number;
   bodyFatPercent?: number;
   measurementsJson?: string;
@@ -69,8 +68,7 @@ export interface BodyStateLogResponse {
   photoSideUrl?: string;
   photoBackUrl?: string;
   notes?: string;
-  createdAt: Date;
-  updatedAt: Date;
+  loggedAt: string;
 }
 
 /**
