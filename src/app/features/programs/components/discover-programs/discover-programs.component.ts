@@ -47,7 +47,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
             <p class="text-red-800 font-medium text-lg">{{ error() }}</p>
             <button
               (click)="loadPrograms()"
-              class="mt-4 px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors">
+              class="mt-4 px-6 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-medium transition-colors">
               Try Again
             </button>
           </div>

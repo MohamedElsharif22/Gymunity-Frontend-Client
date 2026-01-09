@@ -46,7 +46,7 @@ import { AuthService } from '../../../core/services/auth.service';
               </button>
               <button
                 (click)="logout()"
-                class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-6 rounded-lg transition">
+                class="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-6 rounded-lg transition">
                 Logout
               </button>
             } @else {
@@ -104,7 +104,7 @@ import { AuthService } from '../../../core/services/auth.service';
                   </button>
                   <button
                     (click)="logout()"
-                    class="block w-full text-left px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition font-medium">
+                    class="block w-full text-left px-3 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition font-medium">
                     Logout
                   </button>
                 } @else {

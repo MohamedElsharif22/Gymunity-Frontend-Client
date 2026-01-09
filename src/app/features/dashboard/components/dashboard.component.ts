@@ -57,7 +57,7 @@ import { DashboardService, DashboardData } from '../services/dashboard.service';
                 <p class="text-red-700 mt-1">{{ error() }}</p>
                 <button
                   (click)="loadDashboard()"
-                  class="mt-4 px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition shadow-sm">
+                  class="mt-4 px-6 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-medium transition shadow-sm">
                   Try Again
                 </button>
               </div>

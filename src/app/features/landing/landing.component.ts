@@ -48,7 +48,7 @@ import { TrainerCard, Program } from '../../core/models';
               </button>
               <button
                 (click)="logout()"
-                class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-6 rounded-lg transition">
+                class="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-6 rounded-lg transition">
                 Logout
               </button>
             } @else {
@@ -106,7 +106,7 @@ import { TrainerCard, Program } from '../../core/models';
                   </button>
                   <button
                     (click)="logout()"
-                    class="block w-full text-left px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition font-medium">
+                    class="block w-full text-left px-3 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition font-medium">
                     Logout
                   </button>
                 } @else {
@@ -506,10 +506,10 @@ import { TrainerCard, Program } from '../../core/models';
                   <!-- Program Stats -->
                   <div class="flex gap-4 mb-4 text-sm text-gray-600">
                     @if (program.durationWeeks) {
-                      <span>â±ï¸ {{ program.durationWeeks }} weeks</span>
+                      <span>⏱️ {{ program.durationWeeks }} weeks</span>
                     }
                     @if (program.type) {
-                      <span>ðŸŽ¯ {{ program.type }}</span>
+                      <span>🎯 {{ program.type }}</span>
                     }
                   </div>
                 </div>
@@ -846,7 +846,7 @@ export class LandingComponent implements OnInit {
   }
 
   viewProgram(programId: number) {
-    this.router.navigate(['/discover/programs', programId]);
+    this.router.navigate(['/discover/packages', programId]);
   }
 
   viewTrainerProfile(trainer: TrainerCard) {

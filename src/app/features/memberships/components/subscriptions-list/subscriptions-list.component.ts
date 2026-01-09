@@ -28,7 +28,7 @@ import { SubscriptionResponse, SubscriptionStatus } from '../../../../core/model
           <p class="text-red-700 text-sm mb-4">{{ error() }}</p>
           <button 
             (click)="loadSubscriptions()" 
-            class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition">
+            class="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded-lg transition">
             Try Again
           </button>
         </div>
@@ -130,7 +130,7 @@ import { SubscriptionResponse, SubscriptionStatus } from '../../../../core/model
                   @if (subscription.status === 'Active') {
                     <button 
                       (click)="cancelSubscription(subscription.id)"
-                      class="w-full bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-lg transition">
+                      class="w-full bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg transition">
                       Cancel Subscription
                     </button>
                   }
