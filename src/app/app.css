@@ -3,6 +3,12 @@ router-outlet {
   display: block;
 }
 
+:host {
+  display: block;
+  width: 100%;
+  overflow-x: hidden;
+}
+
 .fullscreen-mode {
   position: fixed;
   top: 0;

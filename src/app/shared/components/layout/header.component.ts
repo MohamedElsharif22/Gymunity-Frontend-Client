@@ -55,7 +55,7 @@ import { AuthService } from '../../../core/services/auth.service';
           <div class="flex items-center space-x-4">
             <button
               (click)="logout()"
-              class="px-4 py-2 text-slate-600 hover:text-red-600 font-medium transition">
+              class="px-4 py-2 text-gray-900 hover:bg-gray-200 font-medium transition bg-gray-200 rounded-lg">
               Logout
             </button>
           </div>

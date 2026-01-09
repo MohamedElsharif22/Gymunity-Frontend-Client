@@ -239,7 +239,7 @@ import { DashboardService, DashboardData } from '../services/dashboard.service';
             <!-- Right Column: Quick Actions (1/3 width) -->
             <div class="space-y-6">
               <!-- Quick Actions Card -->
-              <div class="bg-gradient-to-br from-sky-600 to-indigo-600 rounded-2xl shadow-xl p-6 text-white">
+              <div class="bg-gradient-to-br from-sky-600 to-blue-600 rounded-2xl shadow-xl p-6 text-white">
                 <h2 class="text-xl font-bold mb-6 flex items-center gap-2">
                   <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
@@ -311,15 +311,15 @@ import { DashboardService, DashboardData } from '../services/dashboard.service';
           <div class="bg-white rounded-2xl shadow-lg p-6">
             <div class="flex items-center justify-between mb-6">
               <div class="flex items-center gap-3">
-                <div class="bg-indigo-100 rounded-lg p-2">
-                  <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="bg-sky-100 rounded-lg p-2">
+                  <svg class="w-6 h-6 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
                   </svg>
                 </div>
                 <h2 class="text-2xl font-bold text-gray-900">Active Programs</h2>
               </div>
               <a routerLink="/discover-programs"
-                 class="flex items-center gap-2 text-indigo-600 hover:text-indigo-700 font-medium transition group">
+                 class="flex items-center gap-2 text-sky-600 hover:text-sky-700 font-medium transition group">
                 Browse All
                 <svg class="w-5 h-5 group-hover:translate-x-1 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
@@ -330,7 +330,7 @@ import { DashboardService, DashboardData } from '../services/dashboard.service';
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               @if (activePrograms().length > 0) {
                 @for (program of activePrograms(); track program.id) {
-                  <div class="group border-2 border-gray-100 hover:border-indigo-300 rounded-xl overflow-hidden hover:shadow-xl transition-all transform hover:-translate-y-2 cursor-pointer bg-white"
+                  <div class="group border-2 border-gray-100 hover:border-sky-300 rounded-xl overflow-hidden hover:shadow-xl transition-all transform hover:-translate-y-2 cursor-pointer bg-white"
                        [routerLink]="['/programs', program.id]">
                     <!-- Program Image -->
                     @if (program.thumbnailUrl) {
@@ -345,7 +345,7 @@ import { DashboardService, DashboardData } from '../services/dashboard.service';
                         </div>
                       </div>
                     } @else {
-                      <div class="h-48 bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center relative overflow-hidden">
+                      <div class="h-48 bg-gradient-to-br from-sky-600 to-blue-600 flex items-center justify-center relative overflow-hidden">
                         <div class="absolute inset-0 opacity-10">
                           <div class="absolute inset-0" style="background-image: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,.1) 10px, rgba(255,255,255,.1) 20px);"></div>
                         </div>
@@ -386,7 +386,7 @@ import { DashboardService, DashboardData } from '../services/dashboard.service';
                       </div>
 
                       <!-- View Button -->
-                      <button class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold py-3 rounded-lg transition shadow-md flex items-center justify-center gap-2 group-hover:shadow-lg">
+                      <button class="w-full bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-700 hover:to-blue-700 text-white font-semibold py-3 rounded-lg transition shadow-md flex items-center justify-center gap-2 group-hover:shadow-lg">
                         View Program
                         <svg class="w-5 h-5 group-hover:translate-x-1 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>

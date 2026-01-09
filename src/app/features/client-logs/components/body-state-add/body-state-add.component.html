@@ -2,17 +2,20 @@
   <div class="max-w-2xl mx-auto p-4 md:p-8">
     <!-- Header Section -->
     <div class="mb-8">
-      <div class="flex items-center gap-3 mb-4">
-        <div class="bg-gradient-to-br from-sky-500 to-indigo-600 rounded-xl p-3">
-          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m0 0h-6"></path>
-          </svg>
-        </div>
-        <div>
-          <h1 class="text-4xl font-bold bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">
-            Log Body State
-          </h1>
-          <p class="text-gray-600 mt-1">Record your body measurements and progress</p>
+      <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-8 overflow-hidden relative">
+        <div class="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-sky-100 to-indigo-100 rounded-full -mr-20 -mt-20 opacity-50"></div>
+        <div class="relative z-10 flex items-start gap-6">
+          <div class="bg-gradient-to-br from-sky-500 to-indigo-600 rounded-2xl p-4 flex-shrink-0">
+            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+            </svg>
+          </div>
+          <div class="flex-1">
+            <h1 class="text-4xl md:text-5xl font-bold bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">
+              Log Body State
+            </h1>
+            <p class="text-gray-600 mt-2 text-lg">Record your body measurements and progress</p>
+          </div>
         </div>
       </div>
     </div>
@@ -95,7 +98,7 @@
             <!-- Body Fat Percentage -->
             <div>
               <label class="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-3">
-                Body Fat (%)
+                Body Fat (%) <span class="text-red-500">*</span>
               </label>
               <div class="relative">
                 <input
@@ -218,7 +221,7 @@
           </button>
           <button
             type="button"
-            routerLink="/body-state"
+            (click)="clearForm()"
             class="flex-1 px-6 py-3 bg-white hover:bg-gray-50 border border-gray-300 text-gray-900 font-semibold rounded-xl shadow transition">
             Cancel
           </button>

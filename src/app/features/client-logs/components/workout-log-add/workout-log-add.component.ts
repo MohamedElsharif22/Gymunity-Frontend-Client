@@ -72,7 +72,7 @@ export class WorkoutLogAddComponent implements OnInit, OnDestroy {
           this.success.set(true);
           this.loading.set(false);
           setTimeout(() => {
-            this.router.navigate(['/client/workout-logs']);
+            this.router.navigate(['/workout-logs']);
           }, 1500);
         },
         error: (err) => {

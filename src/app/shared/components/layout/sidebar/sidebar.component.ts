@@ -100,7 +100,7 @@ interface NavItem {
       <div class="p-4 border-t border-gray-100">
         <a 
           routerLink="/profile" 
-          class="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-gradient-to-r hover:from-gray-50 hover:to-blue-50 transition-all cursor-pointer group">
+          class="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-gradient-to-r hover:from-gray-50 hover:to-blue-50 hover:text-sky-500 transition-all cursor-pointer group">
           <div class="w-11 h-11 bg-gradient-to-br from-sky-400 via-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold shadow-lg ring-4 ring-white group-hover:ring-sky-100 transition-all">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>

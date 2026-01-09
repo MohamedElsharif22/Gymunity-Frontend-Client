@@ -298,23 +298,15 @@ import { AuthService } from '../../../core/services/auth.service';
                     </div>
                   }
                   
-                  <div class="flex gap-2 flex-1">
-                    <button
-                      (click)="viewTrainerProfile(trainer); $event.stopPropagation()"
-                      class="flex-1 bg-sky-600 hover:bg-sky-700 text-white font-semibold py-2.5 px-4 rounded-lg transition-colors shadow-sm hover:shadow-md flex items-center justify-center gap-2 group"
-                    >
-                      <span>Profile</span>
-                      <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                      </svg>
-                    </button>
-                    <button
-                      (click)="contactTrainer(trainer); $event.stopPropagation()"
-                      class="bg-white hover:bg-gray-50 text-sky-600 border-2 border-sky-200 hover:border-sky-300 font-semibold py-2.5 px-4 rounded-lg transition-colors"
-                    >
-                      Contact
-                    </button>
-                  </div>
+                  <button
+                    (click)="viewTrainerProfile(trainer); $event.stopPropagation()"
+                    class="flex-1 bg-sky-600 hover:bg-sky-700 text-white font-semibold py-2.5 px-4 rounded-lg transition-colors shadow-sm hover:shadow-md flex items-center justify-center gap-2 group"
+                  >
+                    <span>Profile</span>
+                    <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                    </svg>
+                  </button>
                 </div>
               </div>
             </article>
@@ -431,12 +423,6 @@ export class TrainersComponent implements OnInit {
   onSortChange(event: Event): void {
     const target = event.target as HTMLSelectElement;
     this.sortBy.set(target.value);
-  }
-
-  contactTrainer(trainer: TrainerCard): void {
-    console.log('[TrainersComponent] Contacting trainer:', trainer);
-    // TODO: Implement contact trainer functionality (chat, email, etc.)
-    alert(`Contact trainer: ${trainer.userName}`);
   }
 
   viewTrainerProfile(trainer: TrainerCard): void {

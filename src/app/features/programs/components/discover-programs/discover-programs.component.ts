@@ -127,7 +127,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
                       </div>
                       <button
                         (click)="viewTrainerProfile(program.trainerProfileId); $event.stopPropagation()"
-                        class="px-3 py-1 bg-gray-200 hover:bg-gray-300 text-gray-900 text-sm font-medium rounded transition-colors">
+                        class="px-3 py-1 bg-sky-600 hover:bg-sky-700 text-white text-sm font-medium rounded transition-colors">
                         Profile
                       </button>
                     </div>

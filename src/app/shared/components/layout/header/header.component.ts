@@ -196,9 +196,9 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
                   <div class="p-2 border-t border-gray-100">
                     <button 
                       (click)="logout()" 
-                      class="flex items-center gap-3 w-full px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl transition font-semibold group">
-                      <div class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center group-hover:bg-gray-200 transition">
-                        <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      class="flex items-center gap-3 w-full px-4 py-3 text-gray-900 hover:bg-gray-200 rounded-xl transition font-semibold group">
+                      <div class="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center group-hover:bg-gray-300 transition">
+                        <svg class="w-5 h-5 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
                         </svg>
                       </div>

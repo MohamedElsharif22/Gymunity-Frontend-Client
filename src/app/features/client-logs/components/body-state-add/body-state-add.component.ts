@@ -18,7 +18,7 @@ import { CreateBodyStateLogRequest } from '../../../../core/models/client-logs.m
 export class BodyStateAddComponent implements OnInit, OnDestroy {
   private clientLogsService = inject(ClientLogsService);
   private formBuilder = inject(FormBuilder);
-  private router = inject(Router);
+  router = inject(Router);
   private destroy$ = new Subject<void>();
 
   loading = signal(false);
@@ -28,7 +28,7 @@ export class BodyStateAddComponent implements OnInit, OnDestroy {
 
   form = this.formBuilder.group({
     weightKg: [null as number | null, [Validators.required, Validators.min(20), Validators.max(500)]],
-    bodyFatPercent: [null as number | null, [Validators.min(1), Validators.max(80)]],
+    bodyFatPercent: [null as number | null, [Validators.required, Validators.min(1), Validators.max(80)]],
     measurementsJson: [''],
     notes: [''],
     photoFrontUrl: [''],
@@ -87,6 +87,13 @@ export class BodyStateAddComponent implements OnInit, OnDestroy {
           this.loading.set(false);
         }
       });
+  }
+
+  clearForm(): void {
+    this.form.reset();
+    this.error.set('');
+    this.success.set(false);
+    this.router.navigate(['/body-state']);
   }
 
   ngOnDestroy(): void {

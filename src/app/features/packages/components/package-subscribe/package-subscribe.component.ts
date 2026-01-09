@@ -136,8 +136,8 @@ import { HomeClientService, PackageClientResponse } from '../../../trainers/serv
                   <button
                     (click)="subscribeNow()"
                     [disabled]="isSubscribing() || !packageData()?.isActive"
-                    class="w-full bg-sky-600 hover:bg-sky-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-lg transition mb-4">
-                    {{ isSubscribing() ? 'Processing...' : 'اشترك الان' }}
+                    class="w-full bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-600 hover:to-indigo-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-lg transition mb-4 shadow-lg">
+                    {{ isSubscribing() ? 'Processing...' : ' Subscribe Now' }}
                   </button>
                 } @else {
                   <button

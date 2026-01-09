@@ -48,7 +48,7 @@ import { TrainerCard, Program } from '../../core/models';
               </button>
               <button
                 (click)="logout()"
-                class="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-6 rounded-lg transition">
+                class="bg-gray-200 hover:bg-gray-300 text-gray-900 font-semibold py-2 px-6 rounded-lg transition">
                 Logout
               </button>
             } @else {
@@ -106,7 +106,7 @@ import { TrainerCard, Program } from '../../core/models';
                   </button>
                   <button
                     (click)="logout()"
-                    class="block w-full text-left px-3 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition font-medium">
+                    class="block w-full text-left px-3 py-2 bg-gray-200 hover:bg-gray-300 text-gray-900 rounded-lg transition font-medium">
                     Logout
                   </button>
                 } @else {

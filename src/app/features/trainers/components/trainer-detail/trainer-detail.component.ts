@@ -26,7 +26,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
       @if (isLoading()) {
         <div class="max-w-5xl mx-auto px-4 py-8">
           <div class="bg-white rounded-lg shadow p-12 text-center">
-            <div class="w-16 h-16 border-4 border-gray-200 border-t-blue-600 rounded-full animate-spin mx-auto"></div>
+            <div class="w-16 h-16 border-4 border-gray-200 border-t-sky-600 rounded-full animate-spin mx-auto"></div>
             <p class="mt-4 text-gray-600">Loading profile...</p>
           </div>
         </div>
@@ -44,7 +44,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
               <p class="text-gray-600 mb-4">{{ error() }}</p>
               <button
                 (click)="loadTrainerProfile()"
-                class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+                class="px-6 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg font-medium transition-colors"
               >
                 Try Again
               </button>
@@ -60,7 +60,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
           <div class="bg-white shadow">
             <div class="relative">
               <!-- Cover Image -->
-              <div class="h-[450px] bg-gradient-to-br from-blue-400 via-purple-500 to-pink-500 overflow-hidden">
+              <div class="h-[450px] bg-gradient-to-br from-sky-400 via-sky-500 to-cyan-500 overflow-hidden">
                 @if (trainer()!.coverImageUrl) {
                   <img
                     [src]="trainer()!.coverImageUrl"
@@ -69,7 +69,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
                   />
                 } @else {
                   <!-- Gradient fallback with pattern -->
-                  <div class="w-full h-full bg-gradient-to-br from-blue-400 via-purple-500 to-pink-500 opacity-90"></div>
+                  <div class="w-full h-full bg-gradient-to-br from-sky-400 via-sky-500 to-cyan-500 opacity-90"></div>
                 }
               </div>
 
@@ -99,7 +99,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
                             class="w-full h-full rounded-full object-cover"
                           />
                         } @else {
-                          <div class="w-full h-full rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-5xl">
+                          <div class="w-full h-full rounded-full bg-gradient-to-br from-sky-500 to-sky-600 flex items-center justify-center text-white font-bold text-5xl">
                             {{ trainer()!.userName.charAt(0).toUpperCase() }}
                           </div>
                         }
@@ -113,7 +113,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
                       <div class="flex items-center gap-2">
                         <h1 class="text-3xl font-bold text-gray-900">{{ trainer()!.userName }}</h1>
                         @if (trainer()!.isVerified) {
-                          <svg class="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                          <svg class="w-6 h-6 text-sky-600" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                           </svg>
                         }
@@ -129,7 +129,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
                   <div class="hidden md:flex items-center gap-2 mb-4">
                     <button
                       (click)="viewAllPackages()"
-                      class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors flex items-center gap-2"
+                      class="px-6 py-2 bg-sky-600 hover:bg-sky-700 text-white font-semibold rounded-lg transition-colors flex items-center gap-2"
                     >
                       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
@@ -137,6 +137,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
                       Subscribe
                     </button>
                     <button
+                      (click)="sendMessage()"
                       class="px-6 py-2 bg-gray-200 hover:bg-gray-300 text-gray-900 font-semibold rounded-lg transition-colors"
                     >
                       Message
@@ -157,7 +158,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
                   <div class="flex items-center gap-2">
                     <h1 class="text-2xl font-bold text-gray-900">{{ trainer()!.userName }}</h1>
                     @if (trainer()!.isVerified) {
-                      <svg class="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                      <svg class="w-5 h-5 text-sky-600" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                       </svg>
                     }
@@ -172,8 +173,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
                 <div class="border-t border-gray-200 mt-4">
                   <div class="flex gap-1 overflow-x-auto">
                     <button
-                      [class.border-blue-600]="activeTab() === 'about'"
-                      [class.text-blue-600]="activeTab() === 'about'"
+                      [class.border-sky-600]="activeTab() === 'about'"
+                      [class.text-sky-600]="activeTab() === 'about'"
                       [class.text-gray-600]="activeTab() !== 'about'"
                       (click)="activeTab.set('about')"
                       class="px-4 py-3 font-semibold border-b-4 border-transparent hover:bg-gray-50 rounded-t-lg transition-colors whitespace-nowrap"
@@ -181,8 +182,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
                       About
                     </button>
                     <button
-                      [class.border-blue-600]="activeTab() === 'packages'"
-                      [class.text-blue-600]="activeTab() === 'packages'"
+                      [class.border-sky-600]="activeTab() === 'packages'"
+                      [class.text-sky-600]="activeTab() === 'packages'"
                       [class.text-gray-600]="activeTab() !== 'packages'"
                       (click)="activeTab.set('packages')"
                       class="px-4 py-3 font-semibold border-b-4 border-transparent hover:bg-gray-50 rounded-t-lg transition-colors whitespace-nowrap"
@@ -190,8 +191,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
                       Packages
                     </button>
                     <button
-                      [class.border-blue-600]="activeTab() === 'programs'"
-                      [class.text-blue-600]="activeTab() === 'programs'"
+                      [class.border-sky-600]="activeTab() === 'programs'"
+                      [class.text-sky-600]="activeTab() === 'programs'"
                       [class.text-gray-600]="activeTab() !== 'programs'"
                       (click)="activeTab.set('programs')"
                       class="px-4 py-3 font-semibold border-b-4 border-transparent hover:bg-gray-50 rounded-t-lg transition-colors whitespace-nowrap"
@@ -199,8 +200,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
                       Programs
                     </button>
                     <button
-                      [class.border-blue-600]="activeTab() === 'reviews'"
-                      [class.text-blue-600]="activeTab() === 'reviews'"
+                      [class.border-sky-600]="activeTab() === 'reviews'"
+                      [class.text-sky-600]="activeTab() === 'reviews'"
                       [class.text-gray-600]="activeTab() !== 'reviews'"
                       (click)="activeTab.set('reviews')"
                       class="px-4 py-3 font-semibold border-b-4 border-transparent hover:bg-gray-50 rounded-t-lg transition-colors whitespace-nowrap"
@@ -216,11 +217,12 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
             <div class="md:hidden px-4 pb-4 flex gap-2">
               <button
                 (click)="viewAllPackages()"
-                class="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors"
+                class="flex-1 px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white font-semibold rounded-lg transition-colors"
               >
                 Subscribe
               </button>
               <button
+                (click)="sendMessage()"
                 class="flex-1 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-900 font-semibold rounded-lg transition-colors"
               >
                 Message
@@ -316,7 +318,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
                       @if (packages().length > 0) {
                         <button
                           (click)="viewAllPackages()"
-                          class="text-blue-600 hover:text-blue-700 font-semibold text-sm"
+                          class="text-sky-600 hover:text-sky-700 font-semibold text-sm"
                         >
                           View all
                         </button>
@@ -340,7 +342,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
                             @if (pkg.thumbnailUrl) {
                               <img [src]="pkg.thumbnailUrl" [alt]="pkg.name" class="w-full h-48 object-cover"/>
                             } @else {
-                              <div class="w-full h-48 bg-gradient-to-br from-blue-400 to-purple-500"></div>
+                              <div class="w-full h-48 bg-gradient-to-br from-sky-400 to-sky-600"></div>
                             }
                             <!-- Package Info -->
                             <div class="p-4">
@@ -375,7 +377,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
                       @if (trainerPrograms().length > 0) {
                         <button
                           (click)="viewAllPrograms()"
-                          class="text-blue-600 hover:text-blue-700 font-semibold text-sm"
+                          class="text-sky-600 hover:text-sky-700 font-semibold text-sm"
                         >
                           View all
                         </button>
@@ -398,7 +400,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
                             @if (program.thumbnailUrl) {
                               <img [src]="program.thumbnailUrl" [alt]="program.title" class="w-full h-32 object-cover"/>
                             } @else {
-                              <div class="w-full h-32 bg-gradient-to-br from-blue-400 to-purple-500"></div>
+                              <div class="w-full h-32 bg-gradient-to-br from-sky-400 to-sky-600"></div>
                             }
                             <div class="p-4">
                               <h3 class="font-semibold text-gray-900 mb-1">{{ program.title }}</h3>
@@ -573,6 +575,13 @@ export class TrainerDetailComponent implements OnInit {
 
   viewProgram(programId: number): void {
     this.router.navigate(['/discover/programs', programId]);
+  }
+
+  sendMessage(): void {
+    const trainerId = this.trainer()?.id;
+    if (trainerId) {
+      this.router.navigate(['/chat'], { queryParams: { trainerId } });
+    }
   }
 
   goBack(): void {
