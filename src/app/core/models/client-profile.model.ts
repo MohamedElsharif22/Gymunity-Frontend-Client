@@ -60,6 +60,7 @@ export interface ClientProfileRequest {
  * Current weight and body composition tracking
  */
 export interface BodyStateLogResponse {
+  id?: number;
   weightKg: number;
   bodyFatPercent?: number;
   measurementsJson?: string;
