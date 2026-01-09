@@ -18,10 +18,9 @@ import { catchError } from 'rxjs/operators';
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './profile.component.html',
-  styleUrls: ['./profile.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
-    'class': 'profile-container'
+    'class': 'min-h-screen bg-gray-50'
   }
 })
 export class ProfileComponent implements OnInit, OnDestroy {

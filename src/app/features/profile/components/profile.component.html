@@ -1,314 +1,338 @@
-<div class="profile-page">
-  <!-- Header -->
-  <div class="profile-header">
-    <h1>My Profile</h1>
-    <p class="subtitle">Manage your fitness profile and personal information</p>
-  </div>
-
-  <!-- Related Features Navigation -->
-  <div class="related-features mb-6">
-    <div class="features-grid">
-      <a href="/body-state" class="feature-card">
-        <span class="feature-icon">⚖️</span>
-        <span class="feature-text">My Body State Logs</span>
-      </a>
-      <a href="/workout-logs" class="feature-card">
-        <span class="feature-icon">💪</span>
-        <span class="feature-text">Workout Logs</span>
-      </a>
-      <a href="/onboarding" class="feature-card">
-        <span class="feature-icon">✓</span>
-        <span class="feature-text">Onboarding</span>
-      </a>
+<div class="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-4xl mx-auto">
+    <!-- Header -->
+    <div class="mb-8">
+      <h1 class="text-4xl font-bold text-gray-900 mb-2">My Profile</h1>
+      <p class="text-lg text-gray-600">Manage your fitness profile and personal information</p>
     </div>
-  </div>
 
-  <!-- Loading State -->
-  @if (loading()) {
-    <div class="loading-container">
-      <div class="spinner"></div>
-      <p>Loading profile...</p>
-    </div>
-  }
-
-  <!-- Error Message -->
-  @if (error()) {
-    <div class="alert alert-error">
-      <span class="alert-icon">⚠️</span>
-      <span class="alert-text">{{ error() }}</span>
-    </div>
-  }
-
-  <!-- Success Message -->
-  @if (success()) {
-    <div class="alert alert-success">
-      <span class="alert-icon">✓</span>
-      <span class="alert-text">{{ success() }}</span>
-    </div>
-  }
-
-  <!-- Profile Content -->
-  @if (!loading() && !isEditing()) {
-    <!-- View Mode -->
-    <div class="profile-card">
-      @if (profile(); as p) {
-        <div class="profile-content">
-          <div class="profile-header-card">
-            <div class="profile-image-placeholder">
-              {{ p.userName.charAt(0).toUpperCase() }}
-            </div>
-            <div class="profile-header-info">
-              <h2>{{ p.userName }}</h2>
-              <p class="meta">{{ getGoalLabel(p.goal) }} • {{ getExperienceLevelLabel(p.experienceLevel) }}</p>
-            </div>
-          </div>
-
-          <div class="profile-details">
-            <div class="detail-group">
-              <h3>Physical Information</h3>
-              @if (p.heightCm) {
-                <div class="detail-row">
-                  <span class="label">Height:</span>
-                  <span class="value">{{ p.heightCm }} cm</span>
-                </div>
-              }
-              @if (p.startingWeightKg) {
-                <div class="detail-row">
-                  <span class="label">Starting Weight:</span>
-                  <span class="value">{{ p.startingWeightKg }} kg</span>
-                </div>
-              }
-              @if (p.gender) {
-                <div class="detail-row">
-                  <span class="label">Gender:</span>
-                  <span class="value">{{ getGenderLabel(p.gender) }}</span>
-                </div>
-              }
-            </div>
-
-            <div class="detail-group">
-              <h3>Fitness Profile</h3>
-              @if (p.goal) {
-                <div class="detail-row">
-                  <span class="label">Goal:</span>
-                  <span class="value">{{ getGoalLabel(p.goal) }}</span>
-                </div>
-              }
-              @if (p.experienceLevel) {
-                <div class="detail-row">
-                  <span class="label">Experience Level:</span>
-                  <span class="value">{{ getExperienceLevelLabel(p.experienceLevel) }}</span>
-                </div>
-              }
-            </div>
-
-            <div class="detail-group">
-              <h3>Account Information</h3>
-              <div class="detail-row">
-                <span class="label">Created:</span>
-                <span class="value">{{ p.createdAt | date: 'MMM dd, yyyy' }}</span>
-              </div>
-              @if (p.updatedAt) {
-                <div class="detail-row">
-                  <span class="label">Last Updated:</span>
-                  <span class="value">{{ p.updatedAt | date: 'MMM dd, yyyy' }}</span>
-                </div>
-              }
-            </div>
-
-            @if (p.bodyStateLog) {
-              <div class="detail-group">
-                <h3>Latest Body Measurements</h3>
-                <div class="detail-row">
-                  <span class="label">Current Weight:</span>
-                  <span class="value">{{ p.bodyStateLog.weightKg }} kg</span>
-                </div>
-                @if (p.bodyStateLog.bodyFatPercent) {
-                  <div class="detail-row">
-                    <span class="label">Body Fat:</span>
-                    <span class="value">{{ p.bodyStateLog.bodyFatPercent }}%</span>
-                  </div>
-                }
-                <div class="detail-row">
-                  <span class="label">Recorded:</span>
-                  <span class="value">{{ p.bodyStateLog.loggedAt | date: 'MMM dd, yyyy' }}</span>
-                </div>
-              </div>
-            }
-          </div>
-
-          <div class="action-buttons">
-            <button class="btn btn-primary" (click)="onEdit()" [disabled]="loading()">
-              Edit Profile
-            </button>
-            <button class="btn btn-danger" (click)="onDelete()" [disabled]="loading()">
-              Delete Profile
-            </button>
-          </div>
-        </div>
-      } @else {
-        <div class="empty-state">
-          <p>No profile found</p>
-          <button class="btn btn-primary" (click)="onEdit()">Create Profile</button>
-        </div>
-      }
-    </div>
-  } @else if (!loading() && isEditing()) {
-    <!-- Edit Mode -->
-    <div class="profile-card">
-      <div class="bg-gradient-to-r from-blue-50 to-blue-100 px-6 py-4 border-b border-gray-200">
-        <h2 class="text-2xl font-bold text-gray-900 m-0">{{ profile() ? '✏️ Edit Profile' : '✨ Create Profile' }}</h2>
-        <p class="text-sm text-gray-600 mt-1 m-0">{{ profile() ? 'Update your fitness information' : 'Set up your fitness profile' }}</p>
+    <!-- Related Features Navigation -->
+    <div class="bg-gray-100 border border-gray-200 rounded-lg p-6 mb-8">
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <a href="/body-state" class="flex flex-col items-center justify-center p-6 bg-white border-2 border-gray-200 rounded-lg no-underline text-gray-700 transition duration-300 hover:border-blue-600 hover:bg-blue-50 hover:-translate-y-0.5 hover:shadow-md">
+          <span class="text-3xl mb-2">⚖️</span>
+          <span class="text-sm font-semibold text-center">My Body State Logs</span>
+        </a>
+        <a href="/workout-logs" class="flex flex-col items-center justify-center p-6 bg-white border-2 border-gray-200 rounded-lg no-underline text-gray-700 transition duration-300 hover:border-blue-600 hover:bg-blue-50 hover:-translate-y-0.5 hover:shadow-md">
+          <span class="text-3xl mb-2">💪</span>
+          <span class="text-sm font-semibold text-center">Workout Logs</span>
+        </a>
+        <a href="/onboarding" class="flex flex-col items-center justify-center p-6 bg-white border-2 border-gray-200 rounded-lg no-underline text-gray-700 transition duration-300 hover:border-blue-600 hover:bg-blue-50 hover:-translate-y-0.5 hover:shadow-md">
+          <span class="text-3xl mb-2">✓</span>
+          <span class="text-sm font-semibold text-center">Onboarding</span>
+        </a>
       </div>
+    </div>
 
-      <form [formGroup]="profileForm" (ngSubmit)="onSubmit()" class="px-6 py-6">
-        <!-- Basic Information Section -->
-        <div class="mb-8">
-          <div class="flex items-center gap-2 mb-4">
-            <div class="w-1 h-6 bg-blue-600 rounded-full"></div>
-            <h3 class="text-lg font-semibold text-gray-900">Basic Information</h3>
-          </div>
-          
-          <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-            <div class="form-group">
-              <label for="userName" class="block text-sm font-medium text-gray-700 mb-2">Username *</label>
-              <input
-                id="userName"
-                type="text"
-                formControlName="userName"
-                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder-gray-500 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Enter username (3-50 characters)"
-              >
-              @if (profileForm.get('userName')?.invalid && profileForm.get('userName')?.touched) {
-                <span class="text-red-600 text-sm mt-1 flex items-center gap-1">
-                  <span>⚠️</span> Username must be between 3 and 50 characters
-                </span>
+    <!-- Loading State -->
+    @if (loading()) {
+      <div class="flex flex-col items-center justify-center py-12 min-h-96">
+        <div class="w-12 h-12 border-4 border-gray-200 border-t-blue-600 rounded-full animate-spin mb-4"></div>
+        <p class="text-gray-600 text-lg">Loading profile...</p>
+      </div>
+    }
+
+    <!-- Error Message -->
+    @if (error()) {
+      <div class="bg-red-50 border-l-4 border-red-400 p-4 mb-6 rounded flex items-start gap-3">
+        <span class="text-2xl shrink-0">⚠️</span>
+        <span class="text-red-700 font-medium">{{ error() }}</span>
+      </div>
+    }
+
+    <!-- Success Message -->
+    @if (success()) {
+      <div class="bg-green-50 border-l-4 border-green-400 p-4 mb-6 rounded flex items-start gap-3">
+        <span class="text-2xl shrink-0">✓</span>
+        <span class="text-green-700 font-medium">{{ success() }}</span>
+      </div>
+    }
+
+    <!-- Profile Content -->
+    @if (!loading() && !isEditing()) {
+      <!-- View Mode -->
+      <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+        @if (profile(); as p) {
+          <div class="p-8">
+            <!-- Profile Header Card -->
+            <div class="flex items-start gap-8 mb-8 pb-8 border-b border-gray-200">
+              <div class="w-32 h-32 rounded-full bg-gradient-to-br from-blue-600 to-purple-600 text-white flex items-center justify-center shrink-0 text-4xl font-bold">
+                {{ p.userName.charAt(0).toUpperCase() }}
+              </div>
+              <div>
+                <h2 class="text-3xl font-bold text-gray-900 mb-2">{{ p.userName }}</h2>
+                <p class="text-base text-gray-600 mb-2">{{ getGoalLabel(p.goal) }} • {{ getExperienceLevelLabel(p.experienceLevel) }}</p>
+              </div>
+            </div>
+
+            <!-- Profile Details Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+              <!-- Physical Information -->
+              <div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b-2 border-blue-600">Physical Information</h3>
+                <div class="space-y-3">
+                  @if (p.heightCm) {
+                    <div class="flex justify-between items-center py-2 border-b border-gray-200">
+                      <span class="font-semibold text-gray-700">Height:</span>
+                      <span class="text-gray-600">{{ p.heightCm }} cm</span>
+                    </div>
+                  }
+                  @if (p.startingWeightKg) {
+                    <div class="flex justify-between items-center py-2 border-b border-gray-200">
+                      <span class="font-semibold text-gray-700">Starting Weight:</span>
+                      <span class="text-gray-600">{{ p.startingWeightKg }} kg</span>
+                    </div>
+                  }
+                  @if (p.gender) {
+                    <div class="flex justify-between items-center py-2">
+                      <span class="font-semibold text-gray-700">Gender:</span>
+                      <span class="text-gray-600">{{ getGenderLabel(p.gender) }}</span>
+                    </div>
+                  }
+                </div>
+              </div>
+
+              <!-- Fitness Profile -->
+              <div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b-2 border-blue-600">Fitness Profile</h3>
+                <div class="space-y-3">
+                  @if (p.goal) {
+                    <div class="flex justify-between items-center py-2 border-b border-gray-200">
+                      <span class="font-semibold text-gray-700">Goal:</span>
+                      <span class="text-gray-600">{{ getGoalLabel(p.goal) }}</span>
+                    </div>
+                  }
+                  @if (p.experienceLevel) {
+                    <div class="flex justify-between items-center py-2">
+                      <span class="font-semibold text-gray-700">Experience Level:</span>
+                      <span class="text-gray-600">{{ getExperienceLevelLabel(p.experienceLevel) }}</span>
+                    </div>
+                  }
+                </div>
+              </div>
+            </div>
+
+            <!-- Account Information -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+              <div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b-2 border-blue-600">Account Information</h3>
+                <div class="space-y-3">
+                  <div class="flex justify-between items-center py-2 border-b border-gray-200">
+                    <span class="font-semibold text-gray-700">Created:</span>
+                    <span class="text-gray-600">{{ p.createdAt | date: 'MMM dd, yyyy' }}</span>
+                  </div>
+                  @if (p.updatedAt) {
+                    <div class="flex justify-between items-center py-2">
+                      <span class="font-semibold text-gray-700">Last Updated:</span>
+                      <span class="text-gray-600">{{ p.updatedAt | date: 'MMM dd, yyyy' }}</span>
+                    </div>
+                  }
+                </div>
+              </div>
+
+              <!-- Latest Body Measurements -->
+              @if (p.bodyStateLog) {
+                <div>
+                  <h3 class="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b-2 border-blue-600">Latest Body Measurements</h3>
+                  <div class="space-y-3">
+                    <div class="flex justify-between items-center py-2 border-b border-gray-200">
+                      <span class="font-semibold text-gray-700">Current Weight:</span>
+                      <span class="text-gray-600">{{ p.bodyStateLog.weightKg }} kg</span>
+                    </div>
+                    @if (p.bodyStateLog.bodyFatPercent) {
+                      <div class="flex justify-between items-center py-2 border-b border-gray-200">
+                        <span class="font-semibold text-gray-700">Body Fat:</span>
+                        <span class="text-gray-600">{{ p.bodyStateLog.bodyFatPercent }}%</span>
+                      </div>
+                    }
+                    <div class="flex justify-between items-center py-2">
+                      <span class="font-semibold text-gray-700">Recorded:</span>
+                      <span class="text-gray-600">{{ p.bodyStateLog.loggedAt | date: 'MMM dd, yyyy' }}</span>
+                    </div>
+                  </div>
+                </div>
               }
             </div>
+
+            <!-- Action Buttons -->
+            <div class="flex gap-3 pt-8 border-t border-gray-200">
+              <button (click)="onEdit()" [disabled]="loading()" class="flex-1 max-w-xs px-6 py-3 rounded-lg font-semibold transition duration-200 bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800 disabled:bg-gray-400 disabled:cursor-not-allowed transform hover:-translate-y-0.5 hover:shadow-lg">
+                ✏️ Edit Profile
+              </button>
+              <button (click)="onDelete()" [disabled]="loading()" class="flex-1 max-w-xs px-6 py-3 rounded-lg font-semibold transition duration-200 bg-red-600 text-white hover:bg-red-700 active:bg-red-800 disabled:bg-gray-400 disabled:cursor-not-allowed transform hover:-translate-y-0.5 hover:shadow-lg">
+                🗑️ Delete Profile
+              </button>
+            </div>
           </div>
+        } @else {
+          <div class="flex flex-col items-center justify-center py-16 px-4">
+            <p class="text-xl text-gray-600 mb-6">No profile found</p>
+            <button (click)="onEdit()" class="px-6 py-3 rounded-lg font-semibold bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800 transition duration-200 transform hover:-translate-y-0.5 hover:shadow-lg">
+              ✨ Create Profile
+            </button>
+          </div>
+        }
+      </div>
+    }
+
+    @if (!loading() && isEditing()) {
+      <!-- Edit Mode -->
+      <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-blue-50 to-blue-100 px-8 py-6 border-b border-gray-200">
+          <h2 class="text-2xl font-bold text-gray-900 m-0">{{ profile() ? '✏️ Edit Profile' : '✨ Create Profile' }}</h2>
+          <p class="text-sm text-gray-600 mt-2 m-0">{{ profile() ? 'Update your fitness information' : 'Set up your fitness profile' }}</p>
         </div>
 
-        <!-- Physical Information Section -->
-        <div class="mb-8">
-          <div class="flex items-center gap-2 mb-4">
-            <div class="w-1 h-6 bg-blue-600 rounded-full"></div>
-            <h3 class="text-lg font-semibold text-gray-900">Physical Information</h3>
-          </div>
-
-          <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 space-y-4">
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div class="form-group">
-                <label for="heightCm" class="block text-sm font-medium text-gray-700 mb-2">Height (cm)</label>
+        <form [formGroup]="profileForm" (ngSubmit)="onSubmit()" class="p-8">
+          <!-- Basic Information Section -->
+          <div class="mb-8">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="w-1 h-6 bg-blue-600 rounded-full"></div>
+              <h3 class="text-lg font-semibold text-gray-900">Basic Information</h3>
+            </div>
+            
+            <div class="bg-gray-50 p-6 rounded-lg border border-gray-200">
+              <div>
+                <label for="userName" class="block text-sm font-semibold text-gray-700 mb-2">Username *</label>
                 <input
-                  id="heightCm"
-                  type="number"
-                  formControlName="heightCm"
-                  class="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder-gray-500 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="150-250"
+                  id="userName"
+                  type="text"
+                  formControlName="userName"
+                  class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder-gray-500 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Enter username (3-50 characters)"
                 >
-                @if (profileForm.get('heightCm')?.invalid && profileForm.get('heightCm')?.touched) {
-                  <span class="text-red-600 text-sm mt-1 flex items-center gap-1">
-                    <span>⚠️</span> Must be between 50 and 300 cm
+                @if (profileForm.get('userName')?.invalid && profileForm.get('userName')?.touched) {
+                  <span class="text-red-600 text-sm mt-2 flex items-center gap-1">
+                    <span>⚠️</span> Username must be between 3 and 50 characters
                   </span>
                 }
               </div>
+            </div>
+          </div>
 
-              <div class="form-group">
-                <label for="startingWeightKg" class="block text-sm font-medium text-gray-700 mb-2">Starting Weight (kg)</label>
-                <input
-                  id="startingWeightKg"
-                  type="number"
-                  step="0.1"
-                  formControlName="startingWeightKg"
-                  class="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder-gray-500 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="50-150"
+          <!-- Physical Information Section -->
+          <div class="mb-8">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="w-1 h-6 bg-blue-600 rounded-full"></div>
+              <h3 class="text-lg font-semibold text-gray-900">Physical Information</h3>
+            </div>
+
+            <div class="bg-gray-50 p-6 rounded-lg border border-gray-200 space-y-4">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label for="heightCm" class="block text-sm font-semibold text-gray-700 mb-2">Height (cm)</label>
+                  <input
+                    id="heightCm"
+                    type="number"
+                    formControlName="heightCm"
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder-gray-500 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="150-250"
+                  >
+                  @if (profileForm.get('heightCm')?.invalid && profileForm.get('heightCm')?.touched) {
+                    <span class="text-red-600 text-sm mt-2 flex items-center gap-1">
+                      <span>⚠️</span> Must be between 50 and 300 cm
+                    </span>
+                  }
+                </div>
+
+                <div>
+                  <label for="startingWeightKg" class="block text-sm font-semibold text-gray-700 mb-2">Starting Weight (kg)</label>
+                  <input
+                    id="startingWeightKg"
+                    type="number"
+                    step="0.1"
+                    formControlName="startingWeightKg"
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder-gray-500 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="50-150"
+                  >
+                  @if (profileForm.get('startingWeightKg')?.invalid && profileForm.get('startingWeightKg')?.touched) {
+                    <span class="text-red-600 text-sm mt-2 flex items-center gap-1">
+                      <span>⚠️</span> Must be between 20 and 500 kg
+                    </span>
+                  }
+                </div>
+              </div>
+
+              <div>
+                <label for="gender" class="block text-sm font-semibold text-gray-700 mb-2">Gender</label>
+                <select 
+                  id="gender" 
+                  formControlName="gender" 
+                  class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder-gray-500 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none cursor-pointer hover:bg-gray-50"
+                  style="background-image: url('data:image/svg+xml;charset=UTF-8,%3csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22currentColor%22 stroke-width=%222%22%3e%3cpolyline points=%226 9 12 15 18 9%22%3e%3c/polyline%3e%3c/svg%3e'); background-repeat: no-repeat; background-position: right 0.75rem center; background-size: 1.5em 1.5em; padding-right: 2.5rem;"
                 >
-                @if (profileForm.get('startingWeightKg')?.invalid && profileForm.get('startingWeightKg')?.touched) {
-                  <span class="text-red-600 text-sm mt-1 flex items-center gap-1">
-                    <span>⚠️</span> Must be between 20 and 500 kg
-                  </span>
-                }
+                  <option [value]="null">Select gender</option>
+                  @for (option of genderOptions; track option.value) {
+                    <option [value]="option.value">{{ option.label }}</option>
+                  }
+                </select>
               </div>
             </div>
-
-            <div class="form-group">
-              <label for="gender" class="block text-sm font-medium text-gray-700 mb-2">Gender</label>
-              <select 
-                id="gender" 
-                formControlName="gender" 
-                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder-gray-500 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none cursor-pointer hover:bg-gray-50"
-                style="background-image: url('data:image/svg+xml;charset=UTF-8,%3csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22currentColor%22 stroke-width=%222%22%3e%3cpolyline points=%226 9 12 15 18 9%22%3e%3c/polyline%3e%3c/svg%3e'); background-repeat: no-repeat; background-position: right 0.75rem center; background-size: 1.5em 1.5em; padding-right: 2.5rem;"
-              >
-                <option [value]="null">Select gender</option>
-                @for (option of genderOptions; track option.value) {
-                  <option [value]="option.value">{{ option.label }}</option>
-                }
-              </select>
-            </div>
-          </div>
-        </div>
-
-        <!-- Fitness Profile Section -->
-        <div class="mb-8">
-          <div class="flex items-center gap-2 mb-4">
-            <div class="w-1 h-6 bg-blue-600 rounded-full"></div>
-            <h3 class="text-lg font-semibold text-gray-900">Fitness Profile</h3>
           </div>
 
-          <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 space-y-4">
-            <div class="form-group">
-              <label for="goal" class="block text-sm font-medium text-gray-700 mb-2">Fitness Goal</label>
-              <select 
-                id="goal" 
-                formControlName="goal" 
-                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder-gray-500 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none cursor-pointer hover:bg-gray-50"
-                style="background-image: url('data:image/svg+xml;charset=UTF-8,%3csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22currentColor%22 stroke-width=%222%22%3e%3cpolyline points=%226 9 12 15 18 9%22%3e%3c/polyline%3e%3c/svg%3e'); background-repeat: no-repeat; background-position: right 0.75rem center; background-size: 1.5em 1.5em; padding-right: 2.5rem;"
-              >
-                <option [value]="null">Select fitness goal</option>
-                @for (option of goalOptions; track option.value) {
-                  <option [value]="option.value">{{ option.label }}</option>
-                }
-              </select>
-              <p class="text-xs text-gray-500 mt-1">What's your primary fitness goal?</p>
+          <!-- Fitness Profile Section -->
+          <div class="mb-8">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="w-1 h-6 bg-blue-600 rounded-full"></div>
+              <h3 class="text-lg font-semibold text-gray-900">Fitness Profile</h3>
             </div>
 
-            <div class="form-group">
-              <label for="experienceLevel" class="block text-sm font-medium text-gray-700 mb-2">Experience Level</label>
-              <select 
-                id="experienceLevel" 
-                formControlName="experienceLevel" 
-                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder-gray-500 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none cursor-pointer hover:bg-gray-50"
-                style="background-image: url('data:image/svg+xml;charset=UTF-8,%3csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22currentColor%22 stroke-width=%222%22%3e%3cpolyline points=%226 9 12 15 18 9%22%3e%3c/polyline%3e%3c/svg%3e'); background-repeat: no-repeat; background-position: right 0.75rem center; background-size: 1.5em 1.5em; padding-right: 2.5rem;"
-              >
-                <option [value]="null">Select experience level</option>
-                @for (option of experienceLevelOptions; track option.value) {
-                  <option [value]="option.value">{{ option.label }}</option>
-                }
-              </select>
-              <p class="text-xs text-gray-500 mt-1">Your fitness experience level</p>
+            <div class="bg-gray-50 p-6 rounded-lg border border-gray-200 space-y-4">
+              <div>
+                <label for="goal" class="block text-sm font-semibold text-gray-700 mb-2">Fitness Goal</label>
+                <select 
+                  id="goal" 
+                  formControlName="goal" 
+                  class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder-gray-500 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none cursor-pointer hover:bg-gray-50"
+                  style="background-image: url('data:image/svg+xml;charset=UTF-8,%3csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22currentColor%22 stroke-width=%222%22%3e%3cpolyline points=%226 9 12 15 18 9%22%3e%3c/polyline%3e%3c/svg%3e'); background-repeat: no-repeat; background-position: right 0.75rem center; background-size: 1.5em 1.5em; padding-right: 2.5rem;"
+                >
+                  <option [value]="null">Select fitness goal</option>
+                  @for (option of goalOptions; track option.value) {
+                    <option [value]="option.value">{{ option.label }}</option>
+                  }
+                </select>
+                <p class="text-xs text-gray-500 mt-2">What's your primary fitness goal?</p>
+              </div>
+
+              <div>
+                <label for="experienceLevel" class="block text-sm font-semibold text-gray-700 mb-2">Experience Level</label>
+                <select 
+                  id="experienceLevel" 
+                  formControlName="experienceLevel" 
+                  class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder-gray-500 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none cursor-pointer hover:bg-gray-50"
+                  style="background-image: url('data:image/svg+xml;charset=UTF-8,%3csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22currentColor%22 stroke-width=%222%22%3e%3cpolyline points=%226 9 12 15 18 9%22%3e%3c/polyline%3e%3c/svg%3e'); background-repeat: no-repeat; background-position: right 0.75rem center; background-size: 1.5em 1.5em; padding-right: 2.5rem;"
+                >
+                  <option [value]="null">Select experience level</option>
+                  @for (option of experienceLevelOptions; track option.value) {
+                    <option [value]="option.value">{{ option.label }}</option>
+                  }
+                </select>
+                <p class="text-xs text-gray-500 mt-2">Your fitness experience level</p>
+              </div>
             </div>
           </div>
-        </div>
 
-        <!-- Action Buttons -->
-        <div class="flex gap-3 pt-6 border-t border-gray-200">
-          <button 
-            type="submit" 
-            class="flex-1 px-4 py-3 rounded-lg font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800 focus:ring-blue-500 shadow-md hover:shadow-lg"
-            [disabled]="loading() || profileForm.invalid"
-          >
-            {{ profile() ? '💾 Update Profile' : '✨ Create Profile' }}
-          </button>
-          <button 
-            type="button" 
-            class="flex-1 px-4 py-3 rounded-lg font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 bg-gray-200 text-gray-900 hover:bg-gray-300 active:bg-gray-400 focus:ring-gray-400"
-            (click)="onCancel()" 
-            [disabled]="loading()"
-          >
-            ❌ Cancel
-          </button>
-        </div>
-      </form>
-    </div>
-  }
+          <!-- Action Buttons -->
+          <div class="flex gap-3 pt-6 border-t border-gray-200">
+            <button 
+              type="submit" 
+              class="flex-1 px-4 py-3 rounded-lg font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800 shadow-md hover:shadow-lg"
+              [disabled]="loading() || profileForm.invalid"
+            >
+              {{ profile() ? '💾 Update Profile' : '✨ Create Profile' }}
+            </button>
+            <button 
+              type="button" 
+              class="flex-1 px-4 py-3 rounded-lg font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 bg-gray-200 text-gray-900 hover:bg-gray-300 active:bg-gray-400"
+              (click)="onCancel()" 
+              [disabled]="loading()"
+            >
+              ❌ Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+    }
+  </div>
 </div>
