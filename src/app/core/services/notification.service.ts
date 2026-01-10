@@ -23,6 +23,10 @@ export class NotificationService {
   private readonly unreadCountSignal = signal<number>(0);
   readonly unreadCount = this.unreadCountSignal.asReadonly();
 
+  // Notifications list signal
+  private readonly notificationsListSignal = signal<Notification[]>([]);
+  readonly notificationsList = this.notificationsListSignal.asReadonly();
+
   // Connection state
   private connection: signalR.HubConnection | null = null;
   private isConnected = signal(false);
@@ -39,8 +43,27 @@ export class NotificationService {
     return this.apiService.get<NotificationResponse>('/api/client/notifications', params).pipe(
       tap(response => {
         this.unreadCountSignal.set((response as NotificationResponse).unreadCount);
+        // Update notifications list
+        const notif = response as NotificationResponse;
+        if (notif.notifications && Array.isArray(notif.notifications)) {
+          this.notificationsListSignal.set(notif.notifications);
+        }
       })
     );
+  }
+
+  /**
+   * Get notifications list for dropdown (with limit, e.g., 5-10 most recent)
+   */
+  getNotificationsForDropdown(limit: number = 5): void {
+    this.getAllNotifications(1, limit).subscribe({
+      next: (response) => {
+        console.log('✅ Notifications loaded for dropdown:', response.notifications?.length);
+      },
+      error: (error) => {
+        console.error('❌ Failed to load notifications:', error);
+      }
+    });
   }
 
   /**
