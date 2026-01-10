@@ -37,7 +37,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
             </button>
             <!-- Brand Dropdown Menu -->
             <div class="hidden sm:block absolute left-0 mt-0 top-full bg-white rounded-xl shadow-xl border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform group-hover:translate-y-1 translate-y-0 w-48 z-50">
-              <a routerLink="/landing" 
+              <a routerLink="/landing"
                  class="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-sky-50 transition group border-b border-gray-100 first:rounded-t-xl">
                 <div class="w-9 h-9 bg-sky-100 rounded-lg flex items-center justify-center group-hover:bg-sky-200 transition">
                   <svg class="w-5 h-5 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -49,7 +49,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
                   <p class="text-xs text-gray-500">Back to landing</p>
                 </div>
               </a>
-              <a routerLink="/trainers" 
+              <a routerLink="/trainers"
                  class="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-orange-50 transition group border-b border-gray-100 last:rounded-b-xl">
                 <div class="w-9 h-9 bg-orange-100 rounded-lg flex items-center justify-center group-hover:bg-orange-200 transition">
                   <svg class="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -66,12 +66,12 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
           <!-- Center Navigation (Desktop) -->
           <nav class="hidden lg:flex items-center gap-2 flex-1 mx-8 justify-center">
-            <a routerLink="/dashboard" 
+            <a routerLink="/dashboard"
                routerLinkActive="bg-gradient-to-r from-sky-500 to-indigo-600 text-white shadow-lg"
                class="px-4 py-2.5 rounded-xl text-gray-700 font-semibold hover:bg-gray-100 transition-all duration-200">
               Dashboard
             </a>
-            <a routerLink="/my-active-programs" 
+            <a routerLink="/my-active-programs"
                routerLinkActive="bg-gradient-to-r from-sky-500 to-indigo-600 text-white shadow-lg"
                class="flex items-center gap-2 px-4 py-2.5 rounded-xl text-gray-700 font-semibold hover:bg-gray-100 transition-all duration-200">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -102,7 +102,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
           <!-- Right Actions -->
           <div class="flex items-center gap-2 md:gap-3">
             <!-- Search Icon (Mobile) -->
-            <button 
+            <button
               (click)="toggleMobileSearch()"
               class="md:hidden p-2 hover:bg-gray-100 rounded-lg transition">
               <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -122,8 +122,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
             <div class="relative group">
               <button class="flex items-center gap-2 md:gap-3 pl-3 md:pl-4 ml-3 md:ml-4 border-l border-gray-200 hover:bg-gray-50 rounded-r-xl pr-2 py-1 transition-all">
                 @if (currentUser()?.profilePhotoUrl) {
-                  <img 
-                    [src]="currentUser()?.profilePhotoUrl" 
+                  <img
+                    [src]="currentUser()?.profilePhotoUrl"
                     [alt]="currentUser()?.name"
                     class="w-9 h-9 md:w-10 md:h-10 rounded-full object-cover ring-2 ring-white shadow-md"
                   />
@@ -147,8 +147,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
                 <div class="p-4 border-b border-gray-100 bg-gradient-to-br from-sky-50 to-indigo-50 rounded-t-2xl">
                   <div class="flex items-center gap-3 mb-2">
                     @if (currentUser()?.profilePhotoUrl) {
-                      <img 
-                        [src]="currentUser()?.profilePhotoUrl" 
+                      <img
+                        [src]="currentUser()?.profilePhotoUrl"
                         [alt]="currentUser()?.name"
                         class="w-12 h-12 rounded-full object-cover ring-2 ring-white shadow-md"
                       />
@@ -166,7 +166,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
                 <!-- Menu Items -->
                 <div class="py-2">
-                  <a routerLink="/profile" 
+                  <a routerLink="/profile"
                      class="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-sky-50 transition group">
                     <div class="w-10 h-10 bg-sky-100 rounded-lg flex items-center justify-center group-hover:bg-sky-200 transition">
                       <svg class="w-5 h-5 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -178,8 +178,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
                       <p class="text-xs text-gray-500">View and edit profile</p>
                     </div>
                   </a>
-                  
-                  <a routerLink="/body-state" 
+
+                  <a routerLink="/body-state"
                      class="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-purple-50 transition group">
                     <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center group-hover:bg-purple-200 transition">
                       <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -191,11 +191,11 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
                       <p class="text-xs text-gray-500">Track your progress</p>
                     </div>
                   </a>
-                  
+
                   <!-- Logout Button -->
                   <div class="p-2 border-t border-gray-100">
-                    <button 
-                      (click)="logout()" 
+                    <button
+                      (click)="logout()"
                       class="flex items-center gap-3 w-full px-4 py-3 text-gray-900 hover:bg-gray-200 rounded-xl transition font-semibold group">
                       <div class="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center group-hover:bg-gray-300 transition">
                         <svg class="w-5 h-5 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -209,7 +209,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
               </div>
 
             <!-- Mobile Menu Button -->
-            <button 
+            <button
               (click)="toggleMobileMenu()"
               class="lg:hidden p-2 hover:bg-gray-100 rounded-lg transition">
               <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -243,13 +243,13 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
       @if (showMobileMenu()) {
         <div class="lg:hidden border-t border-gray-200 bg-white">
           <nav class="px-4 py-4 space-y-2">
-            <a routerLink="/dashboard" 
+            <a routerLink="/dashboard"
                (click)="toggleMobileMenu()"
                routerLinkActive="bg-gradient-to-r from-sky-500 to-indigo-600 text-white"
                class="block px-4 py-3 rounded-xl text-gray-700 font-semibold hover:bg-gray-100 transition">
               Dashboard
             </a>
-            <a routerLink="/my-active-programs" 
+            <a routerLink="/my-active-programs"
                (click)="toggleMobileMenu()"
                routerLinkActive="bg-gradient-to-r from-sky-500 to-indigo-600 text-white"
                class="block px-4 py-3 rounded-xl text-gray-700 font-semibold hover:bg-gray-100 transition">
@@ -258,7 +258,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
           </nav>
         </div>
       }
-    
+
   `,
   styles: [`
     :host {
@@ -269,7 +269,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 export class HeaderComponent implements OnInit {
   private authService = inject(AuthService);
   private router = inject(Router);
-  
+
   currentUser = this.authService.currentUser;
   searchQuery = signal('');
   showMobileSearch = signal(false);

@@ -13,7 +13,7 @@ import { takeUntil } from 'rxjs/operators';
   imports: [CommonModule, RouterModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="min-h-screen bg-gradient-to-br from-slate-50 via-sky-50 to-indigo-100 py-12 px-4">
+    <div class="min-h-screen bg-white py-12 px-4">
       <div class="max-w-6xl mx-auto">
         <!-- Header Section -->
         <div class="mb-12 animate-fadeIn">
@@ -71,119 +71,62 @@ import { takeUntil } from 'rxjs/operators';
           </div>
 
           <!-- Subscriptions Grid -->
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 mb-8">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             <!-- Loop through all subscriptions -->
-            <div *ngFor="let subscription of activeSubscriptions(); trackBy: trackBySubscriptionId" class="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl border border-gray-200 hover:border-sky-300 transition-all duration-300">
+            <div *ngFor="let subscription of activeSubscriptions(); trackBy: trackBySubscriptionId" class="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg border border-gray-200 hover:border-sky-300 transition-all duration-300 flex flex-col">
               <!-- Header with Gradient -->
-              <div class="relative overflow-hidden bg-gradient-to-br from-sky-500 via-sky-600 to-indigo-600 p-6 pb-8">
+              <div class="relative overflow-hidden bg-gradient-to-br from-sky-500 to-indigo-600 p-4">
                 <div class="relative z-10">
-                  <div class="flex items-start justify-between mb-6">
-                    <div class="flex-1">
-                      <div class="inline-block bg-white backdrop-blur px-3 py-1 rounded-full mb-3">
-                        <p class="text-green-600 text-xs font-bold tracking-wide">✓ ACTIVE</p>
-                      </div>
-                      <h2 class="text-2xl font-bold text-white mb-2">{{ subscription.packageName }}</h2>
-                      <p class="text-sky-100 text-sm leading-relaxed line-clamp-2">{{ subscription.packageDescription }}</p>
-                    </div>
+                  <div class="inline-block bg-green-500 px-2 py-0.5 rounded-full mb-2">
+                    <p class="text-white text-xs font-bold tracking-wide">✓ ACTIVE</p>
                   </div>
-
-                  <!-- Key Info Grid -->
-                  <div class="grid grid-cols-2 gap-3">
-                    <div class="bg-white/15 backdrop-blur rounded-lg p-3">
-                      <p class="text-sky-100 text-xs font-semibold uppercase tracking-wide mb-1">Trainer</p>
-                      <p class="text-white font-bold text-sm">{{ subscription.trainerName }}</p>
-                    </div>
-                    <div class="bg-white/15 backdrop-blur rounded-lg p-3">
-                      <p class="text-sky-100 text-xs font-semibold uppercase tracking-wide mb-1">Days Remaining</p>
-                      <p class="text-white font-bold text-sm">{{ subscription.daysRemaining }}d</p>
-                    </div>
-                  </div>
+                  <h2 class="text-lg font-bold text-white mb-1 line-clamp-1">{{ subscription.packageName }}</h2>
+                  <p class="text-sky-100 text-xs leading-tight line-clamp-1">{{ subscription.packageDescription }}</p>
                 </div>
               </div>
 
               <!-- Content Section -->
-              <div class="p-6 space-y-6">
-                <!-- Price Section -->
-                <div class="flex items-end justify-between pb-4 border-b border-gray-200">
-                  <div>
-                    <p class="text-gray-600 text-xs font-semibold uppercase tracking-wide mb-1">Amount Paid</p>
-                    <p class="text-2xl font-bold text-gray-900">{{ subscription.currency }} {{ subscription.amountPaid | number:'1.2-2' }}</p>
+              <div class="p-4 space-y-4 flex-grow">
+                <!-- Trainer & Days -->
+                <div class="space-y-2">
+                  <div class="flex items-center justify-between text-xs">
+                    <p class="text-gray-600 font-semibold">Trainer</p>
+                    <p class="text-gray-900 font-bold">{{ subscription.trainerName }}</p>
                   </div>
-                  <div class="text-right">
-                    <p class="text-gray-600 text-xs font-semibold uppercase tracking-wide mb-1">Duration</p>
-                    <p class="text-lg font-bold text-sky-600">30 Days</p>
-                  </div>
-                </div>
-
-                <!-- Timeline Section -->
-                <div class="space-y-3">
-                  <p class="text-sm font-bold text-gray-900 uppercase tracking-wide">Timeline</p>
-                  <div class="grid grid-cols-2 gap-4">
-                    <div class="flex items-center gap-3">
-                      <div class="w-8 h-8 rounded-lg bg-sky-100 flex items-center justify-center flex-shrink-0">
-                        <svg class="w-4 h-4 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                        </svg>
-                      </div>
-                      <div>
-                        <p class="text-gray-600 text-xs">Starts</p>
-                        <p class="text-gray-900 font-bold text-sm">{{ subscription.startDate | date:'MMM d, yyyy' }}</p>
-                      </div>
-                    </div>
-                    <div class="flex items-center gap-3">
-                      <div class="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center flex-shrink-0">
-                        <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                      </div>
-                      <div>
-                        <p class="text-gray-600 text-xs">Expires</p>
-                        <p class="text-gray-900 font-bold text-sm">{{ subscription.currentPeriodEnd | date:'MMM d, yyyy' }}</p>
-                      </div>
-                    </div>
+                  <div class="flex items-center justify-between text-xs">
+                    <p class="text-gray-600 font-semibold">Days Left</p>
+                    <p class="text-sky-600 font-bold">{{ subscription.daysRemaining }}d</p>
                   </div>
                 </div>
 
-                <!-- Benefits Section -->
-                <div class="space-y-3">
-                  <p class="text-sm font-bold text-gray-900 uppercase tracking-wide">Included</p>
-                  <div class="grid grid-cols-3 gap-3">
-                    <div class="bg-sky-50 border border-sky-200 rounded-lg p-3 text-center">
-                      <div class="w-8 h-8 rounded-lg bg-sky-100 flex items-center justify-center mb-2 mx-auto">
-                        <svg class="w-4 h-4 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                        </svg>
-                      </div>
-                      <p class="text-gray-900 font-bold text-xs">Workouts</p>
-                    </div>
-                    <div class="bg-indigo-50 border border-indigo-200 rounded-lg p-3 text-center">
-                      <div class="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center mb-2 mx-auto">
-                        <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                      </div>
-                      <p class="text-gray-900 font-bold text-xs">Support</p>
-                    </div>
-                    <div class="bg-purple-50 border border-purple-200 rounded-lg p-3 text-center">
-                      <div class="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center mb-2 mx-auto">
-                        <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                        </svg>
-                      </div>
-                      <p class="text-gray-900 font-bold text-xs">Analytics</p>
-                    </div>
+                <!-- Price -->
+                <div class="py-2 border-t border-b border-gray-200">
+                  <p class="text-gray-600 text-xs font-semibold mb-1">Amount Paid</p>
+                  <p class="text-xl font-bold text-gray-900">{{ subscription.currency }} {{ subscription.amountPaid | number:'1.2-2' }}</p>
+                </div>
+
+                <!-- Dates -->
+                <div class="space-y-2 text-xs">
+                  <div class="flex items-center gap-2">
+                    <svg class="w-3 h-3 text-sky-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                    <span class="text-gray-600">{{ subscription.startDate | date:'MMM d' }}</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <svg class="w-3 h-3 text-indigo-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span class="text-gray-600">{{ subscription.currentPeriodEnd | date:'MMM d' }}</span>
                   </div>
                 </div>
               </div>
 
-              <!-- Action Buttons -->
-              <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex gap-3">
+              <!-- Action Button -->
+              <div class="px-4 py-3 bg-gray-50 border-t border-gray-200">
                 <button
                   (click)="cancelSubscription(subscription.id)"
-                  class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-900 font-semibold py-2.5 px-3 rounded-lg transition flex items-center justify-center gap-2 text-sm transform hover:-translate-y-0.5">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                  </svg>
+                  class="w-full bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-600 hover:to-indigo-700 text-white font-semibold py-2 px-3 rounded-lg transition text-sm">
                   Cancel
                 </button>
               </div>
