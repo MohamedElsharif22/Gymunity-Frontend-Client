@@ -1,7 +1,8 @@
-import { Component, signal, inject } from '@angular/core';
+import { Component, signal, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { ChatService } from '../../../../core/services/chat.service';
 
 interface NavItem {
   label: string;
@@ -55,9 +56,9 @@ interface NavItem {
           </span>
           
           <!-- Badge -->
-          <span *ngIf="item.badge" 
+          <span *ngIf="item.label === 'Messages' ? (unreadMessageCount() > 0) : item.badge" 
                 class="relative z-10 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs font-bold rounded-full min-w-[20px] h-5 md:h-6 px-1.5 md:px-2 flex items-center justify-center shadow-lg animate-pulse flex-shrink-0 text-[10px] md:text-xs">
-            {{ item.badge }}
+            {{ item.label === 'Messages' ? unreadMessageCount() : item.badge }}
           </span>
           
           <!-- New Label -->
@@ -141,6 +142,9 @@ interface NavItem {
 })
 export class SidebarComponent {
   private sanitizer = inject(DomSanitizer);
+  private chatService = inject(ChatService);
+  
+  unreadMessageCount = computed(() => this.chatService.unreadCount());
 
   mainNavItems: NavItem[] = [
     {
@@ -196,7 +200,7 @@ export class SidebarComponent {
       icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>',
       route: '/chat',
       color: 'pink',
-      isNew: true
+      badge: 0
     }
   ];
 
