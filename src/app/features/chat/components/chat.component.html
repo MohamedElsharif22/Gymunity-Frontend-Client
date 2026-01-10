@@ -1,8 +1,8 @@
-<div class="flex h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex-col md:flex-row overflow-hidden">
+<div class="flex h-screen w-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex-col md:flex-row overflow-hidden">
   <!-- Chat Container -->
-  <div class="flex w-full gap-0 md:gap-4 p-0 md:p-4 flex-col md:flex-row h-full overflow-hidden">
+  <div class="flex w-full h-full gap-0 md:gap-4 p-0 md:p-4 flex-col md:flex-row overflow-hidden">
     <!-- Chat List Section - Hidden on mobile when viewing chat, shown on desktop -->
-    <div [class.hidden]="showChatWindow() && !isDesktop()" class="w-full md:w-96 md:shrink-0 flex-shrink-0 overflow-hidden transition-all duration-200">
+    <div [class.hidden]="showChatWindow() && !isDesktop()" class="w-full md:w-96 md:shrink-0 flex-shrink-0 h-full overflow-hidden transition-all duration-200">
       <app-chat-list
         [threads]="threads()"
         [selectedThread]="currentThread()"
