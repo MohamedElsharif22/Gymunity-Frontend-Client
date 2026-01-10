@@ -493,5 +493,27 @@ export class ChatService {
       }
     }, intervalMs);
   }
+
+  /**
+   * Decrement unread message count
+   * Reduces the unread count of a thread by 1
+   */
+  decrementUnreadCount(): void {
+    const threads = this.threadsSignal();
+    if (threads.length > 0) {
+      const updatedThreads = threads.map(thread => {
+        if ((thread.unreadCount || 0) > 0) {
+          return {
+            ...thread,
+            unreadCount: (thread.unreadCount || 0) - 1
+          };
+        }
+        return thread;
+      });
+      this.threadsSignal.set(updatedThreads);
+      console.log('💬 Decremented unread message count');
+    }
+  }
 }
+
 

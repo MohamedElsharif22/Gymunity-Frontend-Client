@@ -104,110 +104,153 @@ import { ChatService } from '../../../../core/services/chat.service';
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
                 </svg>
                 @if (unreadNotificationCount() > 0) {
-                  <span class="absolute top-0.5 right-0.5 w-5 h-5 bg-red-500 rounded-full animate-pulse flex items-center justify-center text-xs text-white font-bold">{{ unreadNotificationCount() }}</span>
+                  <span class="absolute top-0.5 right-0.5 w-5 h-5 bg-blue-500 rounded-full animate-pulse flex items-center justify-center text-xs text-white font-bold">{{ unreadNotificationCount() }}</span>
                 }
               </button>
 
               <!-- Notification Dropdown Panel -->
               @if (showNotificationDropdown()) {
                 <div class="notification-dropdown absolute right-0 top-full mt-3 w-96 max-w-[calc(100vw-1rem)] bg-white rounded-xl shadow-lg border border-gray-200 z-50 overflow-hidden">
-                <!-- Dropdown Header -->
-                <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-slate-50 to-slate-100">
-                  <div>
-                    <h3 class="font-bold text-gray-900 text-base">Activity Center</h3>
-                    <p class="text-xs text-gray-500 mt-0.5">Stay updated with your notifications</p>
-                  </div>
-                  <button (click)="closeNotificationDropdown()" class="text-gray-400 hover:text-gray-600 transition p-1 hover:bg-gray-200 rounded-lg">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
-                  </button>
-                </div>
-
-                <!-- Notifications List -->
-                <div class="max-h-[500px] overflow-y-auto">
-                  @if (notificationsToDisplay().length > 0 || chatService.threads().length > 0) {
-                    <!-- Notifications Section -->
-                    @if (notificationsToDisplay().length > 0) {
-                      <div>
-                        <div class="px-5 py-3 bg-gray-50 border-b border-gray-100 text-xs font-bold text-gray-700 uppercase tracking-wide">📢 Notifications</div>
-                        @for (notification of notificationsToDisplay(); track notification.id) {
-                          <button 
-                            (click)="onNotificationClick(notification)"
-                            class="w-full px-5 py-4 border-b border-gray-100 hover:bg-gray-50 transition text-left group relative"
-                            [class.bg-blue-50]="!notification.isRead">
-                            <div class="flex items-start gap-3">
-                              @if (!notification.isRead) {
-                                <div class="w-2.5 h-2.5 bg-blue-500 rounded-full mt-1.5 flex-shrink-0 animate-pulse"></div>
-                              } @else {
-                                <div class="w-2.5 h-2.5 bg-gray-300 rounded-full mt-1.5 flex-shrink-0"></div>
-                              }
-                              <div class="flex-1 min-w-0">
-                                <p class="font-semibold text-sm text-gray-900 truncate">{{ notification.title }}</p>
-                                <p class="text-sm text-gray-600 line-clamp-2 mt-1">{{ notification.message }}</p>
-                                <p class="text-xs text-gray-500 mt-2 font-medium">{{ getRelativeTime(notification.createdAt) }}</p>
-                              </div>
-                            </div>
-                          </button>
-                        }
-                      </div>
-                    }
-                    
-                    <!-- Chat Messages Section -->
-                    @if (chatService.threads().length > 0) {
-                      <div>
-                        @if (notificationsToDisplay().length > 0) {
-                          <div class="px-5 py-3 bg-gray-50 border-b border-gray-100 text-xs font-bold text-gray-700 uppercase tracking-wide">💬 Messages</div>
-                        }
-                        @for (thread of chatService.threads().slice(0, 3); track thread.id) {
-                          <button 
-                            (click)="navigateToChat(thread)"
-                            class="w-full px-5 py-4 border-b border-gray-100 hover:bg-red-50 transition text-left group relative"
-                            [class.bg-red-50]="(thread.unreadCount ?? 0) > 0">
-                            <div class="flex items-start gap-3">
-                              @if ((thread.unreadCount ?? 0) > 0) {
-                                <div class="w-2.5 h-2.5 bg-red-500 rounded-full mt-1.5 flex-shrink-0 animate-pulse"></div>
-                              } @else {
-                                <div class="w-2.5 h-2.5 bg-gray-300 rounded-full mt-1.5 flex-shrink-0"></div>
-                              }
-                              <div class="flex-1 min-w-0">
-                                <div class="flex items-center justify-between gap-2">
-                                  <p class="font-semibold text-sm text-gray-900 truncate">{{ thread.otherUserName }}</p>
-                                  @if ((thread.unreadCount ?? 0) > 0) {
-                                    <span class="inline-flex items-center justify-center px-2 py-0.5 bg-red-500 text-white rounded-full text-xs font-bold flex-shrink-0">{{ (thread.unreadCount ?? 0) > 99 ? '99+' : thread.unreadCount }}</span>
-                                  }
-                                </div>
-                                <p class="text-sm text-gray-600 line-clamp-2 mt-1">{{ thread.lastMessage }}</p>
-                                <p class="text-xs text-gray-500 mt-2 font-medium">{{ getRelativeTime(thread.lastMessageAt) }}</p>
-                              </div>
-                            </div>
-                          </button>
-                        }
-                      </div>
-                    }
-                  } @else {
-                    <div class="px-6 py-12 text-center">
-                      <div class="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
-                        <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
-                        </svg>
-                      </div>
-                      <p class="text-gray-600 font-semibold text-sm">No notifications yet</p>
-                      <p class="text-gray-500 text-xs mt-1">Check back later for updates</p>
+                  <!-- Dropdown Header -->
+                  <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-slate-50 to-slate-100">
+                    <div>
+                      <h3 class="font-bold text-gray-900 text-base">📢 Notifications</h3>
+                      <p class="text-xs text-gray-500 mt-0.5">System alerts and updates</p>
                     </div>
-                  }
-                </div>
+                    <button (click)="closeNotificationDropdown()" class="text-gray-400 hover:text-gray-600 transition p-1 hover:bg-gray-200 rounded-lg">
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                      </svg>
+                    </button>
+                  </div>
 
-                <!-- Dropdown Footer -->
-                <div class="px-5 py-4 border-t border-gray-100 bg-gradient-to-r from-slate-50 to-slate-100">
-                  <button 
-                    (click)="goToNotifications(); closeNotificationDropdown()"
-                    class="w-full text-center text-sm font-bold text-white bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-600 hover:to-sky-700 transition rounded-lg py-2.5 shadow-sm">
-                    View All Notifications →
-                  </button>
+                  <!-- Notifications List -->
+                  <div class="max-h-[500px] overflow-y-auto">
+                    @if (notificationsToDisplay().length > 0) {
+                      @for (notification of notificationsToDisplay(); track notification.id) {
+                        <button 
+                          (click)="onNotificationClick(notification)"
+                          class="w-full px-5 py-4 border-b border-gray-100 hover:bg-blue-50 transition text-left group relative"
+                          [class.bg-blue-50]="!notification.isRead">
+                          <div class="flex items-start gap-3">
+                            @if (!notification.isRead) {
+                              <div class="w-2.5 h-2.5 bg-blue-500 rounded-full mt-1.5 flex-shrink-0 animate-pulse"></div>
+                            } @else {
+                              <div class="w-2.5 h-2.5 bg-gray-300 rounded-full mt-1.5 flex-shrink-0"></div>
+                            }
+                            <div class="flex-1 min-w-0">
+                              <p class="font-semibold text-sm text-gray-900 truncate">{{ notification.title }}</p>
+                              <p class="text-sm text-gray-600 line-clamp-2 mt-1">{{ notification.message }}</p>
+                              <p class="text-xs text-gray-500 mt-2 font-medium">{{ getRelativeTime(notification.createdAt) }}</p>
+                            </div>
+                          </div>
+                        </button>
+                      }
+                    } @else {
+                      <div class="px-6 py-12 text-center">
+                        <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
+                          <svg class="w-8 h-8 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                          </svg>
+                        </div>
+                        <p class="text-gray-600 font-semibold text-sm">No notifications</p>
+                        <p class="text-gray-500 text-xs mt-1">All caught up!</p>
+                      </div>
+                    }
+                  </div>
+
+                  <!-- Dropdown Footer -->
+                  <div class="px-5 py-4 border-t border-gray-100 bg-gradient-to-r from-slate-50 to-slate-100">
+                    <button 
+                      (click)="goToNotifications(); closeNotificationDropdown()"
+                      class="w-full text-center text-sm font-bold text-white bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-600 hover:to-sky-700 transition rounded-lg py-2.5 shadow-sm">
+                      View All Notifications →
+                    </button>
+                  </div>
                 </div>
-              </div>
-            }
+              }
+            </div>
+
+            <!-- Messages Button with Dropdown -->
+            <div class="relative">
+              <button 
+                aria-label="messages"
+                (click)="toggleMessagesDropdown()"
+                class="relative p-1.5 sm:p-2 hover:bg-gray-100 rounded-lg transition flex-shrink-0 group">
+                <svg class="w-5 h-5 sm:w-6 sm:h-6 text-gray-600 group-hover:text-emerald-600 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                </svg>
+                @if (unreadMessageCount() > 0) {
+                  <span class="absolute top-0.5 right-0.5 w-5 h-5 bg-red-500 rounded-full animate-pulse flex items-center justify-center text-xs text-white font-bold">{{ unreadMessageCount() }}</span>
+                }
+              </button>
+
+              <!-- Messages Dropdown Panel -->
+              @if (showMessagesDropdown()) {
+                <div class="messages-dropdown absolute right-0 top-full mt-3 w-96 max-w-[calc(100vw-1rem)] bg-white rounded-xl shadow-lg border border-gray-200 z-50 overflow-hidden">
+                  <!-- Dropdown Header -->
+                  <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-emerald-50 to-green-50">
+                    <div>
+                      <h3 class="font-bold text-gray-900 text-base">💬 Messages</h3>
+                      <p class="text-xs text-gray-500 mt-0.5">Chat with trainers</p>
+                    </div>
+                    <button (click)="closeMessagesDropdown()" class="text-gray-400 hover:text-gray-600 transition p-1 hover:bg-gray-200 rounded-lg">
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                      </svg>
+                    </button>
+                  </div>
+
+                  <!-- Messages List -->
+                  <div class="max-h-[500px] overflow-y-auto">
+                    @if (chatService.threads().length > 0) {
+                      @for (thread of chatService.threads().slice(0, 5); track thread.id) {
+                        <button 
+                          (click)="onMessageClick(thread)"
+                          class="w-full px-5 py-4 border-b border-gray-100 hover:bg-red-50 transition text-left group relative"
+                          [class.bg-red-50]="(thread.unreadCount ?? 0) > 0">
+                          <div class="flex items-start gap-3">
+                            @if ((thread.unreadCount ?? 0) > 0) {
+                              <div class="w-2.5 h-2.5 bg-red-500 rounded-full mt-1.5 flex-shrink-0 animate-pulse"></div>
+                            } @else {
+                              <div class="w-2.5 h-2.5 bg-gray-300 rounded-full mt-1.5 flex-shrink-0"></div>
+                            }
+                            <div class="flex-1 min-w-0">
+                              <div class="flex items-center justify-between gap-2">
+                                <p class="font-semibold text-sm text-gray-900 truncate">{{ thread.otherUserName }}</p>
+                                @if ((thread.unreadCount ?? 0) > 0) {
+                                  <span class="inline-flex items-center justify-center px-2 py-0.5 bg-red-500 text-white rounded-full text-xs font-bold flex-shrink-0">{{ (thread.unreadCount ?? 0) > 99 ? '99+' : thread.unreadCount }}</span>
+                                }
+                              </div>
+                              <p class="text-sm text-gray-600 line-clamp-2 mt-1">{{ thread.lastMessage }}</p>
+                              <p class="text-xs text-gray-500 mt-2 font-medium">{{ getRelativeTime(thread.lastMessageAt) }}</p>
+                            </div>
+                          </div>
+                        </button>
+                      }
+                    } @else {
+                      <div class="px-6 py-12 text-center">
+                        <div class="inline-flex items-center justify-center w-16 h-16 bg-red-100 rounded-full mb-4">
+                          <svg class="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                          </svg>
+                        </div>
+                        <p class="text-gray-600 font-semibold text-sm">No messages</p>
+                        <p class="text-gray-500 text-xs mt-1">Start chatting with trainers</p>
+                      </div>
+                    }
+                  </div>
+
+                  <!-- Dropdown Footer -->
+                  <div class="px-5 py-4 border-t border-gray-100 bg-gradient-to-r from-emerald-50 to-green-50">
+                    <button 
+                      (click)="goToChat(); closeMessagesDropdown()"
+                      class="w-full text-center text-sm font-bold text-white bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 transition rounded-lg py-2.5 shadow-sm">
+                      Open Chat →
+                    </button>
+                  </div>
+                </div>
+              }
             </div>
 
             <!-- User Profile Menu (Desktop) -->
@@ -460,39 +503,53 @@ export class HeaderComponent implements OnInit {
   // Notifications list
   notificationsToDisplay = computed(() => this.notificationService.notificationsList() || []);
   
-  // Computed: Combine notification count and chat unread count
-  unreadNotificationCount = computed(() => {
-    const notificationCount = this.notificationService.unreadCount();
-    const chatUnreadCount = this.chatService.unreadCount();
-    const totalCount = notificationCount + chatUnreadCount;
-    console.log(`📊 Unread: Notifications=${notificationCount}, Chat=${chatUnreadCount}, Total=${totalCount}`);
-    return totalCount;
-  });
-  
   showMobileMenu = signal(false);
   showDesktopDropdown = signal(false);
   showMobileDropdown = signal(false);
   showNotificationDropdown = signal(false);
+  showMessagesDropdown = signal(false);
+  
+  // Separated unread counts
+  unreadNotificationCount = computed(() => this.notificationService.unreadCount());
+  unreadMessageCount = computed(() => this.chatService.unreadCount());
   
   // Audio notification - using Web Audio API or simple notification sound
   private notificationAudio: HTMLAudioElement | null = null;
-  private previousUnreadCount = 0;
+  private previousUnreadNotificationCount = 0;
+  private previousUnreadMessageCount = 0;
 
-  // Effect to trigger notification sound when unread count increases
+  // Effect to trigger notification sound when notification count increases
   private notificationEffect = effect(() => {
     const currentCount = this.unreadNotificationCount();
-    console.log(`📊 Notification count changed: ${this.previousUnreadCount} → ${currentCount}`);
+    console.log(`📊 Notification count changed: ${this.previousUnreadNotificationCount} → ${currentCount}`);
     
     // Play sound if count increased and we're not on initial load
-    if (currentCount > this.previousUnreadCount && this.previousUnreadCount >= 0) {
-      const newNotificationsCount = currentCount - this.previousUnreadCount;
+    if (currentCount > this.previousUnreadNotificationCount && this.previousUnreadNotificationCount >= 0) {
+      const newNotificationsCount = currentCount - this.previousUnreadNotificationCount;
       console.log(`🔔 New notifications detected! +${newNotificationsCount} unread`);
       // Small delay to ensure audio context is ready
       setTimeout(() => {
         this.playNotificationSound();
       }, 100);
     }
-    this.previousUnreadCount = currentCount;
+    this.previousUnreadNotificationCount = currentCount;
+  });
+
+  // Effect to trigger sound when message count increases
+  private messageEffect = effect(() => {
+    const currentCount = this.unreadMessageCount();
+    console.log(`💬 Message count changed: ${this.previousUnreadMessageCount} → ${currentCount}`);
+    
+    // Play sound if count increased and we're not on initial load
+    if (currentCount > this.previousUnreadMessageCount && this.previousUnreadMessageCount >= 0) {
+      const newMessagesCount = currentCount - this.previousUnreadMessageCount;
+      console.log(`💬 New messages detected! +${newMessagesCount} unread`);
+      // Small delay to ensure audio context is ready
+      setTimeout(() => {
+        this.playNotificationSound();
+      }, 100);
+    }
+    this.previousUnreadMessageCount = currentCount;
   });
 
   @HostListener('document:click', ['$event'])
@@ -502,6 +559,12 @@ export class HeaderComponent implements OnInit {
     if (!target.closest('button[aria-label="notifications"]') && !target.closest('.notification-dropdown')) {
       if (this.showNotificationDropdown()) {
         this.closeNotificationDropdown();
+      }
+    }
+    // Close messages dropdown if clicking outside of it
+    if (!target.closest('button[aria-label="messages"]') && !target.closest('.messages-dropdown')) {
+      if (this.showMessagesDropdown()) {
+        this.closeMessagesDropdown();
       }
     }
   }
@@ -672,6 +735,51 @@ export class HeaderComponent implements OnInit {
 
   closeNotificationDropdown() {
     this.showNotificationDropdown.set(false);
+  }
+
+  // Message Dropdown Methods
+  toggleMessagesDropdown() {
+    this.showMessagesDropdown.update(val => !val);
+    
+    // Load messages when dropdown is opened
+    if (this.showMessagesDropdown()) {
+      this.chatService.loadThreads().subscribe({
+        next: () => {
+          console.log('✅ Chat threads loaded for dropdown');
+        },
+        error: (error) => {
+          console.error('Failed to load chat threads:', error);
+        }
+      });
+    }
+  }
+
+  onMessageClick(thread: any) {
+    // Mark thread as read and navigate
+    this.chatService.markThreadAsRead(thread.id).subscribe({
+      next: () => {
+        console.log('✅ Thread marked as read:', thread.id);
+        // Decrement message count
+        this.chatService.decrementUnreadCount();
+      },
+      error: (error) => {
+        console.error('Failed to mark thread as read:', error);
+      }
+    });
+    
+    // Close the dropdown
+    this.closeMessagesDropdown();
+    
+    // Navigate to chat
+    this.router.navigate(['/chat']);
+  }
+
+  closeMessagesDropdown() {
+    this.showMessagesDropdown.set(false);
+  }
+
+  goToChat() {
+    this.router.navigate(['/chat']);
   }
 
   navigateToChat(thread: any) {
