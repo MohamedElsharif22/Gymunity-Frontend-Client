@@ -30,9 +30,11 @@ export interface CreateChatThreadResponse {
 export interface ChatThread extends CreateChatThreadResponse {
   otherUserName?: string;
   otherUserProfilePhoto?: string;
+  otherUserProfilePhotoUrl?: string;
   lastMessage?: string;
   unreadCount?: number;
   isOnline?: boolean;
+  trainerProfileId?: number;
 }
 
 /**

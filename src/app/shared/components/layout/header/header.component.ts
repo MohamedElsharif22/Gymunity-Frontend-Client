@@ -1,8 +1,10 @@
-import { Component, OnInit, inject, signal, output } from '@angular/core';
+import { Component, OnInit, inject, signal, computed, DestroyRef, HostListener, effect, output } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { AuthService } from '../../../../core/services/auth.service';
+import { NotificationService } from '../../../../core/services/notification.service';
+import { ChatService } from '../../../../core/services/chat.service';
 
 @Component({
   selector: 'app-header',
@@ -175,41 +177,173 @@ import { AuthService } from '../../../../core/services/auth.service';
               Programs
             </a>
           </nav>
-
+          
           <!-- RIGHT: User Actions & Menu -->
-
           <div class="flex items-center gap-2 sm:gap-3 md:gap-4 flex-shrink-0">
-            <!-- Notifications Button -->
+            <!-- Notifications Button with Dropdown -->
+            <div class="relative">
+              <button 
+                aria-label="notifications"
+                (click)="toggleNotificationDropdown()"
+                class="relative p-1.5 sm:p-2 hover:bg-gray-100 rounded-lg transition flex-shrink-0 group">
+                <svg class="w-5 h-5 sm:w-6 sm:h-6 text-gray-600 group-hover:text-sky-600 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                </svg>
+                @if (unreadNotificationCount() > 0) {
+                  <span class="absolute top-0.5 right-0.5 w-5 h-5 bg-blue-500 rounded-full animate-pulse flex items-center justify-center text-xs text-white font-bold">{{ unreadNotificationCount() }}</span>
+                }
+              </button>
 
-            <button
-              class="relative p-1.5 sm:p-2 hover:bg-gray-100 rounded-lg transition flex-shrink-0"
-            >
-              <svg
-                class="w-5 h-5 sm:w-6 sm:h-6 text-gray-600 hover:text-sky-600 transition"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-                ></path>
-              </svg>
+              <!-- Notification Dropdown Panel -->
+              @if (showNotificationDropdown()) {
+                <div class="notification-dropdown absolute right-0 top-full mt-3 w-96 max-w-[calc(100vw-1rem)] bg-white rounded-xl shadow-lg border border-gray-200 z-50 overflow-hidden">
+                  <!-- Dropdown Header -->
+                  <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-slate-50 to-slate-100">
+                    <div>
+                      <h3 class="font-bold text-gray-900 text-base">📢 Notifications</h3>
+                      <p class="text-xs text-gray-500 mt-0.5">System alerts and updates</p>
+                    </div>
+                    <button (click)="closeNotificationDropdown()" class="text-gray-400 hover:text-gray-600 transition p-1 hover:bg-gray-200 rounded-lg">
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                      </svg>
+                    </button>
+                  </div>
 
-              <span
-                class="absolute top-0.5 right-0.5 w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse"
-              ></span>
-            </button>
+                  <!-- Notifications List -->
+                  <div class="max-h-[500px] overflow-y-auto">
+                    @if (notificationsToDisplay().length > 0) {
+                      @for (notification of notificationsToDisplay(); track notification.id) {
+                        <button 
+                          (click)="onNotificationClick(notification)"
+                          class="w-full px-5 py-4 border-b border-gray-100 hover:bg-blue-50 transition text-left group relative"
+                          [class.bg-blue-50]="!notification.isRead">
+                          <div class="flex items-start gap-3">
+                            @if (!notification.isRead) {
+                              <div class="w-2.5 h-2.5 bg-blue-500 rounded-full mt-1.5 flex-shrink-0 animate-pulse"></div>
+                            } @else {
+                              <div class="w-2.5 h-2.5 bg-gray-300 rounded-full mt-1.5 flex-shrink-0"></div>
+                            }
+                            <div class="flex-1 min-w-0">
+                              <p class="font-semibold text-sm text-gray-900 truncate">{{ notification.title }}</p>
+                              <p class="text-sm text-gray-600 line-clamp-2 mt-1">{{ notification.message }}</p>
+                              <p class="text-xs text-gray-500 mt-2 font-medium">{{ getRelativeTime(notification.createdAt) }}</p>
+                            </div>
+                          </div>
+                        </button>
+                      }
+                    } @else {
+                      <div class="px-6 py-12 text-center">
+                        <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
+                          <svg class="w-8 h-8 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                          </svg>
+                        </div>
+                        <p class="text-gray-600 font-semibold text-sm">No notifications</p>
+                        <p class="text-gray-500 text-xs mt-1">All caught up!</p>
+                      </div>
+                    }
+                  </div>
+
+                  <!-- Dropdown Footer -->
+                  <div class="px-5 py-4 border-t border-gray-100 bg-gradient-to-r from-slate-50 to-slate-100">
+                    <button 
+                      (click)="goToNotifications(); closeNotificationDropdown()"
+                      class="w-full text-center text-sm font-bold text-white bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-600 hover:to-sky-700 transition rounded-lg py-2.5 shadow-sm">
+                      View All Notifications →
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
+
+            <!-- Messages Button with Dropdown -->
+            <div class="relative">
+              <button 
+                aria-label="messages"
+                (click)="toggleMessagesDropdown()"
+                class="relative p-1.5 sm:p-2 hover:bg-gray-100 rounded-lg transition flex-shrink-0 group">
+                <svg class="w-5 h-5 sm:w-6 sm:h-6 text-gray-600 group-hover:text-emerald-600 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                </svg>
+                @if (unreadMessageCount() > 0) {
+                  <span class="absolute top-0.5 right-0.5 w-5 h-5 bg-red-500 rounded-full animate-pulse flex items-center justify-center text-xs text-white font-bold">{{ unreadMessageCount() }}</span>
+                }
+              </button>
+
+              <!-- Messages Dropdown Panel -->
+              @if (showMessagesDropdown()) {
+                <div class="messages-dropdown absolute right-0 top-full mt-3 w-96 max-w-[calc(100vw-1rem)] bg-white rounded-xl shadow-lg border border-gray-200 z-50 overflow-hidden">
+                  <!-- Dropdown Header -->
+                  <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-emerald-50 to-green-50">
+                    <div>
+                      <h3 class="font-bold text-gray-900 text-base">💬 Messages</h3>
+                      <p class="text-xs text-gray-500 mt-0.5">Chat with trainers</p>
+                    </div>
+                    <button (click)="closeMessagesDropdown()" class="text-gray-400 hover:text-gray-600 transition p-1 hover:bg-gray-200 rounded-lg">
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                      </svg>
+                    </button>
+                  </div>
+
+                  <!-- Messages List -->
+                  <div class="max-h-[500px] overflow-y-auto">
+                    @if (chatService.threads().length > 0) {
+                      @for (thread of chatService.threads().slice(0, 5); track thread.id) {
+                        <button 
+                          (click)="onMessageClick(thread)"
+                          class="w-full px-5 py-4 border-b border-gray-100 hover:bg-red-50 transition text-left group relative"
+                          [class.bg-red-50]="(thread.unreadCount ?? 0) > 0">
+                          <div class="flex items-start gap-3">
+                            @if ((thread.unreadCount ?? 0) > 0) {
+                              <div class="w-2.5 h-2.5 bg-red-500 rounded-full mt-1.5 flex-shrink-0 animate-pulse"></div>
+                            } @else {
+                              <div class="w-2.5 h-2.5 bg-gray-300 rounded-full mt-1.5 flex-shrink-0"></div>
+                            }
+                            <div class="flex-1 min-w-0">
+                              <div class="flex items-center justify-between gap-2">
+                                <p class="font-semibold text-sm text-gray-900 truncate">{{ thread.otherUserName }}</p>
+                                @if ((thread.unreadCount ?? 0) > 0) {
+                                  <span class="inline-flex items-center justify-center px-2 py-0.5 bg-red-500 text-white rounded-full text-xs font-bold flex-shrink-0">{{ (thread.unreadCount ?? 0) > 99 ? '99+' : thread.unreadCount }}</span>
+                                }
+                              </div>
+                              <p class="text-sm text-gray-600 line-clamp-2 mt-1">{{ thread.lastMessage }}</p>
+                              <p class="text-xs text-gray-500 mt-2 font-medium">{{ getRelativeTime(thread.lastMessageAt) }}</p>
+                            </div>
+                          </div>
+                        </button>
+                      }
+                    } @else {
+                      <div class="px-6 py-12 text-center">
+                        <div class="inline-flex items-center justify-center w-16 h-16 bg-red-100 rounded-full mb-4">
+                          <svg class="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                          </svg>
+                        </div>
+                        <p class="text-gray-600 font-semibold text-sm">No messages</p>
+                        <p class="text-gray-500 text-xs mt-1">Start chatting with trainers</p>
+                      </div>
+                    }
+                  </div>
+
+                  <!-- Dropdown Footer -->
+                  <div class="px-5 py-4 border-t border-gray-100 bg-gradient-to-r from-emerald-50 to-green-50">
+                    <button 
+                      (click)="goToChat(); closeMessagesDropdown()"
+                      class="w-full text-center text-sm font-bold text-white bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 transition rounded-lg py-2.5 shadow-sm">
+                      Open Chat →
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
 
             <!-- User Profile Menu (Desktop) -->
-
             <div class="hidden md:block relative">
-              <button
+              <button 
                 (click)="toggleDesktopDropdown()"
-                class="flex items-center gap-2 pl-3 ml-2 border-l border-gray-200 hover:bg-gray-50 rounded-r-lg p-1 transition-all flex-shrink-0"
-              >
+                class="flex items-center gap-2 pl-3 ml-2 border-l border-gray-200 hover:bg-gray-50 rounded-r-lg p-1 transition-all flex-shrink-0">
                 @if (currentUser()?.profilePhotoUrl) {
 
                 <img
@@ -607,6 +741,20 @@ import { AuthService } from '../../../../core/services/auth.service';
             >
               My Programs
             </a>
+            <a routerLink="/trainers"
+               (click)="toggleMobileMenu()"
+               routerLinkActive="bg-gradient-to-r from-orange-500 to-red-600 text-white"
+               [routerLinkActiveOptions]="{ exact: false }"
+               class="block px-4 py-2.5 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-100 transition">
+              Trainers
+            </a>
+            <a routerLink="/chat"
+               (click)="toggleMobileMenu()"
+               routerLinkActive="bg-gradient-to-r from-pink-500 to-rose-600 text-white"
+               [routerLinkActiveOptions]="{ exact: false }"
+               class="block px-4 py-2.5 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-100 transition">
+              Messages
+            </a>
           </nav>
         </div>
         }
@@ -624,14 +772,149 @@ import { AuthService } from '../../../../core/services/auth.service';
 export class HeaderComponent implements OnInit {
   private authService = inject(AuthService);
   private router = inject(Router);
+  protected notificationService = inject(NotificationService);
+  protected chatService = inject(ChatService);
+  private destroyRef = inject(DestroyRef);
+
+  toggleSidebar = output<void>();
 
   currentUser = this.authService.currentUser;
+  
+  // Notifications list
+  notificationsToDisplay = computed(() => this.notificationService.notificationsList() || []);
+  
   showMobileMenu = signal(false);
   showDesktopDropdown = signal(false);
   showMobileDropdown = signal(false);
+  showNotificationDropdown = signal(false);
+  showMessagesDropdown = signal(false);
+  
+  // Separated unread counts
+  unreadNotificationCount = computed(() => this.notificationService.unreadCount());
+  unreadMessageCount = computed(() => this.chatService.unreadCount());
+  
+  // Audio notification - using Web Audio API or simple notification sound
+  private notificationAudio: HTMLAudioElement | null = null;
+  private previousUnreadNotificationCount = 0;
+  private previousUnreadMessageCount = 0;
+
+  // Effect to trigger notification sound when notification count increases
+  private notificationEffect = effect(() => {
+    const currentCount = this.unreadNotificationCount();
+    console.log(`📊 Notification count changed: ${this.previousUnreadNotificationCount} → ${currentCount}`);
+    
+    // Play sound if count increased and we're not on initial load
+    if (currentCount > this.previousUnreadNotificationCount && this.previousUnreadNotificationCount >= 0) {
+      const newNotificationsCount = currentCount - this.previousUnreadNotificationCount;
+      console.log(`🔔 New notifications detected! +${newNotificationsCount} unread`);
+      // Small delay to ensure audio context is ready
+      setTimeout(() => {
+        this.playNotificationSound();
+      }, 100);
+    }
+    this.previousUnreadNotificationCount = currentCount;
+  });
+
+  // Effect to trigger sound when message count increases
+  private messageEffect = effect(() => {
+    const currentCount = this.unreadMessageCount();
+    console.log(`💬 Message count changed: ${this.previousUnreadMessageCount} → ${currentCount}`);
+    
+    // Play sound if count increased and we're not on initial load
+    if (currentCount > this.previousUnreadMessageCount && this.previousUnreadMessageCount >= 0) {
+      const newMessagesCount = currentCount - this.previousUnreadMessageCount;
+      console.log(`💬 New messages detected! +${newMessagesCount} unread`);
+      // Small delay to ensure audio context is ready
+      setTimeout(() => {
+        this.playNotificationSound();
+      }, 100);
+    }
+    this.previousUnreadMessageCount = currentCount;
+  });
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent) {
+    const target = event.target as HTMLElement;
+    // Close notification dropdown if clicking outside of it
+    if (!target.closest('button[aria-label="notifications"]') && !target.closest('.notification-dropdown')) {
+      if (this.showNotificationDropdown()) {
+        this.closeNotificationDropdown();
+      }
+    }
+    // Close messages dropdown if clicking outside of it
+    if (!target.closest('button[aria-label="messages"]') && !target.closest('.messages-dropdown')) {
+      if (this.showMessagesDropdown()) {
+        this.closeMessagesDropdown();
+      }
+    }
+  }
 
   ngOnInit() {
-    // Initialize any needed data here
+    // Initialize notification sound
+    this.initializeNotificationSound();
+    
+    // Initialize notification real-time connection
+    this.notificationService.connectToNotifications().catch(error => {
+      console.error('Failed to initialize notifications:', error);
+    });
+
+    // Initialize chat real-time connection (so messages trigger unread count updates)
+    this.chatService.connectToChat().catch(error => {
+      console.error('Failed to initialize chat:', error);
+    });
+
+    // Load initial unread count immediately
+    this.notificationService.getUnreadCount().subscribe();
+    
+    // Load initial chat threads immediately (this includes unread counts)
+    this.chatService.loadThreads().subscribe({
+      next: () => {
+        console.log('✅ Initial chat threads loaded');
+      },
+      error: (error) => {
+        console.error('Failed to load initial chat threads:', error);
+      }
+    });
+    
+    // IMPORTANT: Start aggressive polling immediately
+    // This ensures unread badges update within 2 seconds even if SignalR hasn't connected yet
+    let initialPollingInterval = setInterval(() => {
+      this.chatService.loadThreads().subscribe({
+        next: () => {
+          console.log('📊 Fast polling (2s): Unread count:', this.chatService.unreadCount());
+        },
+        error: (error) => {
+          console.warn('Fast polling error:', error);
+        }
+      });
+    }, 2000);
+
+    // After 30 seconds, switch to slower polling (5s) to save bandwidth
+    setTimeout(() => {
+      clearInterval(initialPollingInterval);
+      console.log('📊 Switching to standard 5-second polling');
+      
+      const standardPollingInterval = setInterval(() => {
+        this.chatService.loadThreads().subscribe({
+          next: () => {
+            console.log('📊 Standard polling (5s): Unread count:', this.chatService.unreadCount());
+          },
+          error: (error) => {
+            console.warn('Standard polling error:', error);
+          }
+        });
+      }, 5000);
+      
+      // Clean up standard polling on component destroy
+      this.destroyRef.onDestroy(() => {
+        clearInterval(standardPollingInterval);
+      });
+    }, 30000);
+
+    // Clean up initial polling on component destroy
+    this.destroyRef.onDestroy(() => {
+      clearInterval(initialPollingInterval);
+    });
   }
 
   getUserInitial(): string {
@@ -640,10 +923,10 @@ export class HeaderComponent implements OnInit {
   }
 
   toggleMobileMenu() {
-    this.showMobileMenu.update((val) => !val);
+    this.showMobileMenu.update(val => !val);
   }
 
-    toggleDesktopDropdown() {
+  toggleDesktopDropdown() {
     this.showDesktopDropdown.update(val => !val);
     this.showMobileDropdown.set(false);
   }
@@ -663,5 +946,195 @@ export class HeaderComponent implements OnInit {
     this.router.navigate(['/auth/login']);
   }
 
-  toggleSidebar = output<void>();
+  goToNotifications() {
+    this.router.navigate(['/chat']);
+  }
+
+  toggleNotificationDropdown() {
+    this.showNotificationDropdown.update(val => !val);
+    
+    // Load notifications when dropdown is opened
+    if (this.showNotificationDropdown()) {
+      this.notificationService.getNotificationsForDropdown(5);
+      // Also load chat threads so we can show recent messages in the dropdown
+      this.chatService.loadThreads().subscribe({
+        next: () => {
+          console.log('✅ Chat threads loaded for dropdown');
+        },
+        error: (error) => {
+          console.error('Failed to load chat threads:', error);
+        }
+      });
+    }
+  }
+
+  onNotificationClick(notification: any) {
+    // Mark as read on the server
+    this.notificationService.markAsRead(notification.id).subscribe({
+      next: () => {
+        console.log('✅ Notification marked as read:', notification.id);
+        // Decrement unread count locally
+        this.notificationService.decrementUnreadCount();
+      },
+      error: (error) => {
+        console.error('Failed to mark notification as read:', error);
+      }
+    });
+    
+    // Close the dropdown
+    this.closeNotificationDropdown();
+    
+    // Reload notifications to refresh the list
+    this.notificationService.getNotificationsForDropdown(5);
+    
+    // Optional: Navigate based on notification type
+    if (notification.relatedEntityType === 'Chat' || notification.type === 1) {
+      this.router.navigate(['/chat']);
+    } else if (notification.relatedEntityType === 'Program' || notification.type === 7) {
+      this.router.navigate(['/subscriptions']);
+    }
+  }
+
+  getRelativeTime(date: Date | string | undefined): string {
+    if (!date) return 'Just now';
+    
+    const notificationDate = typeof date === 'string' ? new Date(date) : date;
+    const now = new Date();
+    const diffMs = now.getTime() - notificationDate.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+    
+    return notificationDate.toLocaleDateString();
+  }
+
+  closeNotificationDropdown() {
+    this.showNotificationDropdown.set(false);
+  }
+
+  // Message Dropdown Methods
+  toggleMessagesDropdown() {
+    this.showMessagesDropdown.update(val => !val);
+    
+    // Load messages when dropdown is opened
+    if (this.showMessagesDropdown()) {
+      this.chatService.loadThreads().subscribe({
+        next: () => {
+          console.log('✅ Chat threads loaded for dropdown');
+        },
+        error: (error) => {
+          console.error('Failed to load chat threads:', error);
+        }
+      });
+    }
+  }
+
+  onMessageClick(thread: any) {
+    // Mark thread as read and navigate
+    this.chatService.markThreadAsRead(thread.id).subscribe({
+      next: () => {
+        console.log('✅ Thread marked as read:', thread.id);
+        // Decrement message count
+        this.chatService.decrementUnreadCount();
+      },
+      error: (error) => {
+        console.error('Failed to mark thread as read:', error);
+      }
+    });
+    
+    // Close the dropdown
+    this.closeMessagesDropdown();
+    
+    // Navigate to chat
+    this.router.navigate(['/chat']);
+  }
+
+  closeMessagesDropdown() {
+    this.showMessagesDropdown.set(false);
+  }
+
+  goToChat() {
+    this.router.navigate(['/chat']);
+  }
+
+  navigateToChat(thread: any) {
+    // Close the dropdown
+    this.closeNotificationDropdown();
+    // Navigate to chat
+    this.router.navigate(['/chat']);
+  }
+
+  /**
+   * Initialize notification sound using Web Audio API
+   * Creates a simple beep sound programmatically
+   */
+  private initializeNotificationSound(): void {
+    try {
+      // Try to create audio context for playing sounds
+      const AudioContextClass = (window as any).AudioContext || (window as any).webkitAudioContext;
+      let audioContext: any = null;
+      
+      const playNotificationSound = () => {
+        try {
+          // Create audio context if not already created
+          if (!audioContext) {
+            audioContext = new AudioContextClass();
+          }
+          
+          if (audioContext.state === 'suspended') {
+            audioContext.resume();
+          }
+          
+          const now = audioContext.currentTime;
+          const oscillator = audioContext.createOscillator();
+          const gainNode = audioContext.createGain();
+          
+          oscillator.connect(gainNode);
+          gainNode.connect(audioContext.destination);
+          
+          // Create a pleasant notification sound (two-tone)
+          oscillator.frequency.setValueAtTime(800, now);
+          oscillator.frequency.setValueAtTime(1200, now + 0.1);
+          
+          gainNode.gain.setValueAtTime(0.3, now);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+          
+          oscillator.start(now);
+          oscillator.stop(now + 0.3);
+          
+          console.log('🔊 Notification sound played successfully');
+        } catch (error) {
+          console.log('Audio context error:', error);
+        }
+      };
+      
+      (window as any).playNotificationSound = playNotificationSound;
+      console.log('✅ Notification sound initialized');
+    } catch (error) {
+      console.log('Web Audio API not available, notification sound disabled');
+    }
+  }
+
+  /**
+   * Play notification sound when new notification arrives
+   */
+  private playNotificationSound(): void {
+    try {
+      if ((window as any).playNotificationSound) {
+        (window as any).playNotificationSound();
+      }
+      console.log('🔊 Notification sound played');
+    } catch (error) {
+      console.log('Could not play notification sound:', error);
+    }
+  }
+
+  /**
+   * Override the unreadNotificationCount effect to trigger sound on new notifications
+   */
 }

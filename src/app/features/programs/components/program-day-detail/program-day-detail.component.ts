@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, computed, DestroyRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, computed, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ProgramService, ProgramDay, Exercise } from '../../services/program.service';
@@ -11,13 +11,13 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
   standalone: true,
   imports: [CommonModule, RouterModule],
   template: `
-    <div class="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 py-8 px-4">
-      <div class="max-w-6xl mx-auto">
+    <div class="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 py-8 px-3 sm:px-4 md:px-8">
+      <div class="max-w-7xl mx-auto">
         <!-- Back Button & Header -->
         <div class="mb-8">
           <button
             (click)="goToDetail()"
-            class="flex items-center gap-2 text-sky-600 hover:text-sky-700 font-semibold mb-6 group transition"
+            class="flex items-center gap-2 text-sky-600 hover:text-sky-700 font-semibold mb-6 group transition-all duration-200 active:scale-95"
           >
             <svg class="w-5 h-5 group-hover:-translate-x-1 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
@@ -25,49 +25,49 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
             Back to Days
           </button>
           <div>
-            <h1 class="text-4xl md:text-5xl font-bold bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent mb-2">
+            <h1 class="text-3xl sm:text-4xl md:text-5xl font-bold bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent mb-2">
               {{ day()?.title }}
             </h1>
-            <p class="text-gray-600 text-lg">Day {{ day()?.dayNumber }} • {{ exercises().length }} Exercises</p>
+            <p class="text-gray-600 text-sm sm:text-base md:text-lg">Day {{ day()?.dayNumber }} • {{ exercises().length }} Exercises</p>
           </div>
         </div>
 
         <!-- Start Workout Progress Modal -->
         @if (showStartWorkoutModal()) {
           <div class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 animate-fadeIn p-4">
-            <div class="bg-white rounded-2xl max-w-sm w-full shadow-2xl animate-slideUp max-h-[65vh] overflow-y-auto">
+            <div class="bg-white rounded-2xl max-w-sm w-full shadow-2xl animate-slideUp max-h-[70vh] overflow-y-auto border border-gray-100">
               <!-- Modal Header -->
-              <div class="bg-gradient-to-r from-sky-600 to-indigo-600 px-6 py-3 text-white">
+              <div class="bg-gradient-to-r from-sky-600 to-indigo-600 px-6 py-4 text-white sticky top-0 z-10">
                 <h2 class="text-xl font-bold mb-1">Workout Progress</h2>
-                <p class="text-sky-100 text-xs">{{ completedCount() }} of {{ exercises().length }} exercises completed</p>
+                <p class="text-sky-100 text-sm">{{ completedCount() }} of {{ exercises().length }} exercises completed</p>
               </div>
 
               <!-- Modal Content -->
-              <div class="p-4">
+              <div class="p-6 space-y-5">
                 <!-- Completion Summary -->
-                <div class="mb-4">
-                  <div class="flex items-center justify-between mb-2">
-                    <h3 class="text-sm font-bold text-gray-900">Progress</h3>
-                    <span class="text-lg font-bold text-orange-600">{{ (completedCount() / exercises().length * 100 | number:'1.0-0') || 0 }}%</span>
+                <div class="bg-gradient-to-br from-orange-50 to-red-50 rounded-xl p-4 border border-orange-100">
+                  <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-sm font-bold text-gray-900">Overall Progress</h3>
+                    <span class="text-2xl font-bold text-orange-600">{{ (completedCount() / exercises().length * 100 | number:'1.0-0') || 0 }}%</span>
                   </div>
-                  <div class="w-full bg-gray-200 rounded-full h-2">
-                    <div class="bg-gradient-to-r from-orange-500 to-red-500 h-2 rounded-full transition-all" [style.width.%]="(completedCount() / exercises().length * 100 || 0)"></div>
+                  <div class="w-full bg-orange-200 rounded-full h-3">
+                    <div class="bg-gradient-to-r from-orange-500 to-red-500 h-3 rounded-full transition-all duration-500" [style.width.%]="(completedCount() / exercises().length * 100 || 0)"></div>
                   </div>
                 </div>
 
                 <!-- Completed Exercises -->
                 @if (completedExercisesForDay().length > 0) {
-                  <div class="mb-4">
-                    <h3 class="text-xs font-bold text-gray-900 mb-2 flex items-center gap-2 uppercase">
+                  <div>
+                    <h3 class="text-xs font-bold text-gray-900 mb-3 flex items-center gap-2 uppercase tracking-wider">
                       <svg class="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
                       </svg>
                       Completed
                     </h3>
-                    <div class="space-y-1">
+                    <div class="space-y-2">
                       @for (exercise of getCompletedExercises(); track exercise.exerciseId) {
-                        <div class="flex items-center gap-2 bg-green-50 p-1.5 rounded text-xs border border-green-100">
-                          <svg class="w-3 h-3 text-green-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <div class="flex items-center gap-3 bg-green-50 p-3 rounded-lg text-sm border border-green-200 hover:border-green-300 transition">
+                          <svg class="w-5 h-5 text-green-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
                           </svg>
                           <span class="text-gray-900 font-semibold">{{ exercise.excersiceName }}</span>
@@ -79,35 +79,45 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
                 <!-- Next Exercise -->
                 @if (nextExerciseToExecute(); as next) {
-                  <div class="mb-4">
-                    <h3 class="text-xs font-bold text-gray-900 mb-2 flex items-center gap-2 uppercase">
-                      <svg class="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                  <div>
+                    <h3 class="text-xs font-bold text-gray-900 mb-3 flex items-center gap-2 uppercase tracking-wider">
+                      <svg class="w-4 h-4 text-sky-600" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
                       </svg>
-                      Next
+                      Next Exercise
                     </h3>
-                    <div class="bg-blue-50 border border-blue-300 rounded p-2">
-                      <p class="text-blue-900 font-bold text-sm">{{ next.excersiceName }}</p>
-                      <p class="text-blue-700 text-xs mt-0.5">
-                        {{ getExerciseIndex(next.exerciseId) }} of {{ exercises().length }}
+                    <div class="bg-gradient-to-br from-sky-50 to-indigo-50 border border-sky-300 rounded-lg p-4">
+                      <p class="text-sky-900 font-bold text-base">{{ next.excersiceName }}</p>
+                      <p class="text-sky-700 text-xs mt-2 font-semibold">
+                        Exercise {{ getExerciseIndex(next.exerciseId) }} of {{ exercises().length }}
                       </p>
                     </div>
                   </div>
                 } @else {
-                  <div class="mb-4 bg-green-50 border border-green-300 rounded p-2">
-                    <p class="text-green-900 font-bold text-xs">✓ Workout completed!</p>
+                  <div class="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-300 rounded-lg p-4">
+                    <p class="text-green-900 font-bold text-base flex items-center gap-2">
+                      <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                      </svg>
+                      Workout Completed!
+                    </p>
                   </div>
                 }
 
                 <!-- Remaining Exercises -->
                 @if (getRemainingExercises().length > 0) {
-                  <div class="mb-4">
-                    <h3 class="text-xs font-bold text-gray-900 mb-2 uppercase">Remaining ({{ getRemainingExercises().length }})</h3>
-                    <div class="space-y-1 max-h-20 overflow-y-auto">
+                  <div>
+                    <h3 class="text-xs font-bold text-gray-900 mb-3 flex items-center gap-2 uppercase tracking-wider">
+                      <svg class="w-4 h-4 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
+                        <circle cx="10" cy="10" r="1" />
+                      </svg>
+                      Remaining ({{ getRemainingExercises().length }})
+                    </h3>
+                    <div class="space-y-2 max-h-24 overflow-y-auto">
                       @for (exercise of getRemainingExercises(); track exercise.exerciseId) {
-                        <div class="flex items-center gap-2 bg-gray-50 p-1.5 rounded text-xs border border-gray-100">
-                          <span class="w-4 h-4 rounded-full bg-gray-200 text-gray-700 flex items-center justify-center font-semibold text-xs flex-shrink-0">{{ getExerciseIndex(exercise.exerciseId) }}</span>
-                          <span class="text-gray-700 text-xs">{{ exercise.excersiceName }}</span>
+                        <div class="flex items-center gap-3 bg-gray-50 p-3 rounded-lg text-sm border border-gray-200 hover:border-sky-300 transition">
+                          <span class="w-6 h-6 rounded-full bg-gradient-to-br from-sky-200 to-indigo-200 text-sky-700 flex items-center justify-center font-bold text-xs flex-shrink-0">{{ getExerciseIndex(exercise.exerciseId) }}</span>
+                          <span class="text-gray-700 font-medium">{{ exercise.excersiceName }}</span>
                         </div>
                       }
                     </div>
@@ -116,19 +126,19 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
               </div>
 
               <!-- Modal Footer -->
-              <div class="bg-gray-50 px-4 py-2 border-t border-gray-200 flex gap-2">
+              <div class="bg-gray-50 px-6 py-4 border-t border-gray-200 flex gap-3 sticky bottom-0">
                 <button
                   (click)="cancelStartWorkout()"
-                  class="flex-1 border border-gray-300 text-gray-700 font-semibold py-2 px-3 rounded text-xs hover:bg-gray-100 transition"
+                  class="flex-1 border-2 border-gray-300 text-gray-700 font-semibold py-2.5 px-4 rounded-lg hover:bg-gray-100 transition-all duration-200 active:scale-95 text-sm"
                 >
                   Cancel
                 </button>
                 @if (nextExerciseToExecute()) {
                   <button
                     (click)="proceedWithWorkout()"
-                    class="flex-1 bg-gradient-to-r from-green-600 to-green-700 text-white font-semibold py-2 px-3 rounded text-xs hover:from-green-700 hover:to-green-800 transition"
+                    class="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold py-2.5 px-4 rounded-lg hover:from-green-700 hover:to-emerald-700 transition-all duration-200 active:scale-95 text-sm shadow-lg"
                   >
-                    Continue
+                    Continue Workout
                   </button>
                 }
               </div>
@@ -138,37 +148,48 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
         <!-- Resume Workout Modal (Legacy - kept for backward compatibility) -->
         @if (showResumeModal()) {
-          <div class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 animate-fadeIn">
-            <div class="bg-white rounded-2xl p-8 max-w-md mx-4 shadow-2xl animate-slideUp">
-              <div class="text-center mb-6">
-                <div class="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg class="w-10 h-10 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
-                  </svg>
+          <div class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 animate-fadeIn p-4">
+            <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl animate-slideUp border border-gray-100">
+              <div class="bg-gradient-to-r from-sky-600 to-indigo-600 px-6 py-4 text-white rounded-t-2xl">
+                <h2 class="text-2xl font-bold mb-1">Resume Workout?</h2>
+                <p class="text-sky-100 text-sm">Continue from where you left off</p>
+              </div>
+
+              <div class="p-8 text-center space-y-6">
+                <!-- Progress Display -->
+                <div class="bg-gradient-to-br from-orange-50 to-red-50 rounded-xl p-6 border border-orange-100">
+                  <p class="text-gray-600 text-sm font-semibold mb-3 uppercase tracking-wider">Progress</p>
+                  <p class="text-4xl font-bold text-orange-600 mb-3">{{ completedCount() }}/{{ exercises().length }}</p>
+                  <div class="w-full bg-orange-200 rounded-full h-2">
+                    <div class="bg-gradient-to-r from-orange-500 to-red-500 h-2 rounded-full transition-all" [style.width.%]="(completedCount() / exercises().length * 100 || 0)"></div>
+                  </div>
+                  <p class="text-sm text-orange-700 mt-3 font-semibold">{{ (completedCount() / exercises().length * 100 | number:'1.0-0') || 0 }}% Complete</p>
                 </div>
-                <h2 class="text-2xl font-bold text-gray-900 mb-3">Resume Workout?</h2>
-                <p class="text-gray-600 text-lg mb-2">
-                  You've completed <span class="font-bold text-green-600">{{ completedCount() }}</span> of {{ exercises().length }} exercises
-                </p>
-                <p class="text-gray-500 mb-4">
-                  Next: <span class="font-semibold text-sky-600">{{ getNextExerciseName() }}</span>
-                </p>
-                <div class="bg-sky-50 rounded-lg p-4 mb-6">
-                  <p class="text-sky-800 font-semibold">Starting in {{ resumeCountdown() }} seconds...</p>
+
+                <!-- Next Exercise -->
+                <div class="bg-gradient-to-br from-sky-50 to-indigo-50 rounded-xl p-4 border border-sky-300">
+                  <p class="text-gray-600 text-xs font-bold uppercase tracking-wider mb-2">Next Exercise</p>
+                  <p class="text-xl font-bold text-sky-900">{{ getNextExerciseName() }}</p>
+                </div>
+
+                <!-- Countdown -->
+                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                  <p class="text-yellow-900 font-semibold text-sm">Resuming in <span class="text-2xl font-bold text-yellow-600">{{ resumeCountdown() }}</span> seconds...</p>
                 </div>
               </div>
-              <div class="flex gap-3">
+
+              <div class="bg-gray-50 px-6 py-4 border-t border-gray-200 flex gap-3 rounded-b-2xl">
                 <button
                   (click)="cancelResume()"
-                  class="flex-1 border-2 border-gray-300 text-gray-700 font-semibold py-3 px-6 rounded-xl hover:bg-gray-50 transition"
+                  class="flex-1 border-2 border-gray-300 text-gray-700 font-semibold py-3 px-4 rounded-lg hover:bg-gray-100 transition-all duration-200 active:scale-95"
                 >
                   Cancel
                 </button>
                 <button
                   (click)="continueWorkout()"
-                  class="flex-1 bg-gradient-to-r from-green-600 to-green-700 text-white font-semibold py-3 px-6 rounded-xl hover:from-green-700 hover:to-green-800 transition shadow-lg"
+                  class="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold py-3 px-4 rounded-lg hover:from-green-700 hover:to-emerald-700 transition-all duration-200 active:scale-95 shadow-lg"
                 >
-                  Continue Now
+                  Resume Now
                 </button>
               </div>
             </div>
@@ -185,19 +206,21 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
         <!-- Content -->
         <div *ngIf="!isLoading() && day()">
-          <!-- Day Overview Cards -->
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <!-- Day Overview Cards -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-8">
             <!-- Completion Status -->
-            <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
-              <div class="flex items-center justify-between">
+            <div class="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 p-6 border border-gray-100 overflow-hidden group">
+              <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-sky-100 to-indigo-100 rounded-full -mr-16 -mt-16 opacity-50"></div>
+              <div class="relative z-10 flex items-center justify-between">
                 <div>
-                  <p class="text-gray-600 text-sm font-semibold uppercase tracking-wider mb-2">Status</p>
-                  <p class="text-3xl font-bold" [class.text-green-600]="isDayCompleted()" [class.text-sky-600]="!isDayCompleted()">
-                    {{ isDayCompleted() ? '✓ Completed' : 'Ready' }}
+                  <p class="text-gray-600 text-xs font-bold uppercase tracking-wider mb-2">Status</p>
+                  <p class="text-3xl sm:text-4xl font-bold" [class.text-green-600]="isDayCompleted()" [class.text-sky-600]="!isDayCompleted()">
+                    {{ isDayCompleted() ? '✓' : '→' }}
                   </p>
+                  <p class="text-sm text-gray-600 mt-1 font-semibold">{{ isDayCompleted() ? 'Completed' : 'Ready' }}</p>
                 </div>
-                <div [class]="isDayCompleted() ? 'bg-green-100' : 'bg-sky-100'" class="rounded-full p-4">
-                  <svg [class]="isDayCompleted() ? 'text-green-600' : 'text-sky-600'" class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
+                <div [class]="isDayCompleted() ? 'bg-green-100' : 'bg-sky-100'" class="rounded-2xl p-4 group-hover:scale-110 transition-transform duration-300">
+                  <svg [class]="isDayCompleted() ? 'text-green-600' : 'text-sky-600'" class="w-10 h-10" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
                   </svg>
                 </div>
@@ -205,18 +228,27 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
             </div>
 
             <!-- Exercise Count -->
-            <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
-              <p class="text-gray-600 text-sm font-semibold uppercase tracking-wider mb-2">Total Exercises</p>
-              <p class="text-4xl font-bold text-purple-600 mb-2">{{ exercises().length }}</p>
-              <p class="text-gray-500 text-sm">{{ completedCount() }} completed</p>
+            <div class="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 p-6 border border-gray-100 overflow-hidden group">
+              <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-100 to-pink-100 rounded-full -mr-16 -mt-16 opacity-50"></div>
+              <div class="relative z-10">
+                <p class="text-gray-600 text-xs font-bold uppercase tracking-wider mb-3">Total Exercises</p>
+                <p class="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-2">{{ exercises().length }}</p>
+                <div class="flex items-center gap-2 mt-3">
+                  <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                  <p class="text-sm text-gray-600 font-semibold">{{ completedCount() }} completed</p>
+                </div>
+              </div>
             </div>
 
             <!-- Completion Rate -->
-            <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
-              <p class="text-gray-600 text-sm font-semibold uppercase tracking-wider mb-2">Progress</p>
-              <p class="text-4xl font-bold text-orange-600 mb-2">{{ (completedCount() / exercises().length * 100 | number:'1.0-0') || 0 }}%</p>
-              <div class="w-full bg-gray-200 rounded-full h-2">
-                <div class="bg-gradient-to-r from-orange-500 to-red-500 h-2 rounded-full transition-all" [style.width.%]="(completedCount() / exercises().length * 100 || 0)"></div>
+            <div class="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 p-6 border border-gray-100 overflow-hidden group sm:col-span-2 lg:col-span-1">
+              <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-orange-100 to-red-100 rounded-full -mr-16 -mt-16 opacity-50"></div>
+              <div class="relative z-10">
+                <p class="text-gray-600 text-xs font-bold uppercase tracking-wider mb-3">Progress</p>
+                <p class="text-4xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent mb-3">{{ (completedCount() / exercises().length * 100 | number:'1.0-0') || 0 }}%</p>
+                <div class="w-full bg-gray-200 rounded-full h-3">
+                  <div class="bg-gradient-to-r from-orange-500 to-red-500 h-3 rounded-full transition-all duration-500" [style.width.%]="(completedCount() / exercises().length * 100 || 0)"></div>
+                </div>
               </div>
             </div>
           </div>
@@ -228,17 +260,21 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
               [disabled]="isDayCompleted()"
               class="bg-gradient-to-r from-sky-600 to-indigo-600
                      hover:from-sky-700 hover:to-indigo-700
-                     text-white font-bold text-lg
-                     py-5 px-12 rounded-2xl
-                     shadow-xl hover:scale-105 transition-all
-                     disabled:opacity-50 disabled:cursor-not-allowed"
+                     text-white font-bold text-base sm:text-lg
+                     py-4 sm:py-5 px-8 sm:px-12 rounded-2xl
+                     shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-300
+                     disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100
+                     active:scale-95 flex items-center justify-center gap-2"
             >
-              🚀 {{ isDayCompleted() ? 'Workout Completed' : (completedCount() > 0 ? 'Resume Workout' : 'Start Workout') }}
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M5.5 13a3.5 3.5 0 01-.369-6.98 4 4 0 117.753-1.3A4.5 4.5 0 1113.5 13H11V9.413l1.293 1.293a1 1 0 001.414-1.414l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13H5.5z" />
+              </svg>
+              {{ isDayCompleted() ? 'Workout Completed' : (completedCount() > 0 ? 'Resume Workout' : 'Start Workout') }}
             </button>
           </div>
 
           <!-- Exercises Grid -->
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             @for (exercise of exercises(); track exercise.exerciseId; let i = $index) {
               <div
                 (click)="startExerciseExecution(exercise.exerciseId)"
@@ -247,60 +283,67 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
                 [class.opacity-50]="isDayCompleted()"
                 [class.cursor-not-allowed]="isDayCompleted()"
                 [class.pointer-events-none]="isDayCompleted()"
-                class="group bg-white rounded-lg shadow hover:shadow-md transition-all cursor-pointer overflow-hidden border border-gray-100 flex flex-col relative"
+                class="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer overflow-hidden border border-gray-100 flex flex-col relative hover:scale-105"
                 [style.backgroundImage]="exercise.thumbnailUrl ? 'url(' + exercise.thumbnailUrl + ')' : 'none'"
                 [style.backgroundSize]="'cover'"
                 [style.backgroundPosition]="'center'"
               >
                 <!-- Dark Overlay -->
                 @if (exercise.thumbnailUrl) {
-                  <div class="absolute inset-0 bg-black/50"></div>
+                  <div class="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-all duration-300"></div>
                 }
 
                 <!-- Content -->
-                <div class="relative z-10 flex flex-col h-full">
-                  <div class="bg-gradient-to-r from-gray-500 to-gray-600 px-3 py-3 text-white flex flex-col">
-                    <div class="flex items-start justify-between mb-2">
-                      <h3 class="text-lg font-bold leading-tight flex-1">{{ exercise.excersiceName }}</h3>
+                <div class="relative z-10 flex flex-col h-full justify-between">
+                  <!-- Top Section: Exercise Info -->
+                  <div class="p-6">
+                    <div class="flex items-start justify-between mb-4">
+                      <div class="flex-1">
+                        <span class="inline-block text-xs font-bold text-sky-600 bg-sky-50 px-3 py-1.5 rounded-full mb-3">
+                          Exercise {{ i + 1 }}
+                        </span>
+                        <h3 class="text-lg font-bold text-gray-900 leading-tight line-clamp-2">{{ exercise.excersiceName }}</h3>
+                      </div>
                       @if (isExerciseCompleted(exercise.exerciseId)) {
-                        <div class="bg-green-500 text-white rounded-full p-2 flex-shrink-0 ml-2">
-                          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <div class="bg-green-500 text-white rounded-full p-2.5 flex-shrink-0 ml-3 shadow-lg">
+                          <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
                           </svg>
                         </div>
                       }
                     </div>
 
-                    <p class="text-red-100 text-xs italic mb-3 font-semibold">{{ getMotivationalMessage(exercise.exerciseId) }}</p>
-
-                    <div class="flex gap-2">
-                      <div class="bg-blue-500/40 rounded p-1 border border-blue-300 text-center flex-1">
-                        <p class="text-blue-200 text-xs font-bold">Sets</p>
-                        <p class="text-xs font-bold text-blue-100">{{ exercise.sets }}</p>
-                      </div>
-                      <div class="bg-blue-500/40 rounded p-1 border border-blue-300 text-center flex-1">
-                        <p class="text-green-200 text-xs font-bold">Reps</p>
-                        <p class="text-xs font-bold text-green-100">{{ exercise.reps }}</p>
-                      </div>
-                      <div class="bg-blue-500/40 rounded p-1 border border-blue-300 text-center flex-1">
-                        <p class="text-orange-200 text-xs font-bold">Rest</p>
-                        <p class="text-xs font-bold text-orange-100">{{ exercise.restSeconds }}s</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="px-4 py-6 flex-1">
+                    <!-- Equipment Tag -->
                     @if (exercise.equipment) {
-                      <span class="inline-block bg-purple-100 text-purple-800 px-3 py-2 rounded-full text-xs font-semibold">
+                      <span class="inline-block bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800 px-3 py-1.5 rounded-lg text-sm font-semibold">
                         {{ exercise.equipment }}
                       </span>
                     }
                   </div>
 
-                  <div class="bg-gray-50 px-4 py-2 border-t border-gray-200 flex items-center justify-between text-xs font-semibold text-gray-700 group-hover:bg-sky-50 group-hover:text-sky-600 transition">
-                    <span class="truncate">{{ i + 1 }}. {{ exercise.excersiceName }}</span>
-                    <svg class="w-4 h-4 group-hover:translate-x-1 transition flex-shrink-0 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7"></path>
+                  <!-- Middle Section: Stats Grid -->
+                  <div class="px-6 py-5 border-t border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100">
+                    <div class="grid grid-cols-3 gap-3">
+                      <div class="text-center">
+                        <p class="text-xs font-bold text-gray-600 mb-2">SETS</p>
+                        <p class="text-3xl font-bold text-sky-600">{{ exercise.sets }}</p>
+                      </div>
+                      <div class="text-center border-l border-r border-gray-300">
+                        <p class="text-xs font-bold text-gray-600 mb-2">REPS</p>
+                        <p class="text-3xl font-bold text-green-600">{{ exercise.reps }}</p>
+                      </div>
+                      <div class="text-center">
+                        <p class="text-xs font-bold text-gray-600 mb-2">REST</p>
+                        <p class="text-3xl font-bold text-orange-600">{{ exercise.restSeconds }}<span class="text-sm">s</span></p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Bottom Section: CTA -->
+                  <div class="px-6 py-4 bg-gradient-to-r from-sky-50 to-indigo-50 flex items-center justify-between group-hover:from-sky-100 group-hover:to-indigo-100 transition-all duration-300">
+                    <span class="text-base font-bold text-gray-700">Start</span>
+                    <svg class="w-6 h-6 text-sky-600 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path>
                     </svg>
                   </div>
                 </div>
@@ -309,15 +352,24 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
           </div>
 
           <!-- Action Buttons -->
-          <div class="mt-8 flex gap-4">
+          <div class="flex gap-3 sm:gap-4 justify-center">
             <button
               (click)="goToDetail()"
-              class="flex-1 border-2 border-sky-600 text-sky-600 font-semibold py-4 px-6 rounded-xl hover:bg-sky-50 transition-all flex items-center justify-center gap-2"
+              class="border-2 border-sky-600 text-sky-600 hover:bg-sky-50 font-semibold py-3 sm:py-4 px-6 sm:px-8 rounded-xl transition-all duration-300 active:scale-95 flex items-center justify-center gap-2 hover:border-sky-700"
             >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
               </svg>
-              Back to Days
+              Back
+            </button>
+            <button
+              (click)="goToPrograms()"
+              class="border-2 border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold py-3 sm:py-4 px-6 sm:px-8 rounded-xl transition-all duration-300 active:scale-95 flex items-center justify-center gap-2"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12a9 9 0 0118 0 9 9 0 01-18 0z"></path>
+              </svg>
+              My Programs
             </button>
           </div>
         </div>
@@ -352,7 +404,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
   `,
   styles: []
 })
-export class ProgramDayDetailComponent implements OnInit {
+export class ProgramDayDetailComponent implements OnInit, OnDestroy {
   private programService = inject(ProgramService);
   private workoutStateService = inject(WorkoutStateService);
   private workoutHistoryService = inject(WorkoutHistoryService);
@@ -522,14 +574,19 @@ export class ProgramDayDetailComponent implements OnInit {
   }
 
   startWorkout() {
+    console.log('🏋️ START WORKOUT clicked');
+    console.log('Current exercises:', this.exercises());
+    console.log('Day ID:', this.dayId);
     // Show the progress modal
     this.showStartWorkoutModal.set(true);
+    console.log('Modal state:', this.showStartWorkoutModal());
   }
 
   /**
    * Called when user clicks "Continue Workout" in the modal
    */
   proceedWithWorkout() {
+    console.log('✅ PROCEED WITH WORKOUT clicked');
     const exercisesData = this.exercises().map((ex: any) => ({
       id: ex.exerciseId ?? ex.id,
       sets: Number(ex.sets),
@@ -537,23 +594,33 @@ export class ProgramDayDetailComponent implements OnInit {
     }));
 
     const completedIds = this.completedExerciseIds();
+    console.log('Exercises:', exercisesData);
+    console.log('Completed IDs:', completedIds);
 
     // Initialize the workout session with all exercises (in case user starts from scratch)
     // This will include completedExerciseIds in the session
     this.workoutStateService.initializeWorkout(this.dayId, exercisesData, completedIds);
+    console.log('Workout initialized');
 
     // Get the next exercise to execute
     const nextExercise = this.nextExerciseToExecute();
+    console.log('Next exercise:', nextExercise);
+    
     if (nextExercise) {
       // Close modal and navigate to next exercise
       this.showStartWorkoutModal.set(false);
+      console.log('Navigating to exercise:', nextExercise.exerciseId);
       this.router.navigate(['/exercise', nextExercise.exerciseId, 'execute'], {
         queryParams: { dayId: this.dayId, programId: this.programId }
       });
+    } else {
+      console.warn('⚠️ No next exercise found!');
+      alert('No exercises available. Make sure exercises are loaded.');
     }
   }
 
   cancelStartWorkout() {
+    console.log('❌ CANCEL clicked');
     this.showStartWorkoutModal.set(false);
   }
 
@@ -597,8 +664,8 @@ export class ProgramDayDetailComponent implements OnInit {
   }
 
   startExerciseExecution(exerciseId: number) {
-    if (this.isWorkoutLocked()) {
-      console.warn('⛔ Workout locked: Start workout first');
+    if (this.isDayCompleted()) {
+      console.warn('⛔ Day completed: Cannot start more exercises');
       return;
     }
     this.router.navigate(['/exercise', exerciseId, 'execute'], {
@@ -611,7 +678,7 @@ export class ProgramDayDetailComponent implements OnInit {
   }
 
   goToPrograms() {
-    this.router.navigate(['/programs']);
+    this.router.navigate(['/my-active-programs']);
   }
 
   ngOnDestroy() {

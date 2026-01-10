@@ -111,14 +111,34 @@ export class ChatApiService {
   }
 
   /**
+   * Delete a chat thread
+   * DELETE /api/Chat/threads/:threadId
+   */
+  deleteThread(threadId: number): Observable<void> {
+    return this.http.delete<void>(
+      `${this.apiUrl}/threads/${threadId}`
+    );
+  }
+
+  /**
    * Get all trainers associated with the current client
    * GET /api/client/clientTrainers
-   * Response: { success: boolean, data?: ClientTrainer[] }
+   * Response: ClientTrainer[] (direct array, not wrapped in ApiResponse)
    */
   getClientTrainers(): Observable<ClientTrainer[]> {
-    return this.http.get<ApiResponse<ClientTrainer[]>>(`${this.clientApiUrl}/clientTrainers`)
+    const url = `${this.clientApiUrl}/clientTrainers`;
+    console.log('Getting trainers from URL:', url);
+    return this.http.get<ClientTrainer[]>(url)
       .pipe(
-        map(response => response.data || [])
+        map(response => {
+          console.log('Trainers API response:', response);
+          const trainers = Array.isArray(response) ? response : [];
+          console.log('Extracted trainers:', trainers);
+          if (trainers.length === 0) {
+            console.warn('No trainers returned from API. Please check if the endpoint is correct or if client has trainers assigned.');
+          }
+          return trainers;
+        })
       );
   }
 }

@@ -8,12 +8,14 @@ import {
   AfterViewInit,
   AfterContentChecked,
   signal,
-  effect
+  effect,
+  inject
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Message, ChatThread, MessageType } from '../../../../core/models/chat.model';
 import { User } from '../../../../core/models';
+import { ChatService } from '../../../../core/services/chat.service';
 
 @Component({
   selector: 'app-chat-window',
@@ -32,11 +34,16 @@ export class ChatWindowComponent implements AfterViewInit, AfterContentChecked {
 
   // Outputs
   sendMessage = output<string>();
+  deleteThread = output<number>();
+
+  // Dependencies
+  private readonly chatService = inject(ChatService);
 
   @ViewChild('messagesContainer') private messagesContainer!: ElementRef<HTMLDivElement>;
 
   messageText = signal('');
   isSending = signal(false);
+  isDeleting = signal(false);
   private previousMessageCount = 0;
   private shouldScroll = false;
 
@@ -137,5 +144,29 @@ export class ChatWindowComponent implements AfterViewInit, AfterContentChecked {
   onMessageInputChange(event: Event): void {
     const target = event.target as HTMLTextAreaElement;
     this.messageText.set(target.value);
+  }
+
+  onDeleteThread(): void {
+    const thread = this.selectedThread();
+    if (!thread) return;
+
+    // Ask for confirmation
+    if (!confirm(`Are you sure you want to delete this conversation with ${thread.otherUserName}?`)) {
+      return;
+    }
+
+    this.isDeleting.set(true);
+    this.chatService.deleteThread(thread.id).subscribe({
+      next: () => {
+        this.isDeleting.set(false);
+        this.deleteThread.emit(thread.id);
+        console.log('Thread deleted successfully');
+      },
+      error: (error) => {
+        this.isDeleting.set(false);
+        console.error('Error deleting thread:', error);
+        alert('Failed to delete conversation. Please try again.');
+      }
+    });
   }
 }

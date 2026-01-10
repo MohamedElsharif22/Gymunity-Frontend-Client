@@ -27,7 +27,7 @@ import { Subject } from 'rxjs';
       <app-header *ngIf="!isFullscreen()" (toggleSidebar)="toggleSidebar()"></app-header>
 
       <!-- Main Content -->
-      <div class="flex flex-1 relative z-10" [class.pt-14]="!isFullscreen()" [class.sm:pt-16]="!isFullscreen()" [class.md:pt-20]="!isFullscreen()">
+      <div class="flex flex-1 relative z-10 w-full" [class.mt-14]="!isFullscreen()" [class.sm:mt-16]="!isFullscreen()" [class.md:mt-20]="!isFullscreen()">
         <!-- Sidebar -->
         <app-sidebar 
           *ngIf="!isFullscreen()" 

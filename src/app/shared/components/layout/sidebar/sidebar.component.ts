@@ -1,7 +1,8 @@
-import { Component, signal, inject, input, output } from '@angular/core';
+import { Component, signal, inject, computed, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { ChatService } from '../../../../core/services/chat.service';
 
 interface NavItem {
   label: string;
@@ -23,7 +24,7 @@ interface NavItem {
       <div class="fixed inset-0 bg-black/40 backdrop-blur-sm z-30 lg:hidden" (click)="closeSidebar()"></div>
     }
 
-    <aside [class]="'fixed left-0 top-20 bottom-0 bg-white border-r border-gray-200 overflow-y-auto flex flex-col shadow-lg transition-all duration-300 ' + (isCollapsed() ? 'w-20' : 'w-72')"
+    <aside [class]="'fixed left-0 top-14 sm:top-16 md:top-20 bottom-0 bg-white border-r border-gray-200 overflow-y-auto flex flex-col shadow-lg transition-all duration-300 ' + (isCollapsed() ? 'w-20' : 'w-72')"
            [ngClass]="{
              'hidden lg:flex': true,
              'flex z-40': isSidebarOpen(),
@@ -90,7 +91,7 @@ interface NavItem {
 
           <!-- Arrow on active -->
           <svg routerLinkActive="opacity-100" 
-               class="w-5 h-5 opacity-0 absolute right-4 transition-opacity duration-200" 
+               class="w-4 h-4 md:w-5 md:h-5 opacity-0 absolute right-3 md:right-4 transition-opacity duration-200 flex-shrink-0" 
                fill="none" 
                stroke="currentColor" 
                viewBox="0 0 24 24"
@@ -190,6 +191,12 @@ export class SidebarComponent {
       color: 'sky'
     },
     {
+      label: 'My Active Programs',
+      icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>',
+      route: '/my-active-programs',
+      color: 'indigo'
+    },
+    {
       label: 'My Body-State Logs',
       icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>',
       route: '/body-state',
@@ -197,14 +204,15 @@ export class SidebarComponent {
     },
     {
       label: 'My Workout Logs',
-      icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>',
+      icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>',
       route: '/workout-logs',
       color: 'green'
     },
     {
-      label: 'My Subscription',
-      icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>',
-      route: '/subscriptions'
+      label: 'Subscriptions',
+      icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>',
+      route: '/subscriptions',
+      color: 'amber'
     },
     {
       label: 'Discover Trainers',
@@ -221,14 +229,15 @@ export class SidebarComponent {
     {
       label: 'Discover Packages',
       icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>',
-      route: '/packages'
+      route: '/packages',
+      color: 'teal'
     },
     {
       label: 'Messages',
       icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>',
       route: '/chat',
       color: 'pink',
-      isNew: true
+      badge: 0
     }
   ];
 

@@ -16,16 +16,12 @@ export class ReviewService {
 
   /**
    * Create a review for a trainer
+   * POST /api/client/ReviewClient/trainer/{trainerId}
    */
   createTrainerReview(trainerId: number, request: CreateReviewRequest): Observable<Review> {
-    return this.apiService.post<Review>(`/api/client/reviews/trainer/${trainerId}`, request);
-  }
-
-  /**
-   * Get all reviews for a trainer
-   */
-  getTrainerReviews(trainerId: number): Observable<Review[]> {
-    return this.apiService.get<Review[]>(`/api/trainer/reviews/trainer/${trainerId}`);
+    const url = `/api/client/ReviewClient/trainer/${trainerId}`;
+    console.log('📤 Review API Request:', { url, body: request });
+    return this.apiService.post<Review>(url, request);
   }
 }
 

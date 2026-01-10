@@ -4,20 +4,24 @@ import {
   inject,
   signal,
   ChangeDetectionStrategy,
-  DestroyRef
+  DestroyRef,
+  computed
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule, Router } from '@angular/router';
 import { Location } from '@angular/common';
 import { TrainerProfileService } from '../../services/trainer-profile.service';
 import { HomeClientService } from '../../services/home-client.service';
-import { TrainerCard } from '../../../../core/models';
+import { ReviewService } from '../../services/review.service';
+import { AuthService } from '../../../../core/services/auth.service';
+import { TrainerCard, Review, CreateReviewRequest } from '../../../../core/models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-trainer-detail',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, FormsModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <!-- Facebook-Style Profile Layout -->
@@ -424,11 +428,106 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
                 @if (activeTab() === 'reviews') {
                   <div class="bg-white rounded-lg shadow p-6">
                     <h2 class="text-xl font-bold text-gray-900 mb-6">Reviews</h2>
-                    <div class="text-center py-12 text-gray-600">
-                      <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
-                      </svg>
-                      Reviews coming soon
+                    
+                    <!-- Review Form Toggle Button -->
+                    @if (currentUser()) {
+                      <div class="mb-6">
+                        <button (click)="toggleReviewForm()" class="btn-primary bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">
+                          {{ showReviewForm() ? 'Cancel' : 'Leave a Review' }}
+                        </button>
+                      </div>
+                    }
+                    
+                    <!-- Review Form -->
+                    @if (showReviewForm() && currentUser()) {
+                      <div class="border rounded-lg p-6 mb-6 bg-gray-50">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Share Your Experience</h3>
+                        
+                        <!-- Star Rating Selector -->
+                        <div class="mb-4">
+                          <label class="block text-sm font-medium text-gray-700 mb-2">Rating</label>
+                          <div class="flex gap-2">
+                            @for (star of [1, 2, 3, 4, 5]; track star) {
+                              <button
+                                (click)="setRating(star)"
+                                [class.text-yellow-400]="reviewRating() >= star"
+                                [class.text-gray-300]="reviewRating() < star"
+                                class="text-3xl transition-colors hover:text-yellow-400"
+                              >
+                                ★
+                              </button>
+                            }
+                          </div>
+                          @if (reviewRating() === 0) {
+                            <p class="text-sm text-gray-500 mt-1">Select a rating</p>
+                          } @else {
+                            <p class="text-sm text-gray-700 mt-1">{{ reviewRating() }} out of 5 stars</p>
+                          }
+                        </div>
+                        
+                        <!-- Comment Input -->
+                        <div class="mb-4">
+                          <label class="block text-sm font-medium text-gray-700 mb-2">Comment</label>
+                          <textarea
+                            [ngModel]="reviewComment()"
+                            (ngModelChange)="reviewComment.set($event)"
+                            placeholder="Share your experience with this trainer..."
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            rows="4"
+                          ></textarea>
+                          <p class="text-sm text-gray-500 mt-1">{{ reviewComment().length }} characters</p>
+                        </div>
+                        
+                        <!-- Submit Button -->
+                        <div class="flex gap-3">
+                          <button
+                            (click)="submitReview()"
+                            [disabled]="submittingReview()"
+                            class="btn-primary bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg disabled:bg-gray-400 disabled:cursor-not-allowed"
+                          >
+                            {{ submittingReview() ? 'Submitting...' : 'Submit Review' }}
+                          </button>
+                        </div>
+                        
+                        <!-- Success/Error Messages -->
+                        @if (reviewSubmitMessage(); as message) {
+                          <div [class.bg-green-50]="message.type === 'success'" [class.bg-red-50]="message.type === 'error'" class="mt-4 p-3 rounded-lg border" [class.border-green-200]="message.type === 'success'" [class.border-red-200]="message.type === 'error'">
+                            <p [class.text-green-800]="message.type === 'success'" [class.text-red-800]="message.type === 'error'" class="text-sm">
+                              {{ message.message }}
+                            </p>
+                          </div>
+                        }
+                      </div>
+                    }
+                    
+                    <!-- Reviews List -->
+                    <div>
+                      @if (reviews().length === 0) {
+                        <div class="text-center py-8 text-gray-600">
+                          <p>No reviews yet. Be the first to review this trainer!</p>
+                        </div>
+                      } @else {
+                        <div class="space-y-4">
+                          @for (review of reviews(); track review.id) {
+                            <div class="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                              <div class="flex justify-between items-start mb-2">
+                                <div>
+                                  <p class="font-semibold text-gray-900">{{ review.clientId }}</p>
+                                  <p class="text-sm text-gray-500">{{ review.createdAt | date:'short' }}</p>
+                                </div>
+                                <div class="flex gap-1">
+                                  @for (star of [1, 2, 3, 4, 5]; track star) {
+                                    <span [class.text-yellow-400]="review.rating >= star" [class.text-gray-300]="review.rating < star" class="text-lg">
+                                      ★
+                                    </span>
+                                  }
+                                </div>
+                              </div>
+                              <p class="text-gray-700">{{ review.comment }}</p>
+                            </div>
+                          }
+                        </div>
+                      }
                     </div>
                   </div>
                 }
@@ -451,6 +550,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 export class TrainerDetailComponent implements OnInit {
   private readonly trainerProfileService = inject(TrainerProfileService);
   private readonly homeClientService = inject(HomeClientService);
+  private readonly reviewService = inject(ReviewService);
+  private readonly authService = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly location = inject(Location);
@@ -459,11 +560,20 @@ export class TrainerDetailComponent implements OnInit {
   trainer = signal<TrainerCard | null>(null);
   packages = signal<any[]>([]);
   trainerPrograms = signal<any[]>([]);
+  reviews = signal<Review[]>([]);
   isLoading = signal(false);
   loadingPackages = signal(false);
   loadingPrograms = signal(false);
   error = signal<string | null>(null);
   activeTab = signal<'about' | 'packages' | 'programs' | 'reviews'>('about');
+  
+  // Review form state
+  showReviewForm = signal(false);
+  reviewRating = signal(0);
+  reviewComment = signal('');
+  submittingReview = signal(false);
+  reviewSubmitMessage = signal<{type: 'success' | 'error', message: string} | null>(null);
+  currentUser = this.authService.currentUser;
 
   ngOnInit(): void {
     const state = this.location.getState() as any;
@@ -582,6 +692,78 @@ export class TrainerDetailComponent implements OnInit {
     if (trainerId) {
       this.router.navigate(['/chat'], { queryParams: { trainerId } });
     }
+  }
+
+  // Review-related methods
+  toggleReviewForm(): void {
+    this.showReviewForm.update(v => !v);
+    if (!this.showReviewForm()) {
+      this.clearReviewForm();
+    }
+  }
+
+  setRating(rating: number): void {
+    if (rating >= 1 && rating <= 5) {
+      this.reviewRating.set(rating);
+    }
+  }
+
+  submitReview(): void {
+    const rating = this.reviewRating();
+    const comment = this.reviewComment().trim();
+    const trainerId = this.trainer()?.id;
+    const clientId = this.currentUser()?.id;
+
+    // Validation
+    if (!rating || rating < 1 || rating > 5) {
+      this.reviewSubmitMessage.set({ type: 'error', message: 'Please select a rating (1-5 stars)' });
+      return;
+    }
+
+    if (!comment || comment.length === 0) {
+      this.reviewSubmitMessage.set({ type: 'error', message: 'Please enter a comment' });
+      return;
+    }
+
+    if (!trainerId || !clientId) {
+      this.reviewSubmitMessage.set({ type: 'error', message: 'Unable to submit review. Missing required information.' });
+      return;
+    }
+
+    this.submittingReview.set(true);
+    this.reviewSubmitMessage.set(null);
+
+    const request: CreateReviewRequest = {
+      clientId,
+      rating,
+      comment
+    };
+
+    console.log('📝 Submitting review:', { trainerId, request });
+
+    this.reviewService
+      .createTrainerReview(trainerId, request)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (review: Review) => {
+          this.submittingReview.set(false);
+          this.reviewSubmitMessage.set({ type: 'success', message: 'Thank you! Your review has been submitted.' });
+          this.clearReviewForm();
+          this.showReviewForm.set(false);
+          // Add the new review to the local list
+          this.reviews.update(reviews => [review, ...reviews]);
+        },
+        error: (err: any) => {
+          this.submittingReview.set(false);
+          this.reviewSubmitMessage.set({ type: 'error', message: this.getErrorMessage(err) });
+        }
+      });
+  }
+
+  clearReviewForm(): void {
+    this.reviewRating.set(0);
+    this.reviewComment.set('');
+    this.reviewSubmitMessage.set(null);
   }
 
   goBack(): void {
