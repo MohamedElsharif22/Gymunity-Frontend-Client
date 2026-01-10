@@ -107,8 +107,16 @@ export class ChatService {
   private setupSignalRListeners(): void {
     if (!this.connection) return;
 
+    console.log('📡 Setting up SignalR listeners...');
+
     // Receive message in real-time
     this.connection.on('ReceiveMessage', (message: MessageResponse) => {
+      console.log('🔔 ReceiveMessage event received:', message);
+      console.log('📍 Current thread ID:', this.currentThreadSignal()?.id);
+      console.log('📍 Message thread ID:', message.threadId);
+      console.log('👤 Current user ID:', this.authService.currentUser()?.id);
+      console.log('👤 Message sender ID:', message.senderId);
+      
       const processedMessage: Message = {
         ...message,
         createdAt: new Date(message.createdAt),
@@ -118,10 +126,12 @@ export class ChatService {
 
       // Deduplicate: Only add if not already present
       if (this.addMessageToThread(processedMessage.threadId, processedMessage)) {
-        console.log('Message received via SignalR:', processedMessage);
+        console.log('✅ Message added to thread via SignalR:', processedMessage);
         
         // Update thread's lastMessage and lastMessageAt
         this.updateThreadMetadata(processedMessage.threadId, processedMessage);
+      } else {
+        console.warn('⚠️ Message was deduplicated (already exists)');
       }
     });
 
@@ -444,6 +454,27 @@ export class ChatService {
    */
   getUnreadCount(): number {
     return this.unreadCount();
+  }
+
+  /**
+   * Periodically poll for new messages (fallback if SignalR fails)
+   */
+  startMessagePolling(intervalMs: number = 5000): void {
+    setInterval(() => {
+      const currentThread = this.currentThreadSignal();
+      if (currentThread) {
+        console.log('⏰ Polling for new messages in thread:', currentThread.id);
+        this.loadThreadMessages(currentThread.id)
+          .subscribe({
+            next: (messages) => {
+              console.log('✅ Polling retrieved', messages.length, 'messages');
+            },
+            error: (error) => {
+              console.error('⚠️ Polling error:', error);
+            }
+          });
+      }
+    }, intervalMs);
   }
 }
 

@@ -1,25 +1,24 @@
-<div class="flex flex-col h-full bg-white rounded-2xl shadow-2xl overflow-hidden backdrop-blur-sm border border-blue-100">
+<div class="flex flex-col h-full bg-white rounded-xl shadow-lg overflow-hidden backdrop-blur-sm border border-gray-100">
   <!-- Header with Gradient -->
-  <div class="bg-gradient-to-r from-sky-500 to-indigo-600 p-3 md:p-4 shadow-lg">
-    <div class="flex items-center justify-between mb-3 md:mb-4">
-      <div class="flex items-center gap-2">
-        <div class="bg-white/20 backdrop-blur p-2 rounded-lg">
-          <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+  <div class="bg-gradient-to-r from-sky-500 to-indigo-600 px-3 sm:px-4 py-3 sm:py-4 shadow-md">
+    <div class="flex items-center justify-between mb-3 sm:mb-4">
+      <div class="flex items-center gap-2 min-w-0">
+        <div class="bg-white/20 backdrop-blur p-1.5 sm:p-2 rounded-lg shrink-0">
+          <svg class="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
             <path d="M2 5a2 2 0 012-2h12a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V5z"></path>
             <path fill-rule="evenodd" d="M3 4a1 1 0 00-1 1v10a1 1 0 001 1h12a1 1 0 001-1V5a1 1 0 00-1-1H3z" clip-rule="evenodd"></path>
           </svg>
         </div>
-        <h2 class="text-lg md:text-xl font-bold text-white">Messages</h2>
+        <h2 class="text-base sm:text-lg font-bold text-white truncate">Messages</h2>
       </div>
-      <div class="flex gap-1 md:gap-2">
-        <!-- New Chat Button -->
+      <div class="flex gap-1">
         <button
           (click)="onNewChat()"
           [disabled]="isConnecting()"
-          class="p-2 hover:bg-white/20 rounded-lg transition-all duration-200 disabled:opacity-50 relative group"
+          class="p-1.5 sm:p-2 hover:bg-white/20 rounded-lg transition-all duration-200 disabled:opacity-50 active:scale-95"
           title="Start new chat"
         >
-          <svg class="w-4 h-4 md:w-5 md:h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
               stroke-linecap="round"
               stroke-linejoin="round"
@@ -27,17 +26,16 @@
               d="M12 4v16m8-8H4"
             />
           </svg>
-          <span class="absolute -bottom-8 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">New Chat</span>
         </button>
         
         <!-- Refresh Button -->
         <button
           (click)="onRefresh()"
           [disabled]="isConnecting() || isLoading()"
-          class="p-2 hover:bg-white/20 rounded-lg transition-all duration-200 disabled:opacity-50 group"
+          class="p-1.5 sm:p-2 hover:bg-white/20 rounded-lg transition-all duration-200 disabled:opacity-50 active:scale-95"
           title="Refresh conversations"
         >
-          <svg class="w-4 h-4 md:w-5 md:h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
               stroke-linecap="round"
               stroke-linejoin="round"
@@ -45,21 +43,20 @@
               d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
             />
           </svg>
-          <span class="absolute -bottom-8 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Refresh</span>
         </button>
       </div>
     </div>
 
     <!-- Search Bar with Icon -->
-    <div class="relative">
+    <div class="relative mt-2 sm:mt-3">
       <input
         [value]="searchQuery()"
         (input)="searchQuery.set($event.target.value)"
         type="text"
-        placeholder="Search conversations..."
-        class="w-full px-3 md:px-4 py-2 text-sm md:text-base bg-white/10 backdrop-blur text-white placeholder-white/60 rounded-lg focus:outline-none focus:ring-2 focus:ring-white/30 focus:bg-white/20 transition-all duration-200"
+        placeholder="Search..."
+        class="w-full px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm bg-white/10 backdrop-blur text-white placeholder-white/60 rounded-lg focus:outline-none focus:ring-2 focus:ring-white/30 focus:bg-white/20 transition-all duration-200"
       />
-      <svg class="absolute right-3 top-2.5 w-4 h-4 md:w-5 md:h-5 text-white/60" fill="none" stroke="currentColor"
+      <svg class="absolute right-3 top-2.5 sm:top-3 w-4 h-4 text-white/60" fill="none" stroke="currentColor"
         viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
           d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -67,42 +64,42 @@
     </div>
 
     <!-- Thread Count Badge -->
-    <div class="mt-2 md:mt-3 flex items-center gap-2 text-xs md:text-sm">
+    <div class="mt-2 flex items-center gap-2 text-xs">
       <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
       <span class="text-white/90">{{ threads().length }} {{ threads().length === 1 ? 'conversation' : 'conversations' }}</span>
     </div>
 
     <!-- Trainer Dropdown -->
     @if (showTrainerDropdown()) {
-      <div class="mt-3 bg-white rounded-xl shadow-2xl overflow-hidden border border-blue-100 absolute md:relative md:mt-3 left-0 right-0 md:left-auto md:right-auto z-50 md:z-auto max-h-96 md:max-h-64 backdrop-blur-lg">
+      <div class="mt-3 bg-white rounded-lg shadow-xl overflow-hidden border border-gray-100 absolute md:relative md:mt-3 left-0 right-0 md:left-auto md:right-auto z-50 md:z-auto max-h-80 md:max-h-64 backdrop-blur-lg w-[calc(100%-1.5rem)] sm:w-auto md:w-full">
         <!-- Trainer Search -->
-        <div class="p-2 md:p-3 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-blue-50">
+        <div class="p-2 sm:p-3 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-blue-50">
           <input
             [value]="trainerSearchQuery()"
             (input)="trainerSearchQuery.set($event.target.value)"
             type="text"
             placeholder="Search trainers..."
-            class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all duration-200"
+            class="w-full px-3 py-2 text-xs sm:text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-600 focus:border-transparent transition-all duration-200"
           />
         </div>
 
         <!-- Trainer List -->
-        <div class="max-h-64 md:max-h-80 overflow-y-auto">
+        <div class="max-h-64 sm:max-h-72 overflow-y-auto">
           @if (loadingTrainers()) {
-            <div class="p-3 text-center text-gray-500 text-sm">
+            <div class="p-3 text-center text-gray-500 text-xs sm:text-sm">
               <div class="inline-block animate-spin mr-2">
-                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-4 h-4 sm:w-5 sm:h-5 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                 </svg>
               </div>
-              Loading trainers...
+              Loading...
             </div>
           } @else if (filteredTrainers().length === 0) {
-            <div class="p-3 text-center text-gray-500 text-sm">
+            <div class="p-3 text-center text-gray-500 text-xs sm:text-sm">
               @if (trainers().length === 0) {
-                No trainers available
+                No trainers
               } @else {
-                No trainers match your search
+                No match
               }
             </div>
           } @else {
@@ -110,7 +107,7 @@
               @for (trainer of filteredTrainers(); track trainer.userId) {
                 <button
                   (click)="onSelectTrainer(trainer)"
-                  class="w-full px-3 py-2 hover:bg-blue-50 active:bg-blue-100 transition-colors text-left flex items-center gap-2 group"
+                  class="w-full px-3 sm:px-4 py-2 sm:py-2.5 hover:bg-sky-50 active:bg-sky-100 transition-colors text-left flex items-center gap-2 group"
                 >
                   <!-- Trainer Avatar -->
                   @if (trainer.profilePhotoUrl) {
@@ -118,17 +115,17 @@
                       [src]="trainer.profilePhotoUrl"
                       [alt]="trainer.fullName"
                       title="Trainer profile"
-                      class="w-8 h-8 rounded-full object-cover shrink-0 ring-2 ring-purple-200 group-hover:ring-purple-400 transition-all"
+                      class="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover shrink-0 ring-2 ring-sky-200 group-hover:ring-sky-400 transition-all"
                     />
                   } @else {
-                    <div class="w-8 h-8 rounded-full bg-linear-to-br from-purple-400 to-purple-600 flex items-center justify-center text-white text-xs font-semibold shrink-0 ring-2 ring-purple-200 group-hover:ring-purple-400 transition-all">
+                    <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-sky-400 to-sky-600 flex items-center justify-center text-white text-xs font-semibold shrink-0 ring-2 ring-sky-200 group-hover:ring-sky-400 transition-all">
                       {{ getInitials(trainer.fullName) }}
                     </div>
                   }
 
                   <!-- Trainer Info -->
                   <div class="min-w-0 flex-1">
-                    <p class="text-sm font-semibold text-gray-900 truncate">{{ trainer.fullName }}</p>
+                    <p class="text-xs sm:text-sm font-semibold text-gray-900 truncate">{{ trainer.fullName }}</p>
                     <p class="text-xs text-gray-500 truncate">@{{ trainer.handle }}</p>
                   </div>
                   <svg class="w-4 h-4 text-gray-400 group-hover:text-gray-600 transition-colors shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -146,16 +143,16 @@
   <!-- Threads List -->
   <div class="flex-1 overflow-y-auto bg-gradient-to-b from-white to-gray-50">
     @if (filteredThreads().length === 0) {
-      <div class="flex flex-col items-center justify-center h-full text-gray-400 p-3 md:p-4">
-        <svg class="w-16 h-16 mb-3 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div class="flex flex-col items-center justify-center h-full text-gray-400 p-3 sm:p-4">
+        <svg class="w-12 h-12 sm:w-16 sm:h-16 mb-3 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
             d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
-        <p class="text-center text-xs md:text-sm font-medium">
+        <p class="text-center text-xs sm:text-sm font-medium">
           @if (searchQuery()) {
-            No conversations match your search
+            No match
           } @else {
-            No conversations yet
+            No conversations
           }
         </p>
       </div>
@@ -164,14 +161,14 @@
         @for (thread of filteredThreads(); track thread.id) {
           <button
             (click)="onSelectThread(thread)"
-            [class.bg-blue-50]="selectedThread()?.id === thread.id"
+            [class.bg-sky-50]="selectedThread()?.id === thread.id"
             [class.border-l-4]="selectedThread()?.id === thread.id"
-            [class.border-l-blue-600]="selectedThread()?.id === thread.id"
-            class="w-full px-3 md:px-4 py-2 md:py-3 hover:bg-gray-50 active:bg-gray-100 transition-all duration-150 flex items-center gap-2 md:gap-3 group relative"
+            [class.border-l-sky-600]="selectedThread()?.id === thread.id"
+            class="w-full px-3 sm:px-4 py-2.5 sm:py-3 hover:bg-gray-50 active:bg-gray-100 transition-all duration-150 flex items-center gap-2 sm:gap-3 group relative"
           >
             <!-- Unread Indicator -->
             @if (thread.unreadCount && thread.unreadCount > 0) {
-              <div class="absolute left-0 top-0 bottom-0 w-1 bg-blue-600 group-hover:w-1.5 transition-all"></div>
+              <div class="absolute left-0 top-0 bottom-0 w-0.5 bg-sky-600 group-hover:w-1 transition-all"></div>
             }
 
             <!-- Avatar -->
@@ -181,37 +178,37 @@
                   [src]="thread.otherUserProfilePhoto"
                   [alt]="thread.otherUserName"
                   title="User profile"
-                  class="w-10 h-10 md:w-12 md:h-12 rounded-full object-cover ring-2 ring-blue-100 group-hover:ring-blue-300 transition-all"
+                  class="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover ring-2 ring-blue-100 group-hover:ring-blue-300 transition-all"
                 />
               } @else {
                 <div
-                  class="w-10 h-10 md:w-12 md:h-12 rounded-full bg-linear-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-semibold text-xs md:text-sm ring-2 ring-blue-100 group-hover:ring-blue-300 transition-all"
+                  class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-sky-400 to-sky-600 flex items-center justify-center text-white font-semibold text-xs ring-2 ring-blue-100 group-hover:ring-blue-300 transition-all"
                 >
                   {{ getInitials(thread.otherUserName) }}
                 </div>
               }
               @if (thread.isOnline) {
-                <div class="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-400 rounded-full ring-2 ring-white"></div>
+                <div class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-400 rounded-full ring-2 ring-white"></div>
               }
             </div>
 
             <!-- Thread Info -->
             <div class="flex-1 min-w-0 text-left">
               <div class="flex items-center justify-between gap-2">
-                <h3 class="font-semibold text-gray-900 truncate text-sm md:text-base group-hover:text-blue-700 transition-colors">{{ thread.otherUserName }}</h3>
+                <h3 class="font-semibold text-gray-900 truncate text-xs sm:text-sm md:text-base group-hover:text-sky-700 transition-colors">{{ thread.otherUserName }}</h3>
                 @if (thread.lastMessageAt) {
                   <span class="text-xs text-gray-500 shrink-0 group-hover:text-gray-700 transition-colors">{{ formatTime(thread.lastMessageAt) }}</span>
                 }
               </div>
-              <p class="text-xs md:text-sm text-gray-600 truncate group-hover:text-gray-700 transition-colors">
-                {{ truncateMessage(thread.lastMessage, 40) }}
+              <p class="text-xs text-gray-600 truncate group-hover:text-gray-700 transition-colors">
+                {{ truncateMessage(thread.lastMessage, 35) }}
               </p>
             </div>
 
             <!-- Unread Badge -->
             @if (thread.unreadCount && thread.unreadCount > 0) {
               <div class="shrink-0 flex items-center justify-center">
-                <span class="inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-linear-to-r from-blue-500 to-blue-600 rounded-full animate-pulse">
+                <span class="inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-gradient-to-r from-sky-500 to-indigo-600 rounded-full animate-pulse">
                   {{ thread.unreadCount > 99 ? '99+' : thread.unreadCount }}
                 </span>
               </div>
@@ -221,4 +218,3 @@
       </div>
     }
   </div>
-</div>

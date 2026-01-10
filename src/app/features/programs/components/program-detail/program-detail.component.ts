@@ -249,6 +249,7 @@ export class ProgramDetailComponent implements OnInit {
   // No local generation of days — days come from backend and include real IDs.
 
   goBack() {
-    this.router.navigate(['/programs']);
+    // Navigate back to my-active-programs since that's where the user came from
+    this.router.navigate(['/my-active-programs']);
   }
 }

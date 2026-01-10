@@ -49,6 +49,8 @@ export class ChatComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.initializeChat();
+    // Start polling for new messages as fallback (5 second intervals)
+    this.chatService.startMessagePolling(5000);
   }
 
   ngOnDestroy(): void {
