@@ -343,6 +343,34 @@ export class ChatService {
   }
 
   /**
+   * Delete a chat thread via REST API
+   */
+  deleteThread(threadId: number): Observable<void> {
+    return this.chatApiService.deleteThread(threadId).pipe(
+      map(() => {
+        // Remove thread from threads list
+        this.threadsSignal.update(threads => 
+          threads.filter(t => t.id !== threadId)
+        );
+        
+        // Clear messages for the deleted thread
+        this.clearThreadMessages(threadId);
+        
+        // If the deleted thread was the current thread, clear it
+        if (this.currentThreadSignal()?.id === threadId) {
+          this.currentThreadSignal.set(null);
+        }
+        
+        console.log('Thread deleted successfully:', threadId);
+      }),
+      catchError(error => {
+        console.error('Error deleting thread:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
    * Send a message to a thread via REST API
    */
   sendMessage(threadId: number, request: SendMessageRequest): Observable<MessageResponse> {

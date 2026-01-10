@@ -149,4 +149,17 @@ export class ChatComponent implements OnInit, OnDestroy {
   getMessagesChangeTrigger(): number {
     return this.messagesChangedSignal();
   }
+
+  /**
+   * Handle thread deletion from chat-window component
+   */
+  onDeleteThread(threadId: number): void {
+    console.log('Thread deleted:', threadId);
+    // Clear current thread if it was the deleted one
+    if (this.currentThread()?.id === threadId) {
+      this.chatService.setCurrentThread(null);
+    }
+    // Go back to chat list on mobile
+    this.showChatWindow.set(false);
+  }
 }

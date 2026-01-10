@@ -38,6 +38,7 @@
             [selectedThread]="currentThread()"
             [messageChangeTrigger]="getMessagesChangeTrigger()"
             (sendMessage)="onSendMessage($event)"
+            (deleteThread)="onDeleteThread($event)"
           />
         } @else {
           <!-- Empty State with Enhanced Design - No Scroll -->

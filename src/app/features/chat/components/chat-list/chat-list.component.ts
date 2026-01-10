@@ -78,13 +78,23 @@ export class ChatListComponent {
 
   private loadTrainers(): void {
     this.loadingTrainers.set(true);
+    console.log('Loading trainers...');
     this.chatApiService.getClientTrainers().subscribe({
       next: (trainers) => {
-        this.trainers.set(trainers);
+        console.log('Trainers loaded:', trainers);
+        console.log('Number of trainers:', trainers?.length || 0);
+        this.trainers.set(trainers || []);
         this.loadingTrainers.set(false);
       },
       error: (error) => {
         console.error('Error loading trainers:', error);
+        console.error('Error details:', {
+          message: error.message,
+          status: error.status,
+          statusText: error.statusText,
+          url: error.url
+        });
+        this.trainers.set([]);
         this.loadingTrainers.set(false);
       }
     });
