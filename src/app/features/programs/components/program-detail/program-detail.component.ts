@@ -10,52 +10,67 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
   standalone: true,
   imports: [CommonModule, RouterModule],
   template: `
-    <div class="min-h-screen bg-gray-50 py-8 px-4">
-      <div class="max-w-4xl mx-auto">
-        <!-- Back Button -->
-        <button
-          (click)="goBack()"
-          class="mb-6 flex items-center gap-2 text-sky-600 hover:text-sky-700 font-medium">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-          </svg>
-          Back to Programs
-        </button>
+    <div class="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 py-8 px-3 sm:px-4 md:px-8">
+      <div class="max-w-6xl mx-auto">
+        <!-- Back Button & Header -->
+        <div class="mb-8">
+          <button
+            (click)="goBack()"
+            class="flex items-center gap-2 text-sky-600 hover:text-sky-700 font-semibold mb-6 group transition-all duration-200 active:scale-95"
+          >
+            <svg class="w-5 h-5 group-hover:-translate-x-1 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+            </svg>
+            Back to Programs
+          </button>
+          <div>
+            <h1 class="text-3xl sm:text-4xl md:text-5xl font-bold bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent mb-2">
+              {{ program()?.title }}
+            </h1>
+            <p class="text-gray-600 text-sm sm:text-base md:text-lg">{{ program()?.durationWeeks }} weeks • {{ program()?.totalExercises }} exercises</p>
+          </div>
+        </div>
 
         <!-- Loading State -->
         @if (isLoading()) {
-          <div class="flex justify-center items-center min-h-96">
-            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-sky-600"></div>
+          <div class="flex items-center justify-center py-20">
+            <div class="relative">
+              <div class="w-20 h-20 border-4 border-sky-200 rounded-full"></div>
+              <div class="w-20 h-20 border-4 border-sky-600 rounded-full animate-spin border-t-transparent absolute top-0 left-0"></div>
+            </div>
           </div>
         }
 
         <!-- Content -->
         @else if (program()) {
-          <div class="space-y-6">
-            <!-- Program Header -->
-            <div class="bg-white rounded-lg shadow p-6">
-              <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ program()!.title }}</h1>
-              <p class="text-gray-600">{{ program()!.durationWeeks }} weeks • {{ program()!.totalExercises }} exercises</p>
-            </div>
-
+          <div class="space-y-8">
             <!-- Weeks List (if no week selected) -->
             @if (!selectedWeek()) {
-              <div class="space-y-4">
-                <h2 class="text-2xl font-bold text-gray-900">Select a Training Week</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div>
+                <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-6">Select a Training Week</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                   @for (week of weeks(); track week.id) {
-                    <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition p-4 space-y-4">
-                      <div>
-                        <p class="text-sm text-gray-500 font-medium uppercase mb-1">Week</p>
-                        <h3 class="text-2xl font-bold text-gray-900">{{ week.weekNumber }}</h3>
-                        <p class="text-sm text-gray-600 mt-1">{{ week.title }}</p>
+                    <button
+                      (click)="selectWeek(week)"
+                      class="text-left bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 p-6 border border-gray-100 overflow-hidden group hover:scale-105 active:scale-95"
+                    >
+                      <div class="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-sky-100 to-indigo-100 rounded-full -mr-8 -mt-8 opacity-50"></div>
+                      <div class="relative z-10 space-y-4">
+                        <div>
+                          <p class="text-xs font-bold text-gray-600 uppercase tracking-wider mb-2">Week</p>
+                          <h3 class="text-4xl font-bold bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">{{ week.weekNumber }}</h3>
+                        </div>
+                        <div>
+                          <h4 class="text-lg font-bold text-gray-900 line-clamp-2">{{ week.title }}</h4>
+                        </div>
+                        <div class="flex items-center gap-2 pt-2">
+                          <span class="text-sm font-semibold text-sky-600 group-hover:text-sky-700">Load Days</span>
+                          <svg class="w-4 h-4 text-sky-600 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                          </svg>
+                        </div>
                       </div>
-                      <button
-                        (click)="selectWeek(week)"
-                        class="w-full bg-sky-600 hover:bg-sky-700 text-white font-bold py-2 px-4 rounded-lg transition">
-                        Load Days →
-                      </button>
-                    </div>
+                    </button>
                   }
                 </div>
               </div>
@@ -63,17 +78,18 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
             <!-- Days List (if week selected) -->
             @if (selectedWeek()) {
-              <div class="space-y-4">
+              <div>
                 <button
                   (click)="deselectWeek()"
-                  class="flex items-center gap-2 text-sky-600 hover:text-sky-700 font-medium mb-4">
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  class="flex items-center gap-2 text-sky-600 hover:text-sky-700 font-semibold mb-6 group transition-all duration-200 active:scale-95"
+                >
+                  <svg class="w-5 h-5 group-hover:-translate-x-1 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
                   </svg>
                   Back to Weeks
                 </button>
 
-                <h2 class="text-2xl font-bold text-gray-900">
+                <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-6">
                   Week {{ selectedWeek()!.weekNumber }} - Training Days
                 </h2>
 
@@ -83,31 +99,43 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
                       <button
                         (click)="selectDay(day)"
                         [disabled]="isLoadingDays()"
-                        class="text-left bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition cursor-pointer disabled:opacity-50 disabled:cursor-wait">
-                        <div class="p-6">
-                          <div class="flex items-start justify-between mb-4">
-                            <div>
-                              <h3 class="text-2xl font-bold text-gray-900">{{ day.title }}</h3>
-                              <p class="text-sm text-gray-600">Day {{ day.dayNumber }}</p>
+                        class="text-left bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 p-6 sm:p-8 border border-gray-100 overflow-hidden group hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-wait disabled:hover:scale-100"
+                      >
+                        <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-100 to-pink-100 rounded-full -mr-16 -mt-16 opacity-50"></div>
+                        
+                        <div class="relative z-10 space-y-5">
+                          <!-- Header -->
+                          <div class="flex items-start justify-between">
+                            <div class="flex-1">
+                              <span class="inline-block text-xs font-bold text-sky-600 bg-sky-50 px-3 py-1.5 rounded-full mb-3">
+                                Day {{ day.dayNumber }}
+                              </span>
+                              <h3 class="text-2xl font-bold text-gray-900 leading-tight line-clamp-2">{{ day.title }}</h3>
                             </div>
-                            <span class="bg-sky-100 text-sky-800 px-4 py-2 rounded-full font-semibold text-sm">
-                              Day {{ day.dayNumber }}
-                            </span>
                           </div>
 
+                          <!-- Notes -->
                           @if (day.notes) {
-                            <p class="text-gray-700 mb-4 p-3 bg-gray-50 rounded border-l-4 border-sky-600 text-sm">
+                            <p class="text-sm text-gray-600 p-3 bg-blue-50 rounded-lg border border-blue-200 italic">
                               {{ day.notes }}
                             </p>
                           }
 
-                          <div class="bg-gray-50 rounded p-4 mb-4">
-                            <p class="text-xs text-gray-600 uppercase">Status</p>
-                            @if (isLoadingDays()) {
-                              <p class="text-sm text-sky-600 font-medium">Loading...</p>
-                            } @else {
-                              <p class="text-sm text-sky-600 font-medium">Click to view exercises →</p>
-                            }
+                          <!-- Status -->
+                          <div class="bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg p-4 flex items-center justify-between">
+                            <div>
+                              <p class="text-xs font-bold text-gray-600 uppercase tracking-wider mb-1">Action</p>
+                              @if (isLoadingDays()) {
+                                <p class="text-sm text-sky-600 font-semibold">Loading...</p>
+                              } @else {
+                                <p class="text-sm text-sky-600 font-semibold flex items-center gap-2">
+                                  View Exercises
+                                  <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                  </svg>
+                                </p>
+                              }
+                            </div>
                           </div>
                         </div>
                       </button>
@@ -121,16 +149,53 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
         <!-- Not Found State -->
         @else if (!isLoading()) {
-          <div class="text-center py-12 bg-white rounded-lg shadow">
-            <svg class="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C6.248 6.253 2 10.541 2 15.5S6.248 24.747 12 24.747s10-4.288 10-9.247S17.752 6.253 12 6.253z"></path>
-            </svg>
-            <h3 class="text-lg font-medium text-gray-900">Program Not Found</h3>
-            <p class="text-gray-500 mt-2">This program could not be loaded</p>
+          <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-12 text-center">
+            <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C6.248 6.253 2 10.541 2 15.5S6.248 24.747 12 24.747s10-4.288 10-9.247S17.752 6.253 12 6.253z"></path>
+              </svg>
+            </div>
+            <h3 class="text-xl font-bold text-gray-900 mb-2">Program Not Found</h3>
+            <p class="text-gray-600 mb-6">This program could not be loaded</p>
+            <button
+              (click)="goBack()"
+              class="inline-flex items-center gap-2 bg-sky-600 hover:bg-sky-700 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+              </svg>
+              Go Back
+            </button>
           </div>
         }
       </div>
     </div>
+
+    <style>
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+
+      @keyframes slideUp {
+        from {
+          opacity: 0;
+          transform: translateY(30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .animate-fadeIn {
+        animation: fadeIn 0.3s ease;
+      }
+
+      .animate-slideUp {
+        animation: slideUp 0.4s ease;
+      }
+    </style>
   `,
   styles: []
 })

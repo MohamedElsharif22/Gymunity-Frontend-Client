@@ -27,12 +27,12 @@ import { Subject } from 'rxjs';
       <app-header *ngIf="!isFullscreen()"></app-header>
 
       <!-- Main Content -->
-      <div class="flex flex-1 relative z-10" [class.mt-16]="!isFullscreen()" [class.md:mt-20]="!isFullscreen()">
+      <div class="flex flex-1 relative z-10 w-full" [class.mt-14]="!isFullscreen()" [class.sm:mt-16]="!isFullscreen()" [class.md:mt-20]="!isFullscreen()">
         <!-- Sidebar -->
         <app-sidebar *ngIf="!isFullscreen()"></app-sidebar>
 
         <!-- Page Content Area -->
-        <main class="flex-1 overflow-auto" [class.md:ml-72]="!isFullscreen()">
+        <main class="flex-1 overflow-auto w-full" [class.md:ml-72]="!isFullscreen()">
           <!-- Content Wrapper with Padding and Max Width -->
           <div class="relative">
             <!-- Scroll to Top Button -->
