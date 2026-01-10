@@ -1,10 +1,10 @@
 <div class="flex h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 overflow-hidden">
   <!-- Chat Container - Messenger app style -->
   <div class="w-full h-full flex flex-col md:flex-row overflow-hidden">
-    <!-- Chat List Section - Hidden from 1024px and below, only visible on xl+ -->
+    <!-- Chat List Section - Hidden on mobile, visible on md+ screens -->
     <div 
-      [class.hidden]="showChatWindow() && !isDesktop()"
-      class="hidden xl:block w-full xl:w-96 shrink-0 flex-shrink-0 overflow-y-auto transition-all duration-300 ease-in-out"
+      [class.hidden]="showChatWindow() && !isTablet()"
+      class="hidden md:block w-full md:w-80 lg:w-96 shrink-0 overflow-y-auto transition-all duration-300 ease-in-out border-r border-gray-200"
     >
       <app-chat-list
         [threads]="threads()"
@@ -18,9 +18,9 @@
       />
     </div>
 
-    <!-- Chat Window Section - Full screen when chat is open on mobile, flex-1 on desktop -->
+    <!-- Chat Window Section - Full screen on mobile, flex-1 on tablet+ -->
     <div 
-      [class.hidden]="!showChatWindow() && !isDesktop()"
+      [class.hidden]="!showChatWindow() && !isTablet()"
       class="flex-1 min-w-0 flex flex-col overflow-y-auto transition-all duration-300 ease-in-out"
     >
       @if (isConnected()) {

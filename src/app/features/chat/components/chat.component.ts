@@ -139,8 +139,19 @@ export class ChatComponent implements OnInit, OnDestroy {
     }
   }
 
-  isDesktop(): boolean {
+  /**
+   * Check if screen is tablet or larger (md breakpoint: 768px)
+   * On tablet+, both chat list and window can be shown together
+   */
+  isTablet(): boolean {
     return typeof window !== 'undefined' && window.innerWidth >= 768;
+  }
+
+  /**
+   * @deprecated Use isTablet() instead
+   */
+  isDesktop(): boolean {
+    return this.isTablet();
   }
 
   /**

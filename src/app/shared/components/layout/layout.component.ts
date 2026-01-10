@@ -24,22 +24,31 @@ import { Subject } from 'rxjs';
       </div>
 
       <!-- Header -->
-      <app-header *ngIf="!isFullscreen()"></app-header>
+      <app-header *ngIf="!isFullscreen()" (toggleSidebar)="toggleSidebar()"></app-header>
 
       <!-- Main Content -->
-      <div class="flex flex-1 relative z-10" [class.mt-16]="!isFullscreen()" [class.md:mt-20]="!isFullscreen()">
+      <div class="flex flex-1 relative z-10" [class.pt-14]="!isFullscreen()" [class.sm:pt-16]="!isFullscreen()" [class.md:pt-20]="!isFullscreen()">
         <!-- Sidebar -->
-        <app-sidebar *ngIf="!isFullscreen()"></app-sidebar>
+        <app-sidebar 
+          *ngIf="!isFullscreen()" 
+          [isCollapsed]="sidebarCollapsed()"
+          [isSidebarOpen]="sidebarOpen()"
+          (onCloseSidebar)="closeSidebar()"
+        ></app-sidebar>
 
         <!-- Page Content Area -->
-        <main class="flex-1 overflow-auto" [class.md:ml-72]="!isFullscreen()">
+        <main class="flex-1 overflow-auto transition-all duration-300" [ngClass]="{
+          'lg:ml-72': !isFullscreen() && !sidebarCollapsed(),
+          'lg:ml-20': !isFullscreen() && sidebarCollapsed(),
+          'ml-0': isFullscreen()
+        }">
           <!-- Content Wrapper with Padding and Max Width -->
           <div class="relative">
             <!-- Scroll to Top Button -->
             <button
               *ngIf="showScrollTop() && !isFullscreen()"
               (click)="scrollToTop()"
-              class="fixed bottom-8 right-8 z-50 bg-gradient-to-r from-sky-600 to-indigo-600 hover:from-sky-700 hover:to-indigo-700 text-white p-4 rounded-full shadow-2xl transition-all duration-300 transform hover:scale-110 group"
+              class="fixed bottom-6 right-6 sm:bottom-8 sm:right-8 z-50 bg-gradient-to-r from-sky-600 to-indigo-600 hover:from-sky-700 hover:to-indigo-700 text-white p-3 sm:p-4 rounded-full shadow-2xl transition-all duration-300 transform hover:scale-110 group"
               aria-label="Scroll to top">
               <svg class="w-6 h-6 group-hover:-translate-y-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
@@ -53,21 +62,21 @@ import { Subject } from 'rxjs';
 
             <!-- Minimized Footer for Authenticated Pages -->
             <footer *ngIf="!isFullscreen()" class="bg-gradient-to-b from-white to-gray-50 border-t border-gray-200 backdrop-blur-sm">
-              <div class="max-w-7xl mx-auto px-4 md:px-8 py-6">
-                <div class="flex flex-col md:flex-row justify-between items-center gap-4">
-                  <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 bg-gradient-to-br from-sky-500 to-indigo-600 rounded-lg flex items-center justify-center shadow-lg">
-                      <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div class="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-4 sm:py-6">
+                <div class="flex flex-col md:flex-row justify-between items-center gap-3 sm:gap-4">
+                  <div class="flex items-center gap-2 sm:gap-3">
+                    <div class="w-7 h-7 sm:w-8 sm:h-8 bg-gradient-to-br from-sky-500 to-indigo-600 rounded-lg flex items-center justify-center shadow-lg flex-shrink-0">
+                      <svg class="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
                       </svg>
                     </div>
-                    <p class="text-gray-600 text-sm">
+                    <p class="text-gray-600 text-xs sm:text-sm">
                       © 2024 Gymunity
                     </p>
                   </div>
-                  <div class="flex items-center gap-6">
-                    <a href="#" class="text-gray-600 hover:text-sky-600 transition text-sm font-medium">Privacy</a>
-                    <a href="#" class="text-gray-600 hover:text-sky-600 transition text-sm font-medium">Terms</a>
+                  <div class="flex items-center gap-3 sm:gap-6">
+                    <a href="#" class="text-gray-600 hover:text-sky-600 transition text-xs sm:text-sm font-medium">Privacy</a>
+                    <a href="#" class="text-gray-600 hover:text-sky-600 transition text-xs sm:text-sm font-medium">Terms</a>
                   </div>
                 </div>
               </div>
@@ -94,6 +103,8 @@ export class LayoutComponent implements OnInit, OnDestroy {
 
   showScrollTop = signal(false);
   isFullscreen = signal(false);
+  sidebarCollapsed = signal(false);
+  sidebarOpen = signal(false);
 
   constructor() {
     // Listen for scroll events
@@ -150,5 +161,13 @@ export class LayoutComponent implements OnInit, OnDestroy {
 
   scrollToTop(): void {
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  toggleSidebar(): void {
+    this.sidebarOpen.update(value => !value);
+  }
+
+  closeSidebar(): void {
+    this.sidebarOpen.set(false);
   }
 }
