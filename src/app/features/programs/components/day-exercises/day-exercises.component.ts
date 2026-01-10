@@ -59,7 +59,7 @@ import { takeUntil } from 'rxjs/operators';
 							class="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1 overflow-hidden border border-gray-100">
 
 							<!-- Exercise Header -->
-							<div class="bg-gradient-to-r from-indigo-500 to-purple-600 p-6 text-white">
+							<div class="bg-gradient-to-r from-gray-500 to-gray-600 p-6 text-white">
 								<div class="flex items-start justify-between mb-3">
 									<div>
 										<span class="inline-block bg-white/20 px-3 py-1 rounded-full text-sm font-semibold mb-2">Exercise {{ i + 1 }}</span>

@@ -226,8 +226,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
             <button
               (click)="startWorkout()"
               [disabled]="isDayCompleted()"
-              class="bg-gradient-to-r from-green-600 to-green-700
-                     hover:from-green-700 hover:to-green-800
+              class="bg-gradient-to-r from-sky-600 to-indigo-600
+                     hover:from-sky-700 hover:to-indigo-700
                      text-white font-bold text-lg
                      py-5 px-12 rounded-2xl
                      shadow-xl hover:scale-105 transition-all
@@ -259,7 +259,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
                 <!-- Content -->
                 <div class="relative z-10 flex flex-col h-full">
-                  <div class="bg-gradient-to-r from-red-500 to-red-600 px-3 py-3 text-white flex flex-col">
+                  <div class="bg-gradient-to-r from-gray-500 to-gray-600 px-3 py-3 text-white flex flex-col">
                     <div class="flex items-start justify-between mb-2">
                       <h3 class="text-lg font-bold leading-tight flex-1">{{ exercise.excersiceName }}</h3>
                       @if (isExerciseCompleted(exercise.exerciseId)) {
@@ -271,7 +271,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
                       }
                     </div>
 
-                    <p class="text-red-100 text-lg italic mb-3 font-semibold">{{ getMotivationalMessage(exercise.exerciseId) }}</p>
+                    <p class="text-red-100 text-xs italic mb-3 font-semibold">{{ getMotivationalMessage(exercise.exerciseId) }}</p>
 
                     <div class="flex gap-2">
                       <div class="bg-blue-500/40 rounded p-1 border border-blue-300 text-center flex-1">

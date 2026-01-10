@@ -52,6 +52,83 @@ import { takeUntil } from 'rxjs/operators';
           </a>
         </div>
 
+        <!-- Cancel Subscription Dialog Modal -->
+        <div *ngIf="showCancelDialog()" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-fadeIn p-4">
+          <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full animate-slideUp">
+            <!-- Modal Header -->
+            <div class="bg-gradient-to-r from-red-500 to-red-600 px-6 py-6 text-white">
+              <div class="flex items-center gap-3 mb-2">
+                <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+                  <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                  </svg>
+                </div>
+                <div>
+                  <h2 class="text-xl font-bold">Cancel Subscription</h2>
+                  <p class="text-red-100 text-sm">This action cannot be undone</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Modal Content -->
+            <div class="px-6 py-6 border-b border-gray-200">
+              <p class="text-gray-700 mb-4 font-medium">Are you sure you want to cancel your subscription?</p>
+              <div *ngIf="subscriptionToCancel()" class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-gray-600 text-sm">Package</span>
+                  <span class="text-gray-900 font-bold">{{ subscriptionToCancel()?.packageName }}</span>
+                </div>
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-gray-600 text-sm">Trainer</span>
+                  <span class="text-gray-900 font-bold">{{ subscriptionToCancel()?.trainerName }}</span>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="text-gray-600 text-sm">Days Remaining</span>
+                  <span class="text-red-600 font-bold">{{ subscriptionToCancel()?.daysRemaining }} days</span>
+                </div>
+              </div>
+              <p class="text-gray-600 text-sm leading-relaxed">
+                You will lose access to this package and all associated workouts. Your progress will be saved.
+              </p>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex gap-3">
+              <button
+                (click)="closeCancelDialog()"
+                [disabled]="isCancelling()"
+                class="flex-1 border-2 border-gray-300 text-gray-700 font-semibold py-2.5 px-4 rounded-lg hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                Keep Subscription
+              </button>
+              <button
+                (click)="confirmCancel()"
+                [disabled]="isCancelling()"
+                class="flex-1 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold py-2.5 px-4 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                <span *ngIf="!isCancelling()">Cancel Subscription</span>
+                <span *ngIf="isCancelling()" class="flex items-center gap-2">
+                  <svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                  </svg>
+                  Processing...
+                </span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Success Toast Notification -->
+        <div *ngIf="showSuccessMessage()" class="fixed top-4 right-4 z-50 animate-slideUp">
+          <div class="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-6 py-4 rounded-xl shadow-lg flex items-center gap-3">
+            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+            </svg>
+            <div>
+              <p class="font-bold">Success!</p>
+              <p class="text-sm text-green-50">Subscription cancelled successfully</p>
+            </div>
+          </div>
+        </div>
+
         <!-- Active Subscriptions List -->
         <div *ngIf="activeSubscriptions().length > 0" class="space-y-8 animate-slideDown">
           <!-- Overview Banner -->
@@ -223,6 +300,10 @@ export class SubscriptionsComponent implements OnInit, OnDestroy {
   isLoading = signal(true);
   showWorkoutDialog = signal(false);
   selectedDay = signal<ProgramDay | null>(null);
+  showCancelDialog = signal(false);
+  subscriptionToCancel = signal<SubscriptionResponse | null>(null);
+  isCancelling = signal(false);
+  showSuccessMessage = signal(false);
 
   // Computed signals
   selectedDayTotalSets = computed(() => {
@@ -266,17 +347,42 @@ export class SubscriptionsComponent implements OnInit, OnDestroy {
 
   cancelSubscription(subscriptionId: number) {
     const subscription = this.activeSubscriptions().find(s => s.id === subscriptionId);
-    if (subscription && confirm('Are you sure you want to cancel this subscription?')) {
-      this.subscriptionService.cancelSubscription(subscriptionId)
+    if (subscription) {
+      this.subscriptionToCancel.set(subscription);
+      this.showCancelDialog.set(true);
+    }
+  }
+
+  closeCancelDialog() {
+    this.showCancelDialog.set(false);
+    this.subscriptionToCancel.set(null);
+  }
+
+  confirmCancel() {
+    const subscription = this.subscriptionToCancel();
+    if (subscription) {
+      this.isCancelling.set(true);
+      this.subscriptionService.cancelSubscription(subscription.id)
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: () => {
-            alert('Subscription cancelled successfully');
+            this.isCancelling.set(false);
+            this.showCancelDialog.set(false);
+            this.subscriptionToCancel.set(null);
+
+            // Show success message
+            this.showSuccessMessage.set(true);
+            setTimeout(() => {
+              this.showSuccessMessage.set(false);
+            }, 4000);
+
+            // Reload subscriptions
             this.loadActiveSubscriptions();
           },
           error: (err) => {
+            this.isCancelling.set(false);
             console.error('Error cancelling subscription:', err);
-            alert('Failed to cancel subscription');
+            alert('Failed to cancel subscription. Please try again.');
           }
         });
     }

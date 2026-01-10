@@ -134,8 +134,27 @@ import { TrainerCard, Program } from '../../core/models';
     <div class="pt-16"></div>
 
     <!-- Hero Section -->
-    <section class="bg-gradient-to-br from-sky-600 to-sky-800 text-white py-20 px-4">
-      <div class="max-w-7xl mx-auto">
+    <section class="relative text-white py-20 px-4 overflow-hidden" style="height: auto; min-height: 600px;">
+      <!-- Background Image Carousel with Overlay -->
+      <div class="absolute inset-0 -z-10">
+        <!-- Fallback Gradient Background -->
+        <div 
+          class="absolute inset-0 bg-gradient-to-br from-sky-600 via-blue-500 to-indigo-800 transition-all duration-1000">
+        </div>
+        
+        <!-- Background Image (will display when image exists) -->
+        <div 
+          class="absolute inset-0 transition-all duration-1000 bg-cover bg-center"
+          [style.backgroundImage]="currentImage() ? 'url(' + currentImage() + ')' : 'none'"
+          [style.opacity]="currentImage() ? '1' : '0'">
+        </div>
+        
+        <!-- Dark Overlay -->
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+      </div>
+      
+      <!-- Content -->
+      <div class="max-w-7xl mx-auto relative z-10">
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           <!-- Left Content -->
           <div class="space-y-6 animate-fade-in">
@@ -197,16 +216,19 @@ import { TrainerCard, Program } from '../../core/models';
             </div>
           </div>
           
-          <!-- Right Image -->
-          <div class="hidden lg:block">
-            <div class="relative">
-              <div class="absolute inset-0 bg-gradient-to-r from-sky-400 to-cyan-400 rounded-2xl blur-2xl opacity-30"></div>
-              <svg class="relative w-full h-auto" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="200" cy="200" r="180" stroke="currentColor" stroke-width="2" class="text-sky-300 opacity-20"/>
-                <path d="M200 100C250 100 300 150 300 200C300 250 250 300 200 300C150 300 100 250 100 200C100 150 150 100 200 100Z" 
-                      stroke="currentColor" stroke-width="2" class="text-cyan-200 opacity-40" fill="none"/>
-                <circle cx="200" cy="200" r="60" fill="currentColor" class="text-sky-300 opacity-30"/>
-              </svg>
+          <!-- Right Section - Carousel Indicators - Hidden -->
+          <div class="hidden">
+            <!-- Carousel indicators -->
+            <div class="flex justify-center gap-2 flex-wrap max-w-xs">
+              @for (image of heroImages; track $index) {
+                <button
+                  (click)="currentImageIndex.set($index)"
+                  [class.bg-white]="currentImageIndex() === $index"
+                  [class.bg-white/40]="currentImageIndex() !== $index"
+                  class="w-3 h-3 rounded-full transition-all duration-300 hover:scale-125"
+                  [attr.title]="'Image ' + ($index + 1)">
+                </button>
+              }
             </div>
           </div>
         </div>
@@ -667,6 +689,18 @@ export class LandingComponent implements OnInit {
   isLoadingTrainers = signal(true);
   popularPrograms = signal<ProgramClientResponse[]>([]);
   isLoadingPrograms = signal(true);
+  currentImageIndex = signal(0);
+  
+  // Carousel images - using new images from public/images/hero
+  heroImages = [
+    '/images/hero/1.jpg',
+    '/images/hero/2.jpg',
+    '/images/hero/3.jpg',
+    '/images/hero/4.jpg',
+    '/images/hero/5.jpg'
+  ];
+  
+  currentImage = computed(() => this.heroImages[this.currentImageIndex()]);
   Math = Math;
 
   testimonials = [
@@ -697,6 +731,11 @@ export class LandingComponent implements OnInit {
     // Always load trainers and programs, regardless of authentication status
     this.loadFeaturedTrainers();
     this.loadPopularPrograms();
+    
+    // Start the image carousel - change image every 5 seconds
+    setInterval(() => {
+      this.currentImageIndex.update(index => (index + 1) % this.heroImages.length);
+    }, 5000);
   }
 
   loadFeaturedTrainers() {

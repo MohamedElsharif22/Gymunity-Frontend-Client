@@ -1,15 +1,13 @@
-import { Component, OnInit, inject, signal, DestroyRef } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../../../core/services/auth.service';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule],
+  imports: [CommonModule, RouterModule],
   template: `
     <header class="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-xl border-b border-gray-200 shadow-md">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -81,35 +79,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
             </a>
           </nav>
 
-          <!-- Search Bar (Desktop/Tablet) -->
-          <div class="hidden md:flex flex-1 max-w-md mx-4">
-            <div class="relative w-full">
-              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                </svg>
-              </div>
-              <input
-                type="text"
-                placeholder="Search programs, trainers..."
-                [(ngModel)]="searchQuery"
-                (input)="onSearch()"
-                class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent transition"
-              />
-            </div>
-          </div>
-
           <!-- Right Actions -->
           <div class="flex items-center gap-2 md:gap-3">
-            <!-- Search Icon (Mobile) -->
-            <button
-              (click)="toggleMobileSearch()"
-              class="md:hidden p-2 hover:bg-gray-100 rounded-lg transition">
-              <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-              </svg>
-            </button>
-
             <!-- Notifications -->
             <button class="relative p-2 hover:bg-gray-100 rounded-xl transition group">
               <svg class="w-6 h-6 text-gray-600 group-hover:text-sky-600 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -220,25 +191,6 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
         </div>
       </div>
 
-        <!-- Mobile Search Bar -->
-        @if (showMobileSearch()) {
-          <div class="pb-4 md:hidden">
-            <div class="relative">
-              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                </svg>
-              </div>
-              <input
-                type="text"
-                placeholder="Search programs, trainers..."
-                [(ngModel)]="searchQuery"
-                (input)="onSearch()"
-                class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent transition"
-              />
-            </div>
-          </div>
-        }
       <!-- Mobile Navigation Menu -->
       @if (showMobileMenu()) {
         <div class="lg:hidden border-t border-gray-200 bg-white">
@@ -271,8 +223,6 @@ export class HeaderComponent implements OnInit {
   private router = inject(Router);
 
   currentUser = this.authService.currentUser;
-  searchQuery = signal('');
-  showMobileSearch = signal(false);
   showMobileMenu = signal(false);
 
   ngOnInit() {
@@ -282,15 +232,6 @@ export class HeaderComponent implements OnInit {
   getUserInitial(): string {
     const name = this.currentUser()?.name || 'U';
     return name.charAt(0).toUpperCase();
-  }
-
-  onSearch() {
-    console.log('Searching for:', this.searchQuery());
-    // Implement search logic here
-  }
-
-  toggleMobileSearch() {
-    this.showMobileSearch.update(val => !val);
   }
 
   toggleMobileMenu() {

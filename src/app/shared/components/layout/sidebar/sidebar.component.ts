@@ -45,11 +45,11 @@ interface NavItem {
           [routerLink]="item.route"
           routerLinkActive="bg-gradient-to-r from-sky-500 to-indigo-600 text-white shadow-lg scale-105"
           [routerLinkActiveOptions]="{exact: false}"
-          class="group flex items-center justify-between px-4 py-4 rounded-xl hover:bg-gradient-to-r hover:from-sky-50 hover:to-indigo-50 transition-all duration-200 text-gray-700 font-semibold cursor-pointer relative overflow-hidden"
+          class="group flex items-center justify-between px-4 py-4 rounded-xl hover:bg-gradient-to-r hover:from-sky-50 hover:to-indigo-50 hover:text-sky-600 transition-all duration-200 text-gray-700 font-semibold cursor-pointer relative overflow-hidden"
         >
           <span class="flex items-center gap-3 relative z-10">
             <span [innerHTML]="getSafeIcon(item.icon)" 
-                  class="w-6 h-6 group-hover:scale-110 group-hover:rotate-3 transition-all duration-200"
+                  class="w-6 h-6 group-hover:scale-110 group-hover:rotate-3 transition-all duration-200 group-hover:text-sky-600"
                   [class]="getIconColorClass(item)"></span>
             <span class="group-hover:translate-x-1 transition-transform duration-200">{{ item.label }}</span>
           </span>
@@ -88,10 +88,10 @@ interface NavItem {
           [routerLink]="item.route"
           routerLinkActive="bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg scale-105"
           [routerLinkActiveOptions]="{exact: false}"
-          class="group flex items-center gap-3 px-4 py-4 rounded-xl hover:bg-white/80 transition-all duration-200 text-gray-700 font-semibold cursor-pointer relative overflow-hidden"
+          class="group flex items-center gap-3 px-4 py-4 rounded-xl hover:bg-white/80 hover:text-purple-600 transition-all duration-200 text-gray-700 font-semibold cursor-pointer relative overflow-hidden"
         >
           <span [innerHTML]="getSafeIcon(item.icon)" 
-                class="w-6 h-6 relative z-10 group-hover:scale-110 group-hover:rotate-3 transition-all duration-200"></span>
+                class="w-6 h-6 relative z-10 group-hover:scale-110 group-hover:rotate-3 transition-all duration-200 group-hover:text-purple-600"></span>
           <span class="relative z-10 group-hover:translate-x-1 transition-transform duration-200">{{ item.label }}</span>
         </a>
       </nav>
