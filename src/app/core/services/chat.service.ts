@@ -3,6 +3,7 @@ import * as signalR from '@microsoft/signalr';
 import { Observable, throwError, catchError, map } from 'rxjs';
 import { AuthService } from './auth.service';
 import { ChatApiService } from './chat-api.service';
+import { NotificationService } from './notification.service';
 import { environment } from '../../../environments/environment';
 import {
   ChatThread,
@@ -18,6 +19,7 @@ import {
 export class ChatService {
   private readonly authService = inject(AuthService);
   private readonly chatApiService = inject(ChatApiService);
+  private readonly notificationService = inject(NotificationService);
   private connection: signalR.HubConnection | null = null;
   
   // Connection state signals
@@ -130,6 +132,15 @@ export class ChatService {
         
         // Update thread's lastMessage and lastMessageAt
         this.updateThreadMetadata(processedMessage.threadId, processedMessage);
+
+        // ⭐ IMPORTANT: Notify the notification service about the new message
+        // This updates the notification badge in the header
+        if (!processedMessage.isOwn) {
+          console.log('📢 Notifying notification service of new message from trainer');
+          this.notificationService.incrementUnreadCount();
+          console.log('📊 Chat unread count:', this.unreadCount());
+          console.log('📊 Notification service unread count:', this.notificationService.getLocalUnreadCount());
+        }
       } else {
         console.warn('⚠️ Message was deduplicated (already exists)');
       }
@@ -379,9 +390,15 @@ export class ChatService {
   markThreadAsRead(threadId: number): Observable<void> {
     return this.chatApiService.markThreadAsRead(threadId).pipe(
       map(() => {
+        const threadUnreadBefore = this.threadsSignal().find(t => t.id === threadId)?.unreadCount || 0;
         this.threadsSignal.update(threads =>
           threads.map(t => (t.id === threadId ? { ...t, unreadCount: 0 } : t))
         );
+        // Decrement notification service count by the unread count we just cleared
+        for (let i = 0; i < threadUnreadBefore; i++) {
+          this.notificationService.decrementUnreadCount();
+        }
+        console.log(`✅ Thread ${threadId} marked as read. Cleared ${threadUnreadBefore} unread messages`);
       }),
       catchError(error => {
         console.error('Error marking thread as read:', error);

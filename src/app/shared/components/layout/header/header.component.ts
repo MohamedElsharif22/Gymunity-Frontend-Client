@@ -1,8 +1,10 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, computed, DestroyRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { AuthService } from '../../../../core/services/auth.service';
+import { NotificationService } from '../../../../core/services/notification.service';
+import { ChatService } from '../../../../core/services/chat.service';
 
 @Component({
   selector: 'app-header',
@@ -93,11 +95,15 @@ import { AuthService } from '../../../../core/services/auth.service';
           <!-- RIGHT: User Actions & Menu -->
           <div class="flex items-center gap-2 sm:gap-3 md:gap-4 flex-shrink-0">
             <!-- Notifications Button -->
-            <button class="relative p-1.5 sm:p-2 hover:bg-gray-100 rounded-lg transition flex-shrink-0">
-              <svg class="w-5 h-5 sm:w-6 sm:h-6 text-gray-600 hover:text-sky-600 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <button 
+              (click)="goToNotifications()"
+              class="relative p-1.5 sm:p-2 hover:bg-gray-100 rounded-lg transition flex-shrink-0 group">
+              <svg class="w-5 h-5 sm:w-6 sm:h-6 text-gray-600 group-hover:text-sky-600 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
               </svg>
-              <span class="absolute top-0.5 right-0.5 w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse"></span>
+              @if (unreadNotificationCount() > 0) {
+                <span class="absolute top-0.5 right-0.5 w-5 h-5 bg-red-500 rounded-full animate-pulse flex items-center justify-center text-xs text-white font-bold">{{ unreadNotificationCount() }}</span>
+              }
             </button>
 
             <!-- User Profile Menu (Desktop) -->
@@ -341,14 +347,88 @@ import { AuthService } from '../../../../core/services/auth.service';
 export class HeaderComponent implements OnInit {
   private authService = inject(AuthService);
   private router = inject(Router);
+  private notificationService = inject(NotificationService);
+  private chatService = inject(ChatService);
+  private destroyRef = inject(DestroyRef);
 
   currentUser = this.authService.currentUser;
+  
+  // Computed: Combine notification count and chat unread count
+  unreadNotificationCount = computed(() => {
+    const notificationCount = this.notificationService.unreadCount();
+    const chatUnreadCount = this.chatService.unreadCount();
+    const totalCount = notificationCount + chatUnreadCount;
+    console.log(`📊 Unread: Notifications=${notificationCount}, Chat=${chatUnreadCount}, Total=${totalCount}`);
+    return totalCount;
+  });
+  
   showMobileMenu = signal(false);
   showDesktopDropdown = signal(false);
   showMobileDropdown = signal(false);
 
   ngOnInit() {
-    // Initialize any needed data here
+    // Initialize notification real-time connection
+    this.notificationService.connectToNotifications().catch(error => {
+      console.error('Failed to initialize notifications:', error);
+    });
+
+    // Initialize chat real-time connection (so messages trigger unread count updates)
+    this.chatService.connectToChat().catch(error => {
+      console.error('Failed to initialize chat:', error);
+    });
+
+    // Load initial unread count immediately
+    this.notificationService.getUnreadCount().subscribe();
+    
+    // Load initial chat threads immediately (this includes unread counts)
+    this.chatService.loadThreads().subscribe({
+      next: () => {
+        console.log('✅ Initial chat threads loaded');
+      },
+      error: (error) => {
+        console.error('Failed to load initial chat threads:', error);
+      }
+    });
+    
+    // IMPORTANT: Start aggressive polling immediately
+    // This ensures unread badges update within 2 seconds even if SignalR hasn't connected yet
+    let initialPollingInterval = setInterval(() => {
+      this.chatService.loadThreads().subscribe({
+        next: () => {
+          console.log('📊 Fast polling (2s): Unread count:', this.chatService.unreadCount());
+        },
+        error: (error) => {
+          console.warn('Fast polling error:', error);
+        }
+      });
+    }, 2000);
+
+    // After 30 seconds, switch to slower polling (5s) to save bandwidth
+    setTimeout(() => {
+      clearInterval(initialPollingInterval);
+      console.log('📊 Switching to standard 5-second polling');
+      
+      const standardPollingInterval = setInterval(() => {
+        this.chatService.loadThreads().subscribe({
+          next: () => {
+            console.log('📊 Standard polling (5s): Unread count:', this.chatService.unreadCount());
+          },
+          error: (error) => {
+            console.warn('Standard polling error:', error);
+          }
+        });
+      }, 5000);
+      
+      // Clean up standard polling on component destroy
+      this.destroyRef.onDestroy(() => {
+        clearInterval(standardPollingInterval);
+      });
+    }, 30000);
+
+    // Clean up initial polling on component destroy
+    this.destroyRef.onDestroy(() => {
+      clearInterval(initialPollingInterval);
+    });
   }
 
   getUserInitial(): string {
@@ -378,5 +458,9 @@ export class HeaderComponent implements OnInit {
   logout() {
     this.authService.logout();
     this.router.navigate(['/auth/login']);
+  }
+
+  goToNotifications() {
+    this.router.navigate(['/notifications']);
   }
 }
