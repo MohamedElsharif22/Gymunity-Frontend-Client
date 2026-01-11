@@ -1,10 +1,10 @@
 import { Component, OnInit, OnDestroy, inject, ChangeDetectionStrategy, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators, AbstractControl } from '@angular/forms';
 import { ClientProfileService } from '../../../core/services/client-profile.service';
 import { ClientLogsService } from '../../../core/services/client-logs.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { ClientProfileRequest, ClientProfileResponse, ClientGoal, ExperienceLevel, Gender } from '../../../core/models';
+import { ClientProfileRequest, ClientProfileResponse, ClientGoal, ExperienceLevel, Gender, ChangePasswordRequest } from '../../../core/models';
 import { Router } from '@angular/router';
 import { Subject, takeUntil, forkJoin, of, timeout } from 'rxjs';
 import { catchError } from 'rxjs/operators';
@@ -55,6 +55,10 @@ export class ProfileComponent implements OnInit, OnDestroy {
   isEditing = signal(false);
   profilePhotoPreview = signal<string | null>(null);
   selectedPhotoFile = signal<File | null>(null);
+  showPasswordForm = signal(false);
+  passwordLoading = signal(false);
+  passwordError = signal<string | null>(null);
+  passwordSuccess = signal<string | null>(null);
 
   // Enum options for dropdowns
   goalOptions = [
@@ -93,6 +97,23 @@ export class ProfileComponent implements OnInit, OnDestroy {
     goal: [null as ClientGoal | null],
     experienceLevel: [null as ExperienceLevel | null]
   });
+
+  // Password change form
+  passwordForm = this.formBuilder.group(
+    {
+      currentPassword: ['', [Validators.required]],
+      newPassword: [
+        '',
+        [
+          Validators.required,
+          Validators.minLength(8),
+          Validators.pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#^()\-_=+{}[\]|;:'"",.<>\/\\]).{8,}$/)
+        ]
+      ],
+      confirmNewPassword: ['', [Validators.required]]
+    },
+    { validators: (fg) => this.passwordMatchValidator(fg) }
+  );
 
   ngOnInit(): void {
     this.loadProfile();
@@ -358,6 +379,9 @@ export class ProfileComponent implements OnInit, OnDestroy {
           this.isEditing.set(false);
           this.loading.set(false);
           this.success.set(`Profile ${operation === 'update' ? 'updated' : 'created'} successfully!`);
+          
+          // Silently refresh profile data without showing loading state
+          this.refreshProfileData();
           setTimeout(() => this.success.set(null), 3000);
           return;
         }
@@ -397,6 +421,9 @@ export class ProfileComponent implements OnInit, OnDestroy {
         this.success.set(`Profile successfully saved!`);
         // Don't clear photo - keep it displayed
         // The photo preview will remain since we saved it to currentUser
+        
+        // Silently refresh profile data without showing loading state
+        this.refreshProfileData();
         setTimeout(() => this.success.set(null), 3000);
       },
       error: (error) => {
@@ -502,5 +529,164 @@ export class ProfileComponent implements OnInit, OnDestroy {
     this.profilePhotoPreview.set(null);
     this.profileForm.get('profilePhoto')?.setValue(null);
     console.log('[ProfileComponent] Photo selection cleared');
+  }
+
+  // ===== PASSWORD MANAGEMENT METHODS =====
+
+  /**
+   * Toggle password change form visibility
+   */
+  togglePasswordForm(): void {
+    this.showPasswordForm.update(val => !val);
+    if (this.showPasswordForm()) {
+      this.passwordError.set(null);
+      this.passwordSuccess.set(null);
+    } else {
+      this.passwordForm.reset();
+    }
+  }
+
+  /**
+   * Custom validator to check if passwords match
+   */
+  private passwordMatchValidator(formGroup: AbstractControl): { [key: string]: any } | null {
+    const newPassword = formGroup.get('newPassword')?.value;
+    const confirmPassword = formGroup.get('confirmNewPassword')?.value;
+
+    if (newPassword && confirmPassword && newPassword !== confirmPassword) {
+      return { passwordMismatch: true };
+    }
+    return null;
+  }
+
+  /**
+   * Get password validation status
+   */
+  isPasswordFormReady(): boolean {
+    return this.passwordForm.valid && !this.passwordLoading();
+  }
+
+  /**
+   * Check password field validity
+   */
+  isPasswordFieldInvalid(fieldName: string): boolean {
+    const field = this.passwordForm.get(fieldName);
+    return !!(field && field.invalid && field.touched);
+  }
+
+  /**
+   * Change user password
+   * Uses AuthService.changePassword method
+   * Note: Backend endpoint returns 405 - will use reset password flow instead
+   */
+  onChangePassword(): void {
+    console.log('[ProfileComponent] Password change attempted');
+
+    if (this.passwordForm.invalid) {
+      console.warn('[ProfileComponent] Password form is invalid');
+      this.passwordError.set('Please check your password requirements');
+      return;
+    }
+
+    this.passwordLoading.set(true);
+    this.passwordError.set(null);
+    this.passwordSuccess.set(null);
+
+    const formValue = this.passwordForm.value;
+    
+    // Since /api/account/change-password returns 405, use reset password flow instead
+    // The user needs to verify via email first
+    this.authService.sendResetPasswordLink({ email: this.userEmail() }).pipe(
+      timeout(10000),
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: (response) => {
+        console.log('[ProfileComponent] Password reset link sent successfully');
+        this.passwordLoading.set(false);
+        this.passwordSuccess.set('Password reset link sent to your email! Check your inbox to set a new password.');
+        this.passwordForm.reset();
+        
+        // Close form after 3 seconds
+        setTimeout(() => {
+          this.showPasswordForm.set(false);
+          this.passwordSuccess.set(null);
+        }, 3000);
+      },
+      error: (error) => {
+        this.passwordLoading.set(false);
+        console.error('[ProfileComponent] Password reset link error:', error);
+        const errorMessage = error?.error?.message || 'Failed to send password reset link. Please try again.';
+        this.passwordError.set(errorMessage);
+      }
+    });
+  }
+
+  /**
+   * Cancel password change
+   */
+  onCancelPasswordChange(): void {
+    this.passwordForm.reset();
+    this.passwordError.set(null);
+    this.passwordSuccess.set(null);
+    this.showPasswordForm.set(false);
+  }
+
+  /**
+   * Get password strength indicator
+   * Returns strength level based on validation
+   */
+  getPasswordStrength(): { level: string; color: string } {
+    const password = this.passwordForm.get('newPassword')?.value;
+    if (!password) return { level: '', color: '' };
+
+    let strength = 0;
+    
+    // Check length
+    if (password.length >= 8) strength++;
+    if (password.length >= 12) strength++;
+    
+    // Check for uppercase
+    if (/[A-Z]/.test(password)) strength++;
+    
+    // Check for lowercase
+    if (/[a-z]/.test(password)) strength++;
+    
+    // Check for numbers
+    if (/\d/.test(password)) strength++;
+    
+    // Check for special characters
+    if (/[@$!%*?&#^()\-_=+{}[\]|;:'"",.<>\/\\]/.test(password)) strength++;
+
+    if (strength <= 2) return { level: 'Weak', color: 'text-red-600' };
+    if (strength <= 4) return { level: 'Fair', color: 'text-yellow-600' };
+    return { level: 'Strong', color: 'text-green-600' };
+  }
+
+  /**
+   * Silently refresh profile data without showing loading state
+   * Used after successful save to update view with latest data
+   */
+  private refreshProfileData(): void {
+    this.profileService.getProfile().pipe(
+      timeout(5000),
+      catchError(err => {
+        console.warn('[ProfileComponent] Silent profile refresh failed:', err.message);
+        return of(null);
+      }),
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: (data) => {
+        if (data) {
+          // Convert enums
+          data.gender = this.convertStringToGenderEnum(data.gender as any);
+          data.goal = this.convertStringToGoalEnum(data.goal as any);
+          data.experienceLevel = this.convertStringToExperienceLevelEnum(data.experienceLevel as any);
+          
+          // Update profile signal silently (no loading state)
+          this.profile.set(data);
+          console.log('[ProfileComponent] Profile refreshed silently');
+        }
+      }
+    });
   }
 }

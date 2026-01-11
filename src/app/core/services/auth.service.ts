@@ -237,5 +237,64 @@ export class AuthService {
       })
     );
   }
+
+  /**
+   * Get current user's profile information
+   * Returns the currently authenticated user
+   * 
+   * @returns Current user or null
+   */
+  getCurrentUserProfile(): User | null {
+    return this.getCurrentUser();
+  }
+
+  /**
+   * Update user name and username
+   * Convenience method for updating user identity fields
+   * 
+   * @param fullName - User's full name
+   * @param userName - User's username
+   * @returns Observable with update result
+   */
+  updateUserIdentity(fullName: string, userName: string): Observable<any> {
+    const currentUser = this.getCurrentUser();
+    if (!currentUser) {
+      return of({ success: false, error: 'No authenticated user' });
+    }
+
+    return this.updateUserInfo(fullName, userName, currentUser.email);
+  }
+
+  /**
+   * Update user email address
+   * Convenience method for updating email field
+   * 
+   * @param email - New email address
+   * @returns Observable with update result
+   */
+  updateUserEmail(email: string): Observable<any> {
+    const currentUser = this.getCurrentUser();
+    if (!currentUser) {
+      return of({ success: false, error: 'No authenticated user' });
+    }
+
+    return this.updateUserInfo(currentUser.name, currentUser.userName, email);
+  }
+
+  /**
+   * Update user profile photo
+   * Convenience method for updating profile photo
+   * 
+   * @param photoFile - Photo file to upload
+   * @returns Observable with update result
+   */
+  updateProfilePhoto(photoFile: File): Observable<any> {
+    const currentUser = this.getCurrentUser();
+    if (!currentUser) {
+      return of({ success: false, error: 'No authenticated user' });
+    }
+
+    return this.updateUserInfo(currentUser.name, currentUser.userName, currentUser.email, photoFile);
+  }
 }
 

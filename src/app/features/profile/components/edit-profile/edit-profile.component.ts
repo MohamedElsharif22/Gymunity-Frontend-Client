@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService } from '../../../../core/services/auth.service';
 import { ClientProfileService } from '../../../../core/services/client-profile.service';
-import { ClientProfileRequest, ClientProfileResponse, ClientGoal, ExperienceLevel, Gender } from '../../../../core/models';
+import { ClientProfileRequest, ClientProfileResponse, ClientGoal, ExperienceLevel, Gender, ChangePasswordRequest } from '../../../../core/models';
 import { Subject, takeUntil, timeout } from 'rxjs';
 
 /**
@@ -43,6 +43,10 @@ export class EditProfileComponent implements OnInit, OnDestroy {
   loading = signal(false);
   error = signal<string | null>(null);
   success = signal<string | null>(null);
+  showPasswordForm = signal(false);
+  passwordLoading = signal(false);
+  passwordError = signal<string | null>(null);
+  passwordSuccess = signal<string | null>(null);
 
   // Enums for template
   readonly ClientGoal = ClientGoal;
@@ -82,6 +86,25 @@ export class EditProfileComponent implements OnInit, OnDestroy {
     goal: [null as ClientGoal | null],
     experienceLevel: [null as ExperienceLevel | null]
   });
+
+  // Password change form
+  passwordForm = this.formBuilder.group(
+    {
+      currentPassword: ['', [Validators.required]],
+      newPassword: [
+        '',
+        [
+          Validators.required,
+          Validators.minLength(8),
+          Validators.pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#^()\-_=+{}[\]|;:'"",.<>\/\\]).{8,}$/)
+        ]
+      ],
+      confirmNewPassword: ['', [Validators.required]]
+    },
+    {
+      validators: this.passwordMatchValidator
+    }
+  );
 
   ngOnInit(): void {
     this.initializeForm();
@@ -232,5 +255,166 @@ export class EditProfileComponent implements OnInit, OnDestroy {
     if (!gender) return '';
     const option = this.genderOptions.find(o => o.value === gender);
     return option?.label || '';
+  }
+
+  /**
+   * Check if a form field is invalid and touched
+   * Used for showing error messages
+   */
+  isFieldInvalid(fieldName: string): boolean {
+    const field = this.editForm.get(fieldName);
+    return !!(field && field.invalid && field.touched);
+  }
+
+  /**
+   * Check if a form field has a specific error
+   * Used for conditional error message display
+   */
+  hasFieldError(fieldName: string, errorType: string): boolean {
+    const field = this.editForm.get(fieldName);
+    return !!(field && field.hasError(errorType) && field.touched);
+  }
+
+  /**
+   * Get form validation status
+   * Returns true if form is ready to submit
+   */
+  isFormReady(): boolean {
+    return this.editForm.valid && !this.loading() && !this.authLoading();
+  }
+
+  // ===== PASSWORD MANAGEMENT METHODS =====
+
+  /**
+   * Toggle password change form visibility
+   */
+  togglePasswordForm(): void {
+    this.showPasswordForm.update(val => !val);
+    if (this.showPasswordForm()) {
+      this.passwordError.set(null);
+      this.passwordSuccess.set(null);
+    } else {
+      this.passwordForm.reset();
+    }
+  }
+
+  /**
+   * Custom validator to check if passwords match
+   */
+  private passwordMatchValidator(formGroup: any): { [key: string]: any } | null {
+    const newPassword = formGroup.get('newPassword')?.value;
+    const confirmPassword = formGroup.get('confirmNewPassword')?.value;
+
+    if (newPassword && confirmPassword && newPassword !== confirmPassword) {
+      return { passwordMismatch: true };
+    }
+    return null;
+  }
+
+  /**
+   * Get password validation status
+   */
+  isPasswordFormReady(): boolean {
+    return this.passwordForm.valid && !this.passwordLoading();
+  }
+
+  /**
+   * Check password field validity
+   */
+  isPasswordFieldInvalid(fieldName: string): boolean {
+    const field = this.passwordForm.get(fieldName);
+    return !!(field && field.invalid && field.touched);
+  }
+
+  /**
+   * Change user password
+   * Uses AuthService.changePassword method
+   */
+  onChangePassword(): void {
+    console.log('[EditProfileComponent] Password change attempted');
+
+    if (this.passwordForm.invalid) {
+      console.warn('[EditProfileComponent] Password form is invalid');
+      this.passwordError.set('Please check your password requirements');
+      return;
+    }
+
+    this.passwordLoading.set(true);
+    this.passwordError.set(null);
+    this.passwordSuccess.set(null);
+
+    const formValue = this.passwordForm.value;
+    const request: ChangePasswordRequest = {
+      currentPassword: formValue.currentPassword || '',
+      newPassword: formValue.newPassword || '',
+      confirmPassword: formValue.confirmNewPassword || ''
+    };
+
+    console.log('[EditProfileComponent] Sending change password request');
+
+    this.authService.changePassword(request).pipe(
+      timeout(10000),
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: (response) => {
+        console.log('[EditProfileComponent] Password changed successfully');
+        this.passwordLoading.set(false);
+        this.passwordSuccess.set('Password changed successfully! ✓');
+        this.passwordForm.reset();
+        
+        // Close form after 2 seconds
+        setTimeout(() => {
+          this.showPasswordForm.set(false);
+          this.passwordSuccess.set(null);
+        }, 2000);
+      },
+      error: (error) => {
+        this.passwordLoading.set(false);
+        console.error('[EditProfileComponent] Password change error:', error);
+        const errorMessage = error?.error?.message || 'Failed to change password. Please check your current password and try again.';
+        this.passwordError.set(errorMessage);
+      }
+    });
+  }
+
+  /**
+   * Cancel password change
+   */
+  onCancelPasswordChange(): void {
+    this.passwordForm.reset();
+    this.passwordError.set(null);
+    this.passwordSuccess.set(null);
+    this.showPasswordForm.set(false);
+  }
+
+  /**
+   * Get password strength indicator
+   * Returns strength level based on validation
+   */
+  getPasswordStrength(): { level: string; color: string } {
+    const password = this.passwordForm.get('newPassword')?.value;
+    if (!password) return { level: '', color: '' };
+
+    let strength = 0;
+    
+    // Check length
+    if (password.length >= 8) strength++;
+    if (password.length >= 12) strength++;
+    
+    // Check for uppercase
+    if (/[A-Z]/.test(password)) strength++;
+    
+    // Check for lowercase
+    if (/[a-z]/.test(password)) strength++;
+    
+    // Check for numbers
+    if (/\d/.test(password)) strength++;
+    
+    // Check for special characters
+    if (/[@$!%*?&#^()\-_=+{}[\]|;:'"",.<>\/\\]/.test(password)) strength++;
+
+    if (strength <= 2) return { level: 'Weak', color: 'text-red-600' };
+    if (strength <= 4) return { level: 'Fair', color: 'text-yellow-600' };
+    return { level: 'Strong', color: 'text-green-600' };
   }
 }
