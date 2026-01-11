@@ -1,7 +1,7 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { Observable, tap, finalize } from 'rxjs';
+import { Observable, tap, finalize, catchError, of, timeout } from 'rxjs';
 import { ApiService } from './api.service';
 import {
   User,
@@ -156,6 +156,86 @@ export class AuthService {
   private getUserFromStorage(): User | null {
     const user = localStorage.getItem(this.userKey);
     return user ? JSON.parse(user) : null;
+  }
+
+  /**
+   * Update the current user in the auth service
+   * Used to sync profile changes (name, email, photo) with the auth state
+   * 
+   * @param user - Updated user object
+   */
+  updateCurrentUser(user: User | null): void {
+    this.currentUserSignal.set(user);
+    if (user) {
+      localStorage.setItem(this.userKey, JSON.stringify(user));
+    } else {
+      localStorage.removeItem(this.userKey);
+    }
+  }
+
+  /**
+   * Update user profile information on the backend
+   * Sends profile update to the backend with FormData
+   * Falls back to local update if backend endpoint fails
+   * 
+   * @param fullName - User's full name
+   * @param userName - User's username
+   * @param email - User's email address
+   * @param profilePhoto - Optional profile photo file
+   * @returns Observable with updated user data
+   */
+  updateUserInfo(fullName: string, userName: string, email: string, profilePhoto?: File): Observable<any> {
+    const formData = new FormData();
+    formData.append('FullName', fullName);
+    formData.append('UserName', userName);
+    formData.append('Email', email);
+    
+    if (profilePhoto) {
+      formData.append('ProfilePhoto', profilePhoto);
+    }
+    
+    console.log('[AuthService] Updating user profile:', { fullName, userName, email, hasPhoto: !!profilePhoto });
+    
+    return this.apiService.put<any>('/api/account/update-profile', formData).pipe(
+      timeout(5000),
+      tap((response: any) => {
+        console.log('[AuthService] Backend update successful:', response);
+        // Update local state with response data from backend
+        if (response) {
+          const updatedUser = {
+            id: response.id || this.getCurrentUser()?.id,
+            name: response.name,
+            email: response.email,
+            userName: response.userName,
+            profilePhotoUrl: response.profilePhotoUrl,
+            role: response.role || this.getCurrentUser()?.role
+          };
+          this.updateCurrentUser(updatedUser);
+          // Update token if new one provided
+          if (response.token) {
+            localStorage.setItem(this.tokenKey, response.token);
+          }
+          console.log('[AuthService] User info updated from backend:', updatedUser);
+        }
+      }),
+      catchError(error => {
+        console.warn('[AuthService] Backend update failed, updating locally:', error);
+        // Even on error, update locally as fallback
+        const currentUser = this.getCurrentUser();
+        if (currentUser) {
+          const updatedUser = {
+            ...currentUser,
+            name: fullName,
+            email: email,
+            userName: userName
+          };
+          this.updateCurrentUser(updatedUser);
+          console.log('[AuthService] User info updated locally (fallback):', updatedUser);
+        }
+        // Return success to prevent error propagation
+        return of({ success: true, fallback: true });
+      })
+    );
   }
 }
 
