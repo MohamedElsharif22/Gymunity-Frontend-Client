@@ -203,15 +203,6 @@ import { FormsModule } from '@angular/forms';
                     >
                       Programs
                     </button>
-                    <button
-                      [class.border-sky-600]="activeTab() === 'reviews'"
-                      [class.text-sky-600]="activeTab() === 'reviews'"
-                      [class.text-gray-600]="activeTab() !== 'reviews'"
-                      (click)="activeTab.set('reviews')"
-                      class="px-4 py-3 font-semibold border-b-4 border-transparent hover:bg-gray-50 rounded-t-lg transition-colors whitespace-nowrap"
-                    >
-                      Reviews
-                    </button>
                   </div>
                 </div>
               </div>
@@ -424,113 +415,6 @@ import { FormsModule } from '@angular/forms';
                   </div>
                 }
 
-                <!-- Reviews Tab -->
-                @if (activeTab() === 'reviews') {
-                  <div class="bg-white rounded-lg shadow p-6">
-                    <h2 class="text-xl font-bold text-gray-900 mb-6">Reviews</h2>
-                    
-                    <!-- Review Form Toggle Button -->
-                    @if (currentUser()) {
-                      <div class="mb-6">
-                        <button (click)="toggleReviewForm()" class="btn-primary bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">
-                          {{ showReviewForm() ? 'Cancel' : 'Leave a Review' }}
-                        </button>
-                      </div>
-                    }
-                    
-                    <!-- Review Form -->
-                    @if (showReviewForm() && currentUser()) {
-                      <div class="border rounded-lg p-6 mb-6 bg-gray-50">
-                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Share Your Experience</h3>
-                        
-                        <!-- Star Rating Selector -->
-                        <div class="mb-4">
-                          <label class="block text-sm font-medium text-gray-700 mb-2">Rating</label>
-                          <div class="flex gap-2">
-                            @for (star of [1, 2, 3, 4, 5]; track star) {
-                              <button
-                                (click)="setRating(star)"
-                                [class.text-yellow-400]="reviewRating() >= star"
-                                [class.text-gray-300]="reviewRating() < star"
-                                class="text-3xl transition-colors hover:text-yellow-400"
-                              >
-                                ★
-                              </button>
-                            }
-                          </div>
-                          @if (reviewRating() === 0) {
-                            <p class="text-sm text-gray-500 mt-1">Select a rating</p>
-                          } @else {
-                            <p class="text-sm text-gray-700 mt-1">{{ reviewRating() }} out of 5 stars</p>
-                          }
-                        </div>
-                        
-                        <!-- Comment Input -->
-                        <div class="mb-4">
-                          <label class="block text-sm font-medium text-gray-700 mb-2">Comment</label>
-                          <textarea
-                            [ngModel]="reviewComment()"
-                            (ngModelChange)="reviewComment.set($event)"
-                            placeholder="Share your experience with this trainer..."
-                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            rows="4"
-                          ></textarea>
-                          <p class="text-sm text-gray-500 mt-1">{{ reviewComment().length }} characters</p>
-                        </div>
-                        
-                        <!-- Submit Button -->
-                        <div class="flex gap-3">
-                          <button
-                            (click)="submitReview()"
-                            [disabled]="submittingReview()"
-                            class="btn-primary bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg disabled:bg-gray-400 disabled:cursor-not-allowed"
-                          >
-                            {{ submittingReview() ? 'Submitting...' : 'Submit Review' }}
-                          </button>
-                        </div>
-                        
-                        <!-- Success/Error Messages -->
-                        @if (reviewSubmitMessage(); as message) {
-                          <div [class.bg-green-50]="message.type === 'success'" [class.bg-red-50]="message.type === 'error'" class="mt-4 p-3 rounded-lg border" [class.border-green-200]="message.type === 'success'" [class.border-red-200]="message.type === 'error'">
-                            <p [class.text-green-800]="message.type === 'success'" [class.text-red-800]="message.type === 'error'" class="text-sm">
-                              {{ message.message }}
-                            </p>
-                          </div>
-                        }
-                      </div>
-                    }
-                    
-                    <!-- Reviews List -->
-                    <div>
-                      @if (reviews().length === 0) {
-                        <div class="text-center py-8 text-gray-600">
-                          <p>No reviews yet. Be the first to review this trainer!</p>
-                        </div>
-                      } @else {
-                        <div class="space-y-4">
-                          @for (review of reviews(); track review.id) {
-                            <div class="border rounded-lg p-4 hover:shadow-md transition-shadow">
-                              <div class="flex justify-between items-start mb-2">
-                                <div>
-                                  <p class="font-semibold text-gray-900">{{ review.clientId }}</p>
-                                  <p class="text-sm text-gray-500">{{ review.createdAt | date:'short' }}</p>
-                                </div>
-                                <div class="flex gap-1">
-                                  @for (star of [1, 2, 3, 4, 5]; track star) {
-                                    <span [class.text-yellow-400]="review.rating >= star" [class.text-gray-300]="review.rating < star" class="text-lg">
-                                      ★
-                                    </span>
-                                  }
-                                </div>
-                              </div>
-                              <p class="text-gray-700">{{ review.comment }}</p>
-                            </div>
-                          }
-                        </div>
-                      }
-                    </div>
-                  </div>
-                }
               </div>
             </div>
           </div>
@@ -565,7 +449,7 @@ export class TrainerDetailComponent implements OnInit {
   loadingPackages = signal(false);
   loadingPrograms = signal(false);
   error = signal<string | null>(null);
-  activeTab = signal<'about' | 'packages' | 'programs' | 'reviews'>('about');
+  activeTab = signal<'about' | 'packages' | 'programs'>('about');
   
   // Review form state
   showReviewForm = signal(false);
