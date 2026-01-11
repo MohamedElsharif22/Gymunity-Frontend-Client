@@ -277,7 +277,10 @@ export class LoginComponent implements AfterViewInit {
         // Navigate based on user role
         const user = this.authService.getCurrentUser();
         if (user) {
+          console.log('User logged in:', { id: user.id, role: user.role, userName: user.userName });
           this.authService.navigateByRole(user, this.returnUrl);
+        } else {
+          console.error('User not found after login');
         }
       },
       error: (err: any) => {

@@ -67,7 +67,11 @@ export interface ResetPasswordRequest {
   confirmPassword: string;
 }
 
+// export enum UserRole {
+//   Client = 1,
+//   Trainer = 2
+// }
 export enum UserRole {
-  Client = 1,
-  Trainer = 2
+  Client = 'Client',
+  Trainer = 'Trainer'
 }

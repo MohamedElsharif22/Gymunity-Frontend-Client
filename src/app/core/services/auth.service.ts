@@ -121,8 +121,10 @@ export class AuthService {
    * @param returnUrl - Optional return URL for clients
    */
   navigateByRole(user: User, returnUrl?: string): void {
-    // Default role is Client (1) if not specified
-    if (user.role === UserRole.Trainer) {
+    // Check if user is a trainer (handle both string and number formats from backend)
+    const isTrainer = user.role === UserRole.Trainer;
+    
+    if (isTrainer) {
       // Navigate trainer to trainer app
       window.location.href = this.trainerUrl;
     } else {
@@ -148,6 +150,11 @@ export class AuthService {
       role: response.role,
       profilePhotoUrl: profilePhotoUrl
     };
+
+    this.navigateByRole(user);
+    
+    console.log('setAuthData - User role from backend:', { role: response.role, enum_Trainer: UserRole.Trainer });
+    
     localStorage.setItem(this.userKey, JSON.stringify(user));
     this.currentUserSignal.set(user);
     this.isAuthenticatedSignal.set(true);
