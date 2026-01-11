@@ -33,7 +33,7 @@ import { AuthService } from '../../../core/services/auth.service';
               routerLinkActive="border-b-2 border-green-600 text-green-600"
               [routerLinkActiveOptions]="{ exact: true }"
               class="text-slate-600 hover:text-green-600 font-medium transition px-2 py-1">
-              Programs
+              My Programs
             </a>
             <a
               routerLink="/workout"

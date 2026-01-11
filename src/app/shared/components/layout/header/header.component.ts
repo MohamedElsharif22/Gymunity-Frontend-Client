@@ -174,7 +174,7 @@ import { ChatService } from '../../../../core/services/chat.service';
                 ></path>
               </svg>
 
-              Programs
+              My Programs
             </a>
           </nav>
           

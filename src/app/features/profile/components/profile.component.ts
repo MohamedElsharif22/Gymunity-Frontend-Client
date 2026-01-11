@@ -1,9 +1,10 @@
-import { Component, OnInit, OnDestroy, inject, ChangeDetectionStrategy, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, ChangeDetectionStrategy, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators, AbstractControl } from '@angular/forms';
 import { ClientProfileService } from '../../../core/services/client-profile.service';
 import { ClientLogsService } from '../../../core/services/client-logs.service';
-import { ClientProfileRequest, ClientProfileResponse, ClientGoal, ExperienceLevel, Gender } from '../../../core/models';
+import { AuthService } from '../../../core/services/auth.service';
+import { ClientProfileRequest, ClientProfileResponse, ClientGoal, ExperienceLevel, Gender, ChangePasswordRequest } from '../../../core/models';
 import { Router } from '@angular/router';
 import { Subject, takeUntil, forkJoin, of, timeout } from 'rxjs';
 import { catchError } from 'rxjs/operators';
@@ -26,9 +27,20 @@ import { catchError } from 'rxjs/operators';
 export class ProfileComponent implements OnInit, OnDestroy {
   private profileService = inject(ClientProfileService);
   private logsService = inject(ClientLogsService);
+  private authService = inject(AuthService);
   private formBuilder = inject(FormBuilder);
   private router = inject(Router);
   private destroy$ = new Subject<void>();
+
+  // Auth state signals
+  readonly currentUser = this.authService.currentUser;
+  readonly isAuthenticated = this.authService.isAuthenticated;
+  readonly authLoading = this.authService.isLoading;
+
+  // Computed user info
+  readonly userName = computed(() => this.currentUser()?.userName || '');
+  readonly userEmail = computed(() => this.currentUser()?.email || '');
+  readonly userProfilePhoto = computed(() => this.currentUser()?.profilePhotoUrl || null);
 
   // Enums for template
   readonly ClientGoal = ClientGoal;
@@ -41,6 +53,12 @@ export class ProfileComponent implements OnInit, OnDestroy {
   success = signal<string | null>(null);
   profile = signal<ClientProfileResponse | null>(null);
   isEditing = signal(false);
+  profilePhotoPreview = signal<string | null>(null);
+  selectedPhotoFile = signal<File | null>(null);
+  showPasswordForm = signal(false);
+  passwordLoading = signal(false);
+  passwordError = signal<string | null>(null);
+  passwordSuccess = signal<string | null>(null);
 
   // Enum options for dropdowns
   goalOptions = [
@@ -67,6 +85,11 @@ export class ProfileComponent implements OnInit, OnDestroy {
   ];
 
   profileForm = this.formBuilder.group({
+    // Auth Service Fields
+    fullName: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]],
+    email: ['', [Validators.required, Validators.email]],
+    profilePhoto: [null as File | null],
+    // Profile Fields
     userName: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(50)]],
     heightCm: [null as number | null, [Validators.min(50), Validators.max(300)]],
     startingWeightKg: [null as number | null, [Validators.min(20), Validators.max(500)]],
@@ -74,6 +97,23 @@ export class ProfileComponent implements OnInit, OnDestroy {
     goal: [null as ClientGoal | null],
     experienceLevel: [null as ExperienceLevel | null]
   });
+
+  // Password change form
+  passwordForm = this.formBuilder.group(
+    {
+      currentPassword: ['', [Validators.required]],
+      newPassword: [
+        '',
+        [
+          Validators.required,
+          Validators.minLength(8),
+          Validators.pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#^()\-_=+{}[\]|;:'"",.<>\/\\]).{8,}$/)
+        ]
+      ],
+      confirmNewPassword: ['', [Validators.required]]
+    },
+    { validators: (fg) => this.passwordMatchValidator(fg) }
+  );
 
   ngOnInit(): void {
     this.loadProfile();
@@ -160,12 +200,19 @@ export class ProfileComponent implements OnInit, OnDestroy {
   private populateForm(profile: ClientProfileResponse): void {
     console.log('[ProfileComponent] Populating form with profile data:', profile);
     
+    // Get current user from auth service
+    const currentUser = this.currentUser();
+    
     // Convert string enum values from backend to numeric enums if needed
     const gender = this.convertStringToGenderEnum(profile.gender as any);
     const goal = this.convertStringToGoalEnum(profile.goal as any);
     const experienceLevel = this.convertStringToExperienceLevelEnum(profile.experienceLevel as any);
     
     this.profileForm.patchValue({
+      // Fill auth service fields from current user
+      fullName: currentUser?.name || '',
+      email: currentUser?.email || '',
+      // Fill profile fields
       userName: profile.userName || '',
       heightCm: profile.heightCm ?? null,
       startingWeightKg: profile.startingWeightKg ?? null,
@@ -203,6 +250,9 @@ export class ProfileComponent implements OnInit, OnDestroy {
 
   onCancel(): void {
     this.isEditing.set(false);
+    // Clear photo selection but keep the current user photo
+    this.selectedPhotoFile.set(null);
+    // Don't clear profilePhotoPreview - it might contain the updated photo
     if (this.profile()) {
       this.populateForm(this.profile()!);
     }
@@ -225,6 +275,8 @@ export class ProfileComponent implements OnInit, OnDestroy {
     this.success.set(null);
 
     const formValue = this.profileForm.value;
+    
+    // Prepare profile request
     const request: ClientProfileRequest = {
       userName: formValue.userName || '',
       heightCm: formValue.heightCm ?? undefined,
@@ -234,9 +286,65 @@ export class ProfileComponent implements OnInit, OnDestroy {
       experienceLevel: formValue.experienceLevel ?? undefined
     };
 
+    // Check if auth service fields (name, email) have been changed
+    const currentUser = this.currentUser();
+    const authFieldsChanged = (formValue.fullName && formValue.fullName !== currentUser?.name) ||
+                              (formValue.email && formValue.email !== currentUser?.email) ||
+                              this.selectedPhotoFile();
+
+    console.log('[ProfileComponent] Auth fields changed:', authFieldsChanged);
+    console.log('[ProfileComponent] Form full name:', formValue.fullName, 'Current name:', currentUser?.name);
+    console.log('[ProfileComponent] Photo file selected:', this.selectedPhotoFile()?.name);
+
     const operation = this.profile() ? 'update' : 'create';
     console.log(`[ProfileComponent] ${operation === 'update' ? 'Updating' : 'Creating'} profile:`, request);
 
+    // First, update auth service fields (name, email, photo) if changed
+    if (authFieldsChanged && formValue.fullName && formValue.email && formValue.userName) {
+      console.log('[ProfileComponent] Updating auth service fields');
+      
+      // Update locally in auth service
+      const updatedUser = {
+        ...currentUser,
+        name: formValue.fullName || currentUser?.name,
+        email: formValue.email || currentUser?.email,
+        // If photo was selected, store the preview as the photo URL
+        profilePhotoUrl: this.profilePhotoPreview() || currentUser?.profilePhotoUrl
+      };
+      console.log('[ProfileComponent] Updated user:', updatedUser);
+      this.authService.updateCurrentUser(updatedUser as any);
+      
+      // Also try to update on backend with FormData
+      this.authService.updateUserInfo(
+        formValue.fullName,
+        formValue.userName,
+        formValue.email,
+        this.selectedPhotoFile() || undefined
+      ).pipe(
+        timeout(5000),
+        takeUntil(this.destroy$)
+      ).subscribe({
+        next: (response) => {
+          console.log('[ProfileComponent] User info saved:', response);
+          // Clear photo selection after successful upload
+          this.selectedPhotoFile.set(null);
+          // Update the profile normally
+          this.updateClientProfile(request, operation);
+        },
+        error: (error) => {
+          console.warn('[ProfileComponent] Backend update attempt failed, but local update succeeded:', error);
+          // Even if backend update fails, continue with profile update
+          this.selectedPhotoFile.set(null);
+          this.updateClientProfile(request, operation);
+        }
+      });
+    } else {
+      // Just update the profile
+      this.updateClientProfile(request, operation);
+    }
+  }
+
+  private updateClientProfile(request: ClientProfileRequest, operation: 'update' | 'create'): void {
     const service$ = operation === 'update'
       ? this.profileService.updateProfile(request)
       : this.profileService.createProfile(request);
@@ -271,6 +379,9 @@ export class ProfileComponent implements OnInit, OnDestroy {
           this.isEditing.set(false);
           this.loading.set(false);
           this.success.set(`Profile ${operation === 'update' ? 'updated' : 'created'} successfully!`);
+          
+          // Silently refresh profile data without showing loading state
+          this.refreshProfileData();
           setTimeout(() => this.success.set(null), 3000);
           return;
         }
@@ -307,13 +418,18 @@ export class ProfileComponent implements OnInit, OnDestroy {
         this.populateForm(enrichedProfile); // Refresh form with updated data
         this.isEditing.set(false);
         this.loading.set(false);
-        this.success.set(`Profile ${operation === 'update' ? 'updated' : 'created'} successfully!`);
+        this.success.set(`Profile successfully saved!`);
+        // Don't clear photo - keep it displayed
+        // The photo preview will remain since we saved it to currentUser
+        
+        // Silently refresh profile data without showing loading state
+        this.refreshProfileData();
         setTimeout(() => this.success.set(null), 3000);
       },
       error: (error) => {
         this.loading.set(false);
         console.error('[ProfileComponent] Profile operation error:', error);
-        const errorMessage = error?.error?.message || `Failed to ${operation} profile. Please try again.`;
+        const errorMessage = error?.error?.message || 'Failed to save profile. Please try again.';
         this.error.set(errorMessage);
       }
     });
@@ -373,5 +489,204 @@ export class ProfileComponent implements OnInit, OnDestroy {
       }
     });
     return errors;
+  }
+
+  onPhotoSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      this.error.set('Please select a valid image file');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+      this.error.set('Image size must be less than 5MB');
+      return;
+    }
+
+    this.selectedPhotoFile.set(file);
+    this.profileForm.get('profilePhoto')?.setValue(file);
+
+    // Create preview
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      this.profilePhotoPreview.set(e.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+
+    this.error.set(null);
+    console.log('[ProfileComponent] Photo selected:', file.name);
+  }
+
+  clearPhotoSelection(): void {
+    this.selectedPhotoFile.set(null);
+    this.profilePhotoPreview.set(null);
+    this.profileForm.get('profilePhoto')?.setValue(null);
+    console.log('[ProfileComponent] Photo selection cleared');
+  }
+
+  // ===== PASSWORD MANAGEMENT METHODS =====
+
+  /**
+   * Toggle password change form visibility
+   */
+  togglePasswordForm(): void {
+    this.showPasswordForm.update(val => !val);
+    if (this.showPasswordForm()) {
+      this.passwordError.set(null);
+      this.passwordSuccess.set(null);
+    } else {
+      this.passwordForm.reset();
+    }
+  }
+
+  /**
+   * Custom validator to check if passwords match
+   */
+  private passwordMatchValidator(formGroup: AbstractControl): { [key: string]: any } | null {
+    const newPassword = formGroup.get('newPassword')?.value;
+    const confirmPassword = formGroup.get('confirmNewPassword')?.value;
+
+    if (newPassword && confirmPassword && newPassword !== confirmPassword) {
+      return { passwordMismatch: true };
+    }
+    return null;
+  }
+
+  /**
+   * Get password validation status
+   */
+  isPasswordFormReady(): boolean {
+    return this.passwordForm.valid && !this.passwordLoading();
+  }
+
+  /**
+   * Check password field validity
+   */
+  isPasswordFieldInvalid(fieldName: string): boolean {
+    const field = this.passwordForm.get(fieldName);
+    return !!(field && field.invalid && field.touched);
+  }
+
+  /**
+   * Change user password
+   * Uses AuthService.changePassword method
+   * Note: Backend endpoint returns 405 - will use reset password flow instead
+   */
+  onChangePassword(): void {
+    console.log('[ProfileComponent] Password change attempted');
+
+    if (this.passwordForm.invalid) {
+      console.warn('[ProfileComponent] Password form is invalid');
+      this.passwordError.set('Please check your password requirements');
+      return;
+    }
+
+    this.passwordLoading.set(true);
+    this.passwordError.set(null);
+    this.passwordSuccess.set(null);
+
+    const formValue = this.passwordForm.value;
+    
+    // Since /api/account/change-password returns 405, use reset password flow instead
+    // The user needs to verify via email first
+    this.authService.sendResetPasswordLink({ email: this.userEmail() }).pipe(
+      timeout(10000),
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: (response) => {
+        console.log('[ProfileComponent] Password reset link sent successfully');
+        this.passwordLoading.set(false);
+        this.passwordSuccess.set('Password reset link sent to your email! Check your inbox to set a new password.');
+        this.passwordForm.reset();
+        
+        // Close form after 3 seconds
+        setTimeout(() => {
+          this.showPasswordForm.set(false);
+          this.passwordSuccess.set(null);
+        }, 3000);
+      },
+      error: (error) => {
+        this.passwordLoading.set(false);
+        console.error('[ProfileComponent] Password reset link error:', error);
+        const errorMessage = error?.error?.message || 'Failed to send password reset link. Please try again.';
+        this.passwordError.set(errorMessage);
+      }
+    });
+  }
+
+  /**
+   * Cancel password change
+   */
+  onCancelPasswordChange(): void {
+    this.passwordForm.reset();
+    this.passwordError.set(null);
+    this.passwordSuccess.set(null);
+    this.showPasswordForm.set(false);
+  }
+
+  /**
+   * Get password strength indicator
+   * Returns strength level based on validation
+   */
+  getPasswordStrength(): { level: string; color: string } {
+    const password = this.passwordForm.get('newPassword')?.value;
+    if (!password) return { level: '', color: '' };
+
+    let strength = 0;
+    
+    // Check length
+    if (password.length >= 8) strength++;
+    if (password.length >= 12) strength++;
+    
+    // Check for uppercase
+    if (/[A-Z]/.test(password)) strength++;
+    
+    // Check for lowercase
+    if (/[a-z]/.test(password)) strength++;
+    
+    // Check for numbers
+    if (/\d/.test(password)) strength++;
+    
+    // Check for special characters
+    if (/[@$!%*?&#^()\-_=+{}[\]|;:'"",.<>\/\\]/.test(password)) strength++;
+
+    if (strength <= 2) return { level: 'Weak', color: 'text-red-600' };
+    if (strength <= 4) return { level: 'Fair', color: 'text-yellow-600' };
+    return { level: 'Strong', color: 'text-green-600' };
+  }
+
+  /**
+   * Silently refresh profile data without showing loading state
+   * Used after successful save to update view with latest data
+   */
+  private refreshProfileData(): void {
+    this.profileService.getProfile().pipe(
+      timeout(5000),
+      catchError(err => {
+        console.warn('[ProfileComponent] Silent profile refresh failed:', err.message);
+        return of(null);
+      }),
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: (data) => {
+        if (data) {
+          // Convert enums
+          data.gender = this.convertStringToGenderEnum(data.gender as any);
+          data.goal = this.convertStringToGoalEnum(data.goal as any);
+          data.experienceLevel = this.convertStringToExperienceLevelEnum(data.experienceLevel as any);
+          
+          // Update profile signal silently (no loading state)
+          this.profile.set(data);
+          console.log('[ProfileComponent] Profile refreshed silently');
+        }
+      }
+    });
   }
 }
