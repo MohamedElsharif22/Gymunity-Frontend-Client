@@ -254,7 +254,7 @@ export class RegisterComponent implements AfterViewInit {
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]],
       confirmPassword: ['', [Validators.required]],
-      profilePhoto: [null as File | null]
+      profilePhoto: [null as File | null, [Validators.required]]
     },
     { validators: this.passwordMatchValidator }
   );
